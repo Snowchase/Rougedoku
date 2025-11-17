@@ -24,6 +24,7 @@ import {
   rateLimiter,
   RATE_LIMITS,
 } from '../utils/validation';
+import { updateStatsAfterCompletion } from '../services/statsService';
 
 export interface UserProfile {
   userId: string;
@@ -644,7 +645,16 @@ export async function submitDailyScore(
     const scoreId = `${date}_${currentUser.uid}_${difficulty}`;
     await setDoc(doc(db, 'scores', scoreId), scoreData);
 
-    return { success: true };
+    // Update user stats and streak
+    const statsResult = await updateStatsAfterCompletion(
+      currentUser.uid,
+      date,
+      difficulty as 'easy' | 'medium' | 'hard',
+      timeSeconds,
+      true // completed
+    );
+
+    return { success: true, newStreak: statsResult.newStreak };
   } catch (error) {
     console.error('Error submitting score:', error);
     return { success: false, error: 'Failed to submit score' };

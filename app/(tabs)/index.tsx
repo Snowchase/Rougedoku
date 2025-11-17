@@ -1,13 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAudio } from '../../contexts/AudioContext';
+import { getCurrentUser } from '../../components/friendService';
+import { getUserStats } from '../../services/statsService';
 
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const router = useRouter();
   const { playMusic, stopMusic } = useAudio();
+  const [currentStreak, setCurrentStreak] = useState<number>(0);
 
   // Play home music when screen is focused, stop when unfocused
   useFocusEffect(
@@ -15,12 +18,25 @@ export default function HomeScreen() {
       // Start playing home music with fade in
       playMusic('homeMusic', 1500);
 
+      // Load streak
+      loadStreak();
+
       return () => {
         // Fade out music when leaving screen
         stopMusic(800);
       };
     }, [])
   );
+
+  const loadStreak = async () => {
+    const user = getCurrentUser();
+    if (user) {
+      const stats = await getUserStats(user.uid);
+      if (stats) {
+        setCurrentStreak(stats.currentStreak);
+      }
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -37,6 +53,14 @@ export default function HomeScreen() {
         <View style={styles.titleContainer}>
           <Text style={styles.title}>SUDOKLE</Text>
           <Text style={styles.subtitle}>Daily Sudoku Challenge</Text>
+
+          {/* Streak Badge */}
+          {currentStreak > 0 && (
+            <View style={styles.streakBadge}>
+              <Text style={styles.streakEmoji}>🔥</Text>
+              <Text style={styles.streakText}>{currentStreak} Day Streak!</Text>
+            </View>
+          )}
         </View>
 
         {/* Menu Buttons */}
@@ -107,6 +131,31 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 8,
     letterSpacing: 1,
+  },
+  streakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#FEF3C7',
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#F59E0B',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  streakEmoji: {
+    fontSize: 24,
+    marginRight: 8,
+  },
+  streakText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#92400E',
   },
   menuContainer: {
     width: '100%',
