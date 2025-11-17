@@ -52,7 +52,7 @@ export default function HomeScreen() {
         {/* App Title */}
         <View style={styles.titleContainer}>
           <Text style={styles.title}>SUDOKLE</Text>
-          <Text style={styles.subtitle}>Daily Sudoku Challenge</Text>
+          <Text style={styles.subtitle}>New puzzle every day at midnight!</Text>
 
           {/* Streak Badge */}
           {currentStreak > 0 && (
@@ -91,11 +91,6 @@ export default function HomeScreen() {
             <Text style={styles.menuButtonText}>Friends</Text>
             <Text style={styles.menuButtonSubtext}>Manage your friends</Text>
           </TouchableOpacity>
-        </View>
-
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>New puzzle every day at midnight!</Text>
         </View>
       </View>
     </View>
@@ -200,16 +195,6 @@ const styles = StyleSheet.create({
   menuButtonSubtext: {
     fontSize: 14,
     color: '#6B7280',
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 40,
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#9CA3AF',
-    fontStyle: 'italic',
   },
   settingsButton: {
     position: 'absolute',

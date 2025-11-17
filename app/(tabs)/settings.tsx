@@ -401,12 +401,6 @@ export default function SettingsScreen() {
               </View>
             </View>
           )}
-
-          <View style={[styles.audioNote, { backgroundColor: theme.colors.cellBackground }]}>
-            <Text style={[styles.audioNoteText, { color: theme.colors.textSecondary }]}>
-              💡 Note: Add your own MP3 files to assets/audio/ to enable music playback. See README for instructions.
-            </Text>
-          </View>
         </View>
 
         <View style={styles.section}>
