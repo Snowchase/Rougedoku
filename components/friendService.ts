@@ -22,6 +22,8 @@ export interface UserProfile {
   userId: string;
   username: string;
   friendCode: string;
+  avatar?: string; // Emoji avatar
+  profileColor?: string; // Hex color for profile
   createdAt: any;
   friends: string[]; // Array of friend userIds
 }
@@ -39,6 +41,8 @@ export interface FriendRequest {
 export interface DailyScore {
   userId: string;
   username: string;
+  avatar?: string; // User's emoji avatar
+  profileColor?: string; // User's profile color
   date: string;
   difficulty: string;
   timeSeconds: number;
@@ -46,6 +50,26 @@ export interface DailyScore {
   completed: boolean;
   completedAt: any;
 }
+
+// Available avatar emojis
+export const AVATAR_OPTIONS = [
+  '😀', '😎', '🤓', '🥳', '🤩', '🤗', '🙂', '😊',
+  '🐶', '🐱', '🐼', '🦊', '🐯', '🦁', '🐸', '🐙',
+  '🌟', '⚡', '🔥', '💎', '🎮', '🎯', '🎨', '🎭',
+  '🍕', '🍔', '🌮', '🍦', '🍪', '☕', '🥑', '🌈',
+];
+
+// Available profile colors
+export const PROFILE_COLORS = [
+  '#3B82F6', // Blue
+  '#10B981', // Green
+  '#F59E0B', // Orange
+  '#EF4444', // Red
+  '#8B5CF6', // Purple
+  '#EC4899', // Pink
+  '#06B6D4', // Cyan
+  '#F97316', // Deep Orange
+];
 
 // Generate a random 6-character friend code
 function generateFriendCode(): string {
@@ -55,6 +79,16 @@ function generateFriendCode(): string {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return code;
+}
+
+// Get random avatar
+function getRandomAvatar(): string {
+  return AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)];
+}
+
+// Get random profile color
+function getRandomProfileColor(): string {
+  return PROFILE_COLORS[Math.floor(Math.random() * PROFILE_COLORS.length)];
 }
 
 // Initialize auth and create/load user profile
@@ -82,15 +116,17 @@ export async function initializeUser(username?: string): Promise<UserProfile | n
       userId,
       username,
       friendCode,
+      avatar: getRandomAvatar(),
+      profileColor: getRandomProfileColor(),
       createdAt: serverTimestamp(),
       friends: [],
     };
 
     await setDoc(doc(db, 'users', userId), profile);
-    
+
     // Save to local storage
     await AsyncStorage.setItem('userProfile', JSON.stringify(profile));
-    
+
     return profile;
   } catch (error) {
     console.error('Error initializing user:', error);
@@ -121,6 +157,25 @@ export async function updateUsername(newUsername: string): Promise<boolean> {
     return true;
   } catch (error) {
     console.error('Error updating username:', error);
+    return false;
+  }
+}
+
+// Update user profile (username, avatar, profileColor)
+export async function updateProfile(updates: {
+  username?: string;
+  avatar?: string;
+  profileColor?: string;
+}): Promise<boolean> {
+  try {
+    const user = auth.currentUser;
+    if (!user) return false;
+
+    await updateDoc(doc(db, 'users', user.uid), updates);
+
+    return true;
+  } catch (error) {
+    console.error('Error updating profile:', error);
     return false;
   }
 }
@@ -358,6 +413,8 @@ export async function submitDailyScore(
     const scoreData: Omit<DailyScore, 'id'> = {
       userId: currentUser.uid,
       username: myProfile.username,
+      avatar: myProfile.avatar,
+      profileColor: myProfile.profileColor,
       date,
       difficulty,
       timeSeconds,

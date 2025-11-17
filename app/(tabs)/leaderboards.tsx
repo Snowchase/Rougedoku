@@ -104,6 +104,8 @@ export default function LeaderboardsScreen() {
   const renderScoreRow = (score: DailyScore, index: number) => {
     const isCurrentUser = score.userId === currentUserId;
     const rank = index + 1;
+    const avatar = score.avatar || '😀';
+    const profileColor = score.profileColor || '#3B82F6';
 
     return (
       <View
@@ -118,6 +120,10 @@ export default function LeaderboardsScreen() {
           <Text style={[styles.rankText, rank <= 3 && styles.rankTextMedal]}>
             {getMedalEmoji(rank)}
           </Text>
+        </View>
+
+        <View style={[styles.avatarContainer, { backgroundColor: profileColor }]}>
+          <Text style={styles.avatarEmoji}>{avatar}</Text>
         </View>
 
         <View style={styles.scoreInfo}>
@@ -378,6 +384,17 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   rankTextMedal: {
+    fontSize: 24,
+  },
+  avatarContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  avatarEmoji: {
     fontSize: 24,
   },
   scoreInfo: {
