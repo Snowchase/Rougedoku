@@ -1,5 +1,5 @@
 import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { db, auth } from '../config/firebase';
+import { db, auth } from '../components/firebaseConfig';
 
 export interface UserStats {
   userId: string;
