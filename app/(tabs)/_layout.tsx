@@ -24,6 +24,24 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="play"
+        options={{
+          href: null, // Hide from tab bar
+        }}
+      />
+      <Tabs.Screen
+        name="leaderboards"
+        options={{
+          href: null, // Hide from tab bar
+        }}
+      />
+      <Tabs.Screen
+        name="friends"
+        options={{
+          href: null, // Hide from tab bar
+        }}
+      />
+      <Tabs.Screen
         name="explore"
         options={{
           title: 'Explore',

@@ -413,3 +413,46 @@ export async function getFriendsScores(date: string, difficulty: string): Promis
     return [];
   }
 }
+
+// Get global leaderboard scores for a specific date and difficulty
+export async function getGlobalScores(date: string, difficulty: string, limit: number = 100): Promise<DailyScore[]> {
+  try {
+    const q = query(
+      collection(db, 'scores'),
+      where('date', '==', date),
+      where('difficulty', '==', difficulty)
+    );
+
+    const querySnapshot = await getDocs(q);
+    const allScores = querySnapshot.docs.map(doc => doc.data() as DailyScore);
+
+    // Sort by time (fastest first) and limit results
+    return allScores
+      .sort((a, b) => a.timeSeconds - b.timeSeconds)
+      .slice(0, limit);
+  } catch (error) {
+    console.error('Error getting global scores:', error);
+    return [];
+  }
+}
+
+// Get all-time best scores (across all dates for a difficulty)
+export async function getAllTimeBestScores(difficulty: string, limit: number = 100): Promise<DailyScore[]> {
+  try {
+    const q = query(
+      collection(db, 'scores'),
+      where('difficulty', '==', difficulty)
+    );
+
+    const querySnapshot = await getDocs(q);
+    const allScores = querySnapshot.docs.map(doc => doc.data() as DailyScore);
+
+    // Sort by time (fastest first) and limit results
+    return allScores
+      .sort((a, b) => a.timeSeconds - b.timeSeconds)
+      .slice(0, limit);
+  } catch (error) {
+    console.error('Error getting all-time best scores:', error);
+    return [];
+  }
+}

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getDailyPuzzle, getDateString, isNewDay, type Difficulty } from './dailyPuzzleGenerator';
+import { submitDailyScore, initializeUser } from './friendService';
 
 const GRID_SIZE = 9;
 const { width } = Dimensions.get('window');
@@ -46,6 +47,11 @@ const SudokuGrid = () => {
   const [isComplete, setIsComplete] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [todayDate, setTodayDate] = useState('');
+
+  // Initialize user on mount
+  useEffect(() => {
+    initializeUser();
+  }, []);
 
   // Load or create puzzle on mount and difficulty change
   useEffect(() => {
@@ -194,7 +200,7 @@ const SudokuGrid = () => {
 
     if (complete) {
       setIsComplete(true);
-      
+
       // Save completion
       const state: GameState = {
         grid: currentGrid,
@@ -205,7 +211,15 @@ const SudokuGrid = () => {
         lastPlayed: todayDate,
       };
       await AsyncStorage.setItem(getStorageKey(), JSON.stringify(state));
-      
+
+      // Submit score to Firebase
+      try {
+        await submitDailyScore(todayDate, difficulty, elapsedTime, hintsUsed);
+        console.log('Score submitted successfully');
+      } catch (error) {
+        console.error('Error submitting score:', error);
+      }
+
       showCompletionScreen();
     }
   };
