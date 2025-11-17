@@ -1,24 +1,25 @@
 import { Audio, AVPlaybackStatus } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Asset } from 'expo-asset';
 
 // Audio file references
 // To add your own MP3s:
 // 1. Place MP3 files in assets/audio/music/ or assets/audio/sfx/
-// 2. Uncomment the require() lines below and update with your filenames
-// 3. Use the key in playMusic() or playSoundEffect()
+// 2. Uncomment the lines below and update with your filenames
+// 3. Restart with: npx expo start --clear
 
-// Example: const homeMusic = require('../assets/audio/music/home.mp3');
-
+// Audio files - placeholder silent MP3s included
+// Replace these files with your own music in assets/audio/
 const AUDIO_FILES: Record<string, any> = {
-  // Music tracks - uncomment and add your MP3 files
-  // homeMusic: require('../assets/audio/music/home.mp3'),
-  // gameplayMusic: require('../assets/audio/music/gameplay.mp3'),
+  // Music tracks
+  homeMusic: require('../assets/audio/music/home.mp3'),
+  gameplayMusic: require('../assets/audio/music/gameplay.mp3'),
 
-  // Sound effects - uncomment and add your MP3 files
-  // numberPlace: require('../assets/audio/sfx/place.mp3'),
-  // puzzleComplete: require('../assets/audio/sfx/complete.mp3'),
-  // buttonClick: require('../assets/audio/sfx/click.mp3'),
-  // errorSound: require('../assets/audio/sfx/error.mp3'),
+  // Sound effects
+  numberPlace: require('../assets/audio/sfx/place.mp3'),
+  puzzleComplete: require('../assets/audio/sfx/complete.mp3'),
+  buttonClick: require('../assets/audio/sfx/click.mp3'),
+  errorSound: require('../assets/audio/sfx/error.mp3'),
 };
 
 export type MusicTrack = 'homeMusic' | 'gameplayMusic';
