@@ -17,6 +17,13 @@ import {
 import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from './firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  validateUsername,
+  validateScore,
+  validateDate,
+  rateLimiter,
+  RATE_LIMITS,
+} from '../utils/validation';
 
 export interface UserProfile {
   userId: string;
@@ -26,6 +33,7 @@ export interface UserProfile {
   profileColor?: string; // Hex color for profile
   createdAt: any;
   friends: string[]; // Array of friend userIds
+  blockedUsers?: string[]; // Array of blocked userIds
 }
 
 export interface FriendRequest {
@@ -120,6 +128,7 @@ export async function initializeUser(username?: string): Promise<UserProfile | n
       profileColor: getRandomProfileColor(),
       createdAt: serverTimestamp(),
       friends: [],
+      blockedUsers: [],
     };
 
     await setDoc(doc(db, 'users', userId), profile);
@@ -166,17 +175,38 @@ export async function updateProfile(updates: {
   username?: string;
   avatar?: string;
   profileColor?: string;
-}): Promise<boolean> {
+}): Promise<{ success: boolean; error?: string }> {
   try {
     const user = auth.currentUser;
-    if (!user) return false;
+    if (!user) return { success: false, error: 'Not logged in' };
+
+    // Validate username if provided
+    if (updates.username) {
+      // Check rate limit
+      const rateLimitKey = `username_change_${user.uid}`;
+      if (!rateLimiter.isAllowed(
+        rateLimitKey,
+        RATE_LIMITS.USERNAME_CHANGE.maxActions,
+        RATE_LIMITS.USERNAME_CHANGE.windowMs
+      )) {
+        return {
+          success: false,
+          error: 'You can only change your username 3 times per day',
+        };
+      }
+
+      const validation = validateUsername(updates.username);
+      if (!validation.isValid) {
+        return { success: false, error: validation.error };
+      }
+    }
 
     await updateDoc(doc(db, 'users', user.uid), updates);
 
-    return true;
+    return { success: true };
   } catch (error) {
     console.error('Error updating profile:', error);
-    return false;
+    return { success: false, error: 'Failed to update profile' };
   }
 }
 
@@ -218,6 +248,25 @@ export async function sendFriendRequest(friendCode: string): Promise<{ success: 
       return { success: false, message: 'Not logged in' };
     }
 
+    // Check rate limit
+    const rateLimitKey = `friend_request_${currentUser.uid}`;
+    if (!rateLimiter.isAllowed(
+      rateLimitKey,
+      RATE_LIMITS.FRIEND_REQUEST.maxActions,
+      RATE_LIMITS.FRIEND_REQUEST.windowMs
+    )) {
+      const retryAfter = rateLimiter.getRetryAfter(
+        rateLimitKey,
+        RATE_LIMITS.FRIEND_REQUEST.maxActions,
+        RATE_LIMITS.FRIEND_REQUEST.windowMs
+      );
+      const minutesLeft = Math.ceil(retryAfter / 60000);
+      return {
+        success: false,
+        message: `Too many requests. Please wait ${minutesLeft} minutes.`,
+      };
+    }
+
     // Get current user profile
     const myProfile = await getUserProfile(currentUser.uid);
     if (!myProfile) {
@@ -235,6 +284,19 @@ export async function sendFriendRequest(friendCode: string): Promise<{ success: 
       return { success: false, message: "Can't add yourself!" };
     }
 
+    // Check if blocked by the other user
+    if (friendProfile.blockedUsers?.includes(currentUser.uid)) {
+      return { success: false, message: 'Unable to send friend request' };
+    }
+
+    // Check if you blocked them
+    if (myProfile.blockedUsers?.includes(friendProfile.userId)) {
+      return {
+        success: false,
+        message: 'You have blocked this user. Unblock them first.',
+      };
+    }
+
     // Check if already friends
     if (myProfile.friends.includes(friendProfile.userId)) {
       return { success: false, message: 'Already friends!' };
@@ -248,7 +310,7 @@ export async function sendFriendRequest(friendCode: string): Promise<{ success: 
       where('status', '==', 'pending')
     );
     const existingRequests = await getDocs(existingQ);
-    
+
     if (!existingRequests.empty) {
       return { success: false, message: 'Request already sent!' };
     }
@@ -396,19 +458,174 @@ export async function removeFriend(friendUserId: string): Promise<boolean> {
   }
 }
 
+// Block a user
+export async function blockUser(userIdToBlock: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      return { success: false, message: 'Not logged in' };
+    }
+
+    if (userIdToBlock === currentUser.uid) {
+      return { success: false, message: "Can't block yourself" };
+    }
+
+    const myProfile = await getUserProfile(currentUser.uid);
+    if (!myProfile) {
+      return { success: false, message: 'Profile not found' };
+    }
+
+    // Check if already blocked
+    if (myProfile.blockedUsers?.includes(userIdToBlock)) {
+      return { success: false, message: 'User already blocked' };
+    }
+
+    // Add to blocked list
+    const updatedBlockedUsers = [...(myProfile.blockedUsers || []), userIdToBlock];
+    await updateDoc(doc(db, 'users', currentUser.uid), {
+      blockedUsers: updatedBlockedUsers,
+    });
+
+    // Remove from friends list if they were friends
+    if (myProfile.friends.includes(userIdToBlock)) {
+      await removeFriend(userIdToBlock);
+    }
+
+    // Delete any pending friend requests between the users
+    const pendingRequestsFromThem = query(
+      collection(db, 'friendRequests'),
+      where('fromUserId', '==', userIdToBlock),
+      where('toUserId', '==', currentUser.uid),
+      where('status', '==', 'pending')
+    );
+    const pendingRequestsToThem = query(
+      collection(db, 'friendRequests'),
+      where('fromUserId', '==', currentUser.uid),
+      where('toUserId', '==', userIdToBlock),
+      where('status', '==', 'pending')
+    );
+
+    const [fromThemSnapshot, toThemSnapshot] = await Promise.all([
+      getDocs(pendingRequestsFromThem),
+      getDocs(pendingRequestsToThem),
+    ]);
+
+    const deletePromises = [
+      ...fromThemSnapshot.docs.map(doc => deleteDoc(doc.ref)),
+      ...toThemSnapshot.docs.map(doc => deleteDoc(doc.ref)),
+    ];
+
+    await Promise.all(deletePromises);
+
+    return { success: true, message: 'User blocked successfully' };
+  } catch (error) {
+    console.error('Error blocking user:', error);
+    return { success: false, message: 'Failed to block user' };
+  }
+}
+
+// Unblock a user
+export async function unblockUser(userIdToUnblock: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      return { success: false, message: 'Not logged in' };
+    }
+
+    const myProfile = await getUserProfile(currentUser.uid);
+    if (!myProfile) {
+      return { success: false, message: 'Profile not found' };
+    }
+
+    // Check if actually blocked
+    if (!myProfile.blockedUsers?.includes(userIdToUnblock)) {
+      return { success: false, message: 'User is not blocked' };
+    }
+
+    // Remove from blocked list
+    const updatedBlockedUsers = myProfile.blockedUsers.filter(id => id !== userIdToUnblock);
+    await updateDoc(doc(db, 'users', currentUser.uid), {
+      blockedUsers: updatedBlockedUsers,
+    });
+
+    return { success: true, message: 'User unblocked successfully' };
+  } catch (error) {
+    console.error('Error unblocking user:', error);
+    return { success: false, message: 'Failed to unblock user' };
+  }
+}
+
+// Get list of blocked users
+export async function getBlockedUsers(): Promise<UserProfile[]> {
+  try {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return [];
+
+    const myProfile = await getUserProfile(currentUser.uid);
+    if (!myProfile || !myProfile.blockedUsers || myProfile.blockedUsers.length === 0) {
+      return [];
+    }
+
+    // Get all blocked user profiles
+    const blockedProfiles = await Promise.all(
+      myProfile.blockedUsers.map(userId => getUserProfile(userId))
+    );
+
+    return blockedProfiles.filter(profile => profile !== null) as UserProfile[];
+  } catch (error) {
+    console.error('Error getting blocked users:', error);
+    return [];
+  }
+}
+
 // Submit daily score
 export async function submitDailyScore(
   date: string,
   difficulty: string,
   timeSeconds: number,
   hintsUsed: number
-): Promise<boolean> {
+): Promise<{ success: boolean; error?: string }> {
   try {
     const currentUser = auth.currentUser;
-    if (!currentUser) return false;
+    if (!currentUser) {
+      return { success: false, error: 'Not logged in' };
+    }
+
+    // Validate date
+    const dateValidation = validateDate(date);
+    if (!dateValidation.isValid) {
+      return { success: false, error: dateValidation.error };
+    }
+
+    // Validate score
+    const scoreValidation = validateScore(timeSeconds, hintsUsed, difficulty);
+    if (!scoreValidation.isValid) {
+      return { success: false, error: scoreValidation.error };
+    }
+
+    // Check rate limit
+    const rateLimitKey = `score_submission_${currentUser.uid}`;
+    if (!rateLimiter.isAllowed(
+      rateLimitKey,
+      RATE_LIMITS.SCORE_SUBMISSION.maxActions,
+      RATE_LIMITS.SCORE_SUBMISSION.windowMs
+    )) {
+      const retryAfter = rateLimiter.getRetryAfter(
+        rateLimitKey,
+        RATE_LIMITS.SCORE_SUBMISSION.maxActions,
+        RATE_LIMITS.SCORE_SUBMISSION.windowMs
+      );
+      const minutesLeft = Math.ceil(retryAfter / 60000);
+      return {
+        success: false,
+        error: `Too many score submissions. Please wait ${minutesLeft} minutes.`,
+      };
+    }
 
     const myProfile = await getUserProfile(currentUser.uid);
-    if (!myProfile) return false;
+    if (!myProfile) {
+      return { success: false, error: 'Profile not found' };
+    }
 
     const scoreData: Omit<DailyScore, 'id'> = {
       userId: currentUser.uid,
@@ -427,10 +644,10 @@ export async function submitDailyScore(
     const scoreId = `${date}_${currentUser.uid}_${difficulty}`;
     await setDoc(doc(db, 'scores', scoreId), scoreData);
 
-    return true;
+    return { success: true };
   } catch (error) {
     console.error('Error submitting score:', error);
-    return false;
+    return { success: false, error: 'Failed to submit score' };
   }
 }
 

@@ -50,29 +50,35 @@ export default function SettingsScreen() {
       return;
     }
 
-    const success = await updateProfile({ username: username.trim() });
-    if (success) {
+    const result = await updateProfile({ username: username.trim() });
+    if (result.success) {
       setIsEditingUsername(false);
       await loadProfile();
       Alert.alert('Success', 'Username updated successfully!');
     } else {
-      Alert.alert('Error', 'Failed to update username');
+      Alert.alert('Error', result.error || 'Failed to update username');
     }
   };
 
   const handleAvatarSelect = async (avatar: string) => {
     setSelectedAvatar(avatar);
-    const success = await updateProfile({ avatar });
-    if (success) {
+    const result = await updateProfile({ avatar });
+    if (result.success) {
       await loadProfile();
+    } else {
+      // Revert on failure
+      setSelectedAvatar(profile?.avatar || '😀');
     }
   };
 
   const handleColorSelect = async (color: string) => {
     setSelectedColor(color);
-    const success = await updateProfile({ profileColor: color });
-    if (success) {
+    const result = await updateProfile({ profileColor: color });
+    if (result.success) {
       await loadProfile();
+    } else {
+      // Revert on failure
+      setSelectedColor(profile?.profileColor || '#3B82F6');
     }
   };
 

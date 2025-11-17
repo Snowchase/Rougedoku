@@ -233,8 +233,13 @@ const SudokuGrid = () => {
 
       // Submit score to Firebase
       try {
-        await submitDailyScore(todayDate, difficulty, elapsedTime, hintsUsed);
-        console.log('Score submitted successfully');
+        const result = await submitDailyScore(todayDate, difficulty, elapsedTime, hintsUsed);
+        if (result.success) {
+          console.log('Score submitted successfully');
+        } else {
+          console.error('Error submitting score:', result.error);
+          // Note: Score submission failed but game is still complete locally
+        }
       } catch (error) {
         console.error('Error submitting score:', error);
       }
