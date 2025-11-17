@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,11 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getDailyPuzzle, getDateString, isNewDay, type Difficulty } from './dailyPuzzleGenerator';
 import { submitDailyScore, initializeUser } from './friendService';
+import { useTheme } from '../contexts/ThemeContext';
 
 const GRID_SIZE = 9;
 const { width } = Dimensions.get('window');
@@ -34,6 +36,7 @@ interface GameState {
 }
 
 const SudokuGrid = () => {
+  const { theme } = useTheme();
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [grid, setGrid] = useState<number[][]>([]);
   const [original, setOriginal] = useState<number[][]>([]);
@@ -47,6 +50,22 @@ const SudokuGrid = () => {
   const [isComplete, setIsComplete] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [todayDate, setTodayDate] = useState('');
+
+  // Count how many of each number (1-9) are in the grid
+  const numberCounts = useMemo(() => {
+    const counts: {[key: number]: number} = {};
+    for (let num = 1; num <= 9; num++) {
+      counts[num] = 0;
+    }
+    grid.forEach(row => {
+      row.forEach(cell => {
+        if (cell !== 0) {
+          counts[cell]++;
+        }
+      });
+    });
+    return counts;
+  }, [grid]);
 
   // Initialize user on mount
   useEffect(() => {
@@ -348,14 +367,17 @@ const SudokuGrid = () => {
 
   if (grid.length === 0) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.loadingText}>Loading today's puzzle...</Text>
-      </View>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
+          Loading today's puzzle...
+        </Text>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
+      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.contentContainer}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>SUDOKLE</Text>
@@ -432,16 +454,31 @@ const SudokuGrid = () => {
         <>
           {/* Number Pad */}
           <View style={styles.numberPad}>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
-              <TouchableOpacity
-                key={num}
-                style={styles.numberButton}
-                onPress={() => handleNumberPress(num)}
-                disabled={isPaused}
-              >
-                <Text style={styles.numberButtonText}>{num}</Text>
-              </TouchableOpacity>
-            ))}
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => {
+              const isComplete = numberCounts[num] >= 9;
+              return (
+                <TouchableOpacity
+                  key={num}
+                  style={[
+                    styles.numberButton,
+                    { backgroundColor: theme.colors.primaryButton },
+                    isComplete && styles.numberButtonComplete,
+                  ]}
+                  onPress={() => handleNumberPress(num)}
+                  disabled={isPaused || isComplete}
+                >
+                  <Text
+                    style={[
+                      styles.numberButtonText,
+                      { color: theme.colors.primaryButtonText },
+                      isComplete && styles.numberButtonTextComplete,
+                    ]}
+                  >
+                    {num}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
           {/* Action Buttons */}
@@ -482,14 +519,17 @@ const SudokuGrid = () => {
           </Text>
         </View>
       )}
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+  },
+  scrollContainer: {
+    flex: 1,
   },
   contentContainer: {
     padding: 20,
@@ -678,6 +718,13 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  numberButtonComplete: {
+    backgroundColor: '#9CA3AF',
+    opacity: 0.5,
+  },
+  numberButtonTextComplete: {
+    color: '#D1D5DB',
   },
   actionButtons: {
     flexDirection: 'row',
