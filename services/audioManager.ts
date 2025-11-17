@@ -142,10 +142,9 @@ class AudioManager {
       }
     }
 
-    // Fade out and stop current music if playing
+    // Stop current music if playing (with fade out)
     if (this.currentMusic) {
-      await this.fadeOut(500);
-      await this.stopMusic();
+      await this.stopMusic(500);
     }
 
     try {
@@ -173,19 +172,45 @@ class AudioManager {
   async stopMusic(fadeOutDuration: number = 500) {
     if (!this.currentMusic) return;
 
+    // Store reference to avoid race conditions
+    const musicToStop = this.currentMusic;
+
+    // Clear current references immediately to prevent double-stopping
+    this.currentMusic = null;
+    this.currentTrack = null;
+
     try {
-      if (fadeOutDuration > 0) {
-        await this.fadeOut(fadeOutDuration);
+      // Fade out if requested
+      if (fadeOutDuration > 0 && !this.isFading) {
+        const steps = 20;
+        const stepDuration = fadeOutDuration / steps;
+        const status = await musicToStop.getStatusAsync();
+
+        if (status.isLoaded) {
+          const currentVolume = status.volume || 0;
+          const volumeDecrement = currentVolume / steps;
+
+          for (let i = steps; i >= 0; i--) {
+            try {
+              const newVolume = volumeDecrement * i;
+              await musicToStop.setVolumeAsync(newVolume);
+              await new Promise(resolve => setTimeout(resolve, stepDuration));
+            } catch {
+              break; // Stop fading if sound was released
+            }
+          }
+        }
       }
 
-      await this.currentMusic.stopAsync();
-      await this.currentMusic.unloadAsync();
-      this.currentMusic = null;
-      this.currentTrack = null;
+      await musicToStop.stopAsync();
+      await musicToStop.unloadAsync();
 
       console.log('Music stopped');
     } catch (error) {
-      console.error('Error stopping music:', error);
+      // Silently handle errors if music was already stopped/released
+      if (error && !error.toString().includes('released') && !error.toString().includes('unloaded')) {
+        console.error('Error stopping music:', error);
+      }
     }
   }
 
