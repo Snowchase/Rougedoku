@@ -1,17 +1,30 @@
 {
   "expo": {
-    "name": "SudokleApp",
-    "slug": "SudokleApp",
+    "name": "Sudokle",
+    "slug": "sudokle",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "sudokleapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourcompany.sudokle",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Allow Sudokle to access your photos to share your scores.",
+        "NSCameraUsageDescription": "Allow Sudokle to use your camera to share your scores."
+      }
     },
     "android": {
+      "package": "com.yourcompany.sudokle",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -43,6 +56,11 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "YOUR_PROJECT_ID_WILL_BE_HERE"
+      }
     }
   }
 }
