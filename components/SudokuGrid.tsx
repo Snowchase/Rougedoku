@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getDailyPuzzle, getDateString, isNewDay, type Difficulty } from './dailyPuzzleGenerator';
 import { submitDailyScore, initializeUser } from './friendService';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAudio } from '../contexts/AudioContext';
 
 const GRID_SIZE = 9;
 const { width } = Dimensions.get('window');
@@ -37,6 +38,7 @@ interface GameState {
 
 const SudokuGrid = () => {
   const { theme } = useTheme();
+  const { playSoundEffect } = useAudio();
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [grid, setGrid] = useState<number[][]>([]);
   const [original, setOriginal] = useState<number[][]>([]);
@@ -205,8 +207,14 @@ const SudokuGrid = () => {
       setNotes(newNotes);
     }
 
+    // Play sound effects
     if (num !== 0 && num !== solution[row][col]) {
+      // Incorrect number
+      playSoundEffect('errorSound');
       Alert.alert('❌ Incorrect', "That number doesn't belong there!");
+    } else if (num !== 0) {
+      // Correct number placed
+      playSoundEffect('numberPlace');
     }
 
     checkCompletion(newGrid);
@@ -219,6 +227,9 @@ const SudokuGrid = () => {
 
     if (complete) {
       setIsComplete(true);
+
+      // Play completion sound
+      playSoundEffect('puzzleComplete');
 
       // Save completion
       const state: GameState = {
@@ -402,7 +413,10 @@ const SudokuGrid = () => {
                 borderColor: DIFFICULTY_CONFIG[diff].color,
               }
             ]}
-            onPress={() => setDifficulty(diff)}
+            onPress={() => {
+              playSoundEffect('buttonClick');
+              setDifficulty(diff);
+            }}
           >
             <Text style={[
               styles.difficultyTabText,
