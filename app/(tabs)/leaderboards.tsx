@@ -18,8 +18,8 @@ import {
 } from '../../components/friendService';
 import { getDateString } from '../../components/dailyPuzzleGenerator';
 
-type TabType = 'global' | 'friends';
-type TimeframeType = 'today' | 'allTime';
+type TabType = 'allTime' | 'daily';
+type ViewType = 'global' | 'friends';
 type Difficulty = 'easy' | 'medium' | 'hard' | 'expert';
 
 const DIFFICULTY_COLORS = {
@@ -30,13 +30,14 @@ const DIFFICULTY_COLORS = {
 };
 
 export default function LeaderboardsScreen() {
-  const [activeTab, setActiveTab] = useState<TabType>('global');
-  const [timeframe, setTimeframe] = useState<TimeframeType>('today');
+  const [activeTab, setActiveTab] = useState<TabType>('daily');
+  const [viewType, setViewType] = useState<ViewType>('global');
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [scores, setScores] = useState<DailyScore[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   useEffect(() => {
     initAuth();
@@ -44,7 +45,7 @@ export default function LeaderboardsScreen() {
 
   useEffect(() => {
     loadScores();
-  }, [activeTab, timeframe, difficulty]);
+  }, [activeTab, viewType, difficulty, selectedDate]);
 
   const initAuth = async () => {
     const user = getCurrentUser();
@@ -60,18 +61,19 @@ export default function LeaderboardsScreen() {
   const loadScores = async () => {
     setLoading(true);
     try {
-      const today = getDateString();
       let fetchedScores: DailyScore[] = [];
 
-      if (activeTab === 'global') {
-        if (timeframe === 'today') {
-          fetchedScores = await getGlobalScores(today, difficulty, 100);
-        } else {
-          fetchedScores = await getAllTimeBestScores(difficulty, 100);
-        }
+      if (activeTab === 'allTime') {
+        // All-time best scores
+        fetchedScores = await getAllTimeBestScores(difficulty, 100);
       } else {
-        // Friends tab - always shows today's scores
-        fetchedScores = await getFriendsScores(today, difficulty);
+        // Daily scores for selected date
+        const dateStr = getDateString(selectedDate);
+        if (viewType === 'global') {
+          fetchedScores = await getGlobalScores(dateStr, difficulty, 100);
+        } else {
+          fetchedScores = await getFriendsScores(dateStr, difficulty);
+        }
       }
 
       setScores(fetchedScores);
@@ -86,6 +88,52 @@ export default function LeaderboardsScreen() {
     setRefreshing(true);
     await loadScores();
     setRefreshing(false);
+  };
+
+  const goToPreviousDay = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() - 1);
+    setSelectedDate(newDate);
+  };
+
+  const goToNextDay = () => {
+    const today = new Date();
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() + 1);
+
+    // Don't allow going past today
+    if (newDate <= today) {
+      setSelectedDate(newDate);
+    }
+  };
+
+  const goToToday = () => {
+    setSelectedDate(new Date());
+  };
+
+  const isToday = () => {
+    const today = new Date();
+    return getDateString(selectedDate) === getDateString(today);
+  };
+
+  const formatDisplayDate = (date: Date): string => {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const dateStr = getDateString(date);
+    const todayStr = getDateString(today);
+    const yesterdayStr = getDateString(yesterday);
+
+    if (dateStr === todayStr) return 'Today';
+    if (dateStr === yesterdayStr) return 'Yesterday';
+
+    // Format as "Mon, Jan 15"
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   const formatTime = (seconds: number): string => {
@@ -131,7 +179,7 @@ export default function LeaderboardsScreen() {
             {score.username}
             {isCurrentUser && ' (You)'}
           </Text>
-          {timeframe === 'allTime' && (
+          {activeTab === 'allTime' && (
             <Text style={styles.dateText}>{score.date}</Text>
           )}
         </View>
@@ -153,45 +201,74 @@ export default function LeaderboardsScreen() {
         <Text style={styles.title}>Leaderboards</Text>
       </View>
 
-      {/* Tab Selector */}
+      {/* Tab Selector - All-Time vs Daily */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'global' && styles.tabActive]}
-          onPress={() => setActiveTab('global')}
+          style={[styles.tab, activeTab === 'allTime' && styles.tabActive]}
+          onPress={() => setActiveTab('allTime')}
         >
-          <Text style={[styles.tabText, activeTab === 'global' && styles.tabTextActive]}>
-            🌎 Global
+          <Text style={[styles.tabText, activeTab === 'allTime' && styles.tabTextActive]}>
+            🏆 All-Time
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'friends' && styles.tabActive]}
-          onPress={() => setActiveTab('friends')}
+          style={[styles.tab, activeTab === 'daily' && styles.tabActive]}
+          onPress={() => setActiveTab('daily')}
         >
-          <Text style={[styles.tabText, activeTab === 'friends' && styles.tabTextActive]}>
-            👥 Friends
+          <Text style={[styles.tabText, activeTab === 'daily' && styles.tabTextActive]}>
+            📅 Daily
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Timeframe Selector (only for global) */}
-      {activeTab === 'global' && (
-        <View style={styles.timeframeContainer}>
+      {/* Date Navigation (only for daily) */}
+      {activeTab === 'daily' && (
+        <View style={styles.dateNavContainer}>
           <TouchableOpacity
-            style={[styles.timeframeButton, timeframe === 'today' && styles.timeframeButtonActive]}
-            onPress={() => setTimeframe('today')}
+            style={styles.dateNavButton}
+            onPress={goToPreviousDay}
           >
-            <Text style={[styles.timeframeText, timeframe === 'today' && styles.timeframeTextActive]}>
-              Today
+            <Text style={styles.dateNavArrow}>←</Text>
+          </TouchableOpacity>
+
+          <View style={styles.dateCenterContainer}>
+            <Text style={styles.dateDisplay}>{formatDisplayDate(selectedDate)}</Text>
+            {!isToday() && (
+              <TouchableOpacity onPress={goToToday} style={styles.todayButton}>
+                <Text style={styles.todayButtonText}>Today</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <TouchableOpacity
+            style={[styles.dateNavButton, isToday() && styles.dateNavButtonDisabled]}
+            onPress={goToNextDay}
+            disabled={isToday()}
+          >
+            <Text style={[styles.dateNavArrow, isToday() && styles.dateNavArrowDisabled]}>→</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* View Selector - Global vs Friends (only for daily) */}
+      {activeTab === 'daily' && (
+        <View style={styles.viewContainer}>
+          <TouchableOpacity
+            style={[styles.viewButton, viewType === 'global' && styles.viewButtonActive]}
+            onPress={() => setViewType('global')}
+          >
+            <Text style={[styles.viewText, viewType === 'global' && styles.viewTextActive]}>
+              🌎 Global
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.timeframeButton, timeframe === 'allTime' && styles.timeframeButtonActive]}
-            onPress={() => setTimeframe('allTime')}
+            style={[styles.viewButton, viewType === 'friends' && styles.viewButtonActive]}
+            onPress={() => setViewType('friends')}
           >
-            <Text style={[styles.timeframeText, timeframe === 'allTime' && styles.timeframeTextActive]}>
-              All-Time Best
+            <Text style={[styles.viewText, viewType === 'friends' && styles.viewTextActive]}>
+              👥 Friends
             </Text>
           </TouchableOpacity>
         </View>
@@ -238,9 +315,11 @@ export default function LeaderboardsScreen() {
         ) : scores.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>
-              {activeTab === 'friends'
-                ? 'No friends have completed this puzzle yet.\nAdd friends to see their scores!'
-                : 'No scores yet for this puzzle.\nBe the first to complete it!'}
+              {activeTab === 'allTime'
+                ? 'No scores recorded yet.\nComplete a puzzle to appear on the leaderboard!'
+                : viewType === 'friends'
+                  ? 'No friends have completed this puzzle yet.\nAdd friends to see their scores!'
+                  : `No scores yet for ${formatDisplayDate(selectedDate)}.\nBe the first to complete it!`}
             </Text>
           </View>
         ) : (
@@ -298,13 +377,66 @@ const styles = StyleSheet.create({
   tabTextActive: {
     color: '#fff',
   },
-  timeframeContainer: {
+  dateNavContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#F9FAFB',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  dateNavButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  dateNavButtonDisabled: {
+    opacity: 0.3,
+  },
+  dateNavArrow: {
+    fontSize: 20,
+    color: '#3B82F6',
+    fontWeight: 'bold',
+  },
+  dateNavArrowDisabled: {
+    color: '#9CA3AF',
+  },
+  dateCenterContainer: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
+  },
+  dateDisplay: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1F2937',
+  },
+  todayButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    backgroundColor: '#3B82F6',
+    borderRadius: 12,
+  },
+  todayButtonText: {
+    fontSize: 12,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  viewContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
+    paddingTop: 12,
     paddingBottom: 12,
     gap: 12,
   },
-  timeframeButton: {
+  viewButton: {
     flex: 1,
     paddingVertical: 10,
     paddingHorizontal: 12,
@@ -314,16 +446,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
-  timeframeButtonActive: {
+  viewButtonActive: {
     backgroundColor: '#EFF6FF',
     borderColor: '#3B82F6',
   },
-  timeframeText: {
+  viewText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#6B7280',
   },
-  timeframeTextActive: {
+  viewTextActive: {
     color: '#3B82F6',
   },
   difficultyContainer: {

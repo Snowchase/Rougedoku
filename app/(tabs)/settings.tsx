@@ -105,65 +105,30 @@ export default function SettingsScreen() {
 
         {/* Color Preview */}
         <View style={styles.colorPreview}>
-          <View style={styles.colorRow}>
-            <View
-              style={[
-                styles.colorSwatch,
-                { backgroundColor: themeData.colors.primaryButton },
-              ]}
-            />
-            <View
-              style={[
-                styles.colorSwatch,
-                { backgroundColor: themeData.colors.cellSelected },
-              ]}
-            />
-            <View
-              style={[
-                styles.colorSwatch,
-                { backgroundColor: themeData.colors.cellOriginal },
-              ]}
-            />
-          </View>
-          <View style={styles.colorRow}>
-            <View
-              style={[
-                styles.colorSwatch,
-                { backgroundColor: themeData.colors.difficultyEasy },
-              ]}
-            />
-            <View
-              style={[
-                styles.colorSwatch,
-                { backgroundColor: themeData.colors.difficultyMedium },
-              ]}
-            />
-            <View
-              style={[
-                styles.colorSwatch,
-                { backgroundColor: themeData.colors.difficultyHard },
-              ]}
-            />
-          </View>
-        </View>
-
-        {/* Mini Grid Preview */}
-        <View style={[styles.miniGrid, { borderColor: themeData.colors.gridBorder }]}>
-          <View style={styles.miniGridRow}>
-            <View style={[styles.miniCell, { backgroundColor: themeData.colors.cellOriginal }]} />
-            <View style={[styles.miniCell, { backgroundColor: themeData.colors.cellBackground }]} />
-            <View style={[styles.miniCell, { backgroundColor: themeData.colors.cellSelected }]} />
-          </View>
-          <View style={styles.miniGridRow}>
-            <View style={[styles.miniCell, { backgroundColor: themeData.colors.cellBackground }]} />
-            <View style={[styles.miniCell, { backgroundColor: themeData.colors.cellOriginal }]} />
-            <View style={[styles.miniCell, { backgroundColor: themeData.colors.cellBackground }]} />
-          </View>
-          <View style={styles.miniGridRow}>
-            <View style={[styles.miniCell, { backgroundColor: themeData.colors.cellSelected }]} />
-            <View style={[styles.miniCell, { backgroundColor: themeData.colors.cellBackground }]} />
-            <View style={[styles.miniCell, { backgroundColor: themeData.colors.cellOriginal }]} />
-          </View>
+          <View
+            style={[
+              styles.colorSwatch,
+              { backgroundColor: themeData.colors.primaryButton },
+            ]}
+          />
+          <View
+            style={[
+              styles.colorSwatch,
+              { backgroundColor: themeData.colors.cellSelected },
+            ]}
+          />
+          <View
+            style={[
+              styles.colorSwatch,
+              { backgroundColor: themeData.colors.difficultyEasy },
+            ]}
+          />
+          <View
+            style={[
+              styles.colorSwatch,
+              { backgroundColor: themeData.colors.difficultyMedium },
+            ]}
+          />
         </View>
       </TouchableOpacity>
     );
@@ -470,19 +435,22 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   themesGrid: {
-    gap: 16,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
     marginBottom: 32,
   },
   themeCard: {
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 3,
+    width: '48%',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 2,
     borderColor: 'transparent',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 4,
+    elevation: 2,
   },
   themeCardSelected: {
     borderColor: '#3B82F6',
@@ -491,19 +459,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   themeName: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '600',
   },
   selectedBadge: {
-    fontSize: 24,
+    fontSize: 18,
     color: '#3B82F6',
   },
   colorPreview: {
-    marginBottom: 12,
-    gap: 8,
+    flexDirection: 'row',
+    gap: 6,
   },
   colorRow: {
     flexDirection: 'row',
@@ -511,8 +479,8 @@ const styles = StyleSheet.create({
   },
   colorSwatch: {
     flex: 1,
-    height: 40,
-    borderRadius: 8,
+    height: 28,
+    borderRadius: 6,
   },
   miniGrid: {
     borderWidth: 2,
