@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  Switch,
 } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAudio } from '../../contexts/AudioContext';
 import { themes, themeKeys, ThemeKey } from '../../constants/themes';
 import {
   getUserProfile,
@@ -21,6 +23,13 @@ import {
 
 export default function SettingsScreen() {
   const { theme, themeKey, setTheme } = useTheme();
+  const {
+    settings: audioSettings,
+    setMusicEnabled,
+    setSoundEffectsEnabled,
+    setMusicVolume,
+    setSfxVolume,
+  } = useAudio();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [username, setUsername] = useState('');
   const [isEditingUsername, setIsEditingUsername] = useState(false);
@@ -274,6 +283,132 @@ export default function SettingsScreen() {
           {themeKeys.map(key => renderThemePreview(key))}
         </View>
 
+        {/* Audio Section */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
+            Audio & Music
+          </Text>
+          <Text style={[styles.sectionDescription, { color: theme.colors.textSecondary }]}>
+            Control background music and sound effects
+          </Text>
+        </View>
+
+        <View style={[styles.audioCard, { backgroundColor: theme.colors.cardBackground }]}>
+          {/* Music Toggle */}
+          <View style={styles.audioRow}>
+            <View style={styles.audioLabelContainer}>
+              <Text style={[styles.audioLabel, { color: theme.colors.textPrimary }]}>
+                Background Music
+              </Text>
+              <Text style={[styles.audioSubLabel, { color: theme.colors.textSecondary }]}>
+                Play music on home screen and during gameplay
+              </Text>
+            </View>
+            <Switch
+              value={audioSettings.musicEnabled}
+              onValueChange={setMusicEnabled}
+              trackColor={{ false: '#D1D5DB', true: theme.colors.primaryButton }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          {/* Music Volume */}
+          {audioSettings.musicEnabled && (
+            <View style={styles.volumeContainer}>
+              <Text style={[styles.volumeLabel, { color: theme.colors.textPrimary }]}>
+                Music Volume: {Math.round(audioSettings.musicVolume * 100)}%
+              </Text>
+              <View style={styles.volumeSlider}>
+                {[0, 0.25, 0.5, 0.75, 1].map((value) => (
+                  <TouchableOpacity
+                    key={value}
+                    style={[
+                      styles.volumeButton,
+                      { backgroundColor: theme.colors.cellBackground },
+                      audioSettings.musicVolume === value && {
+                        backgroundColor: theme.colors.primaryButton,
+                      },
+                    ]}
+                    onPress={() => setMusicVolume(value)}
+                  >
+                    <Text
+                      style={[
+                        styles.volumeButtonText,
+                        { color: theme.colors.textPrimary },
+                        audioSettings.musicVolume === value && {
+                          color: theme.colors.primaryButtonText,
+                        },
+                      ]}
+                    >
+                      {Math.round(value * 100)}%
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Sound Effects Toggle */}
+          <View style={styles.audioRow}>
+            <View style={styles.audioLabelContainer}>
+              <Text style={[styles.audioLabel, { color: theme.colors.textPrimary }]}>
+                Sound Effects
+              </Text>
+              <Text style={[styles.audioSubLabel, { color: theme.colors.textSecondary }]}>
+                Play sounds for button clicks and game events
+              </Text>
+            </View>
+            <Switch
+              value={audioSettings.soundEffectsEnabled}
+              onValueChange={setSoundEffectsEnabled}
+              trackColor={{ false: '#D1D5DB', true: theme.colors.primaryButton }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          {/* SFX Volume */}
+          {audioSettings.soundEffectsEnabled && (
+            <View style={styles.volumeContainer}>
+              <Text style={[styles.volumeLabel, { color: theme.colors.textPrimary }]}>
+                Effects Volume: {Math.round(audioSettings.sfxVolume * 100)}%
+              </Text>
+              <View style={styles.volumeSlider}>
+                {[0, 0.25, 0.5, 0.75, 1].map((value) => (
+                  <TouchableOpacity
+                    key={value}
+                    style={[
+                      styles.volumeButton,
+                      { backgroundColor: theme.colors.cellBackground },
+                      audioSettings.sfxVolume === value && {
+                        backgroundColor: theme.colors.primaryButton,
+                      },
+                    ]}
+                    onPress={() => setSfxVolume(value)}
+                  >
+                    <Text
+                      style={[
+                        styles.volumeButtonText,
+                        { color: theme.colors.textPrimary },
+                        audioSettings.sfxVolume === value && {
+                          color: theme.colors.primaryButtonText,
+                        },
+                      ]}
+                    >
+                      {Math.round(value * 100)}%
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          <View style={[styles.audioNote, { backgroundColor: theme.colors.cellBackground }]}>
+            <Text style={[styles.audioNoteText, { color: theme.colors.textSecondary }]}>
+              💡 Note: Add your own MP3 files to assets/audio/ to enable music playback. See README for instructions.
+            </Text>
+          </View>
+        </View>
+
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
             About
@@ -508,5 +643,71 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 14,
+  },
+  audioCard: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  audioRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  audioLabelContainer: {
+    flex: 1,
+    marginRight: 16,
+  },
+  audioLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  audioSubLabel: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  volumeContainer: {
+    marginBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  volumeLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  volumeSlider: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  volumeButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  volumeButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  audioNote: {
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 4,
+  },
+  audioNoteText: {
+    fontSize: 13,
+    lineHeight: 18,
   },
 });

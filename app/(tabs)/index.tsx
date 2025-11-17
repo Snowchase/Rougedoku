@@ -1,11 +1,26 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { useAudio } from '../../contexts/AudioContext';
 
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { playMusic, stopMusic } = useAudio();
+
+  // Play home music when screen is focused, stop when unfocused
+  useFocusEffect(
+    React.useCallback(() => {
+      // Start playing home music with fade in
+      playMusic('homeMusic', 1500);
+
+      return () => {
+        // Fade out music when leaving screen
+        stopMusic(800);
+      };
+    }, [])
+  );
 
   return (
     <View style={styles.container}>
