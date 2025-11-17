@@ -2,21 +2,27 @@
 
 This directory contains all audio files for Sudokle.
 
+## 🔊 Current Status
+
+**Placeholder files are included** - The app currently has minimal silent MP3 files as placeholders. Replace them with your own music to hear actual audio!
+
 ## Directory Structure
 
 ```
 assets/audio/
 ├── music/           # Background music tracks
-│   ├── home.mp3     # Home screen music
-│   └── gameplay.mp3 # Gameplay music
+│   ├── home.mp3     # Home screen music (PLACEHOLDER - replace me!)
+│   └── gameplay.mp3 # Gameplay music (PLACEHOLDER - replace me!)
 └── sfx/             # Sound effects
-    ├── place.mp3    # Number placement sound
-    ├── complete.mp3 # Puzzle completion sound
-    ├── click.mp3    # Button click sound
-    └── error.mp3    # Error sound
+    ├── place.mp3    # Number placement sound (placeholder)
+    ├── complete.mp3 # Puzzle completion sound (placeholder)
+    ├── click.mp3    # Button click sound (placeholder)
+    └── error.mp3    # Error sound (placeholder)
 ```
 
-## Adding Your Music Files
+## 🎵 Replacing Placeholder Files
+
+The app works out of the box, but the included audio files are just silent placeholders. Here's how to add your own music:
 
 ### Step 1: Prepare Your Audio Files
 
@@ -29,55 +35,66 @@ assets/audio/
    - Keep short (0.5-2 seconds)
    - Small file size (<100KB each)
 
-### Step 2: Add Files to Project
+### Step 2: Replace the Placeholder Files
 
-1. Place your MP3 files in the appropriate directory:
-   ```
-   assets/audio/music/home.mp3
-   assets/audio/music/gameplay.mp3
-   assets/audio/sfx/place.mp3
-   assets/audio/sfx/complete.mp3
-   assets/audio/sfx/click.mp3
-   assets/audio/sfx/error.mp3
-   ```
+Simply **overwrite** the existing MP3 files with your own:
 
-2. **Important**: Use lowercase names with no spaces or special characters
+**On Windows:**
+1. Navigate to: `C:\Users\YourName\Desktop\Sudokle\SudokleApp\assets\audio\music\`
+2. Copy your `home.mp3` file here (overwrite the existing one)
+3. Copy your `gameplay.mp3` file here (overwrite the existing one)
+4. Repeat for sound effects in the `sfx\` folder
 
-### Step 3: Update Audio Manager
+**On Mac/Linux:**
+```bash
+# Copy your music files (replace the placeholders)
+cp /path/to/your/home-music.mp3 assets/audio/music/home.mp3
+cp /path/to/your/gameplay-music.mp3 assets/audio/music/gameplay.mp3
 
-Edit `services/audioManager.ts` to reference your files:
-
-```typescript
-const AUDIO_FILES = {
-  // Music tracks
-  homeMusic: require('../assets/audio/music/home.mp3'),
-  gameplayMusic: require('../assets/audio/music/gameplay.mp3'),
-
-  // Sound effects
-  numberPlace: require('../assets/audio/sfx/place.mp3'),
-  puzzleComplete: require('../assets/audio/sfx/complete.mp3'),
-  buttonClick: require('../assets/audio/sfx/click.mp3'),
-  errorSound: require('../assets/audio/sfx/error.mp3'),
-};
+# Copy your sound effects
+cp /path/to/your/place-sound.mp3 assets/audio/sfx/place.mp3
+cp /path/to/your/complete-sound.mp3 assets/audio/sfx/complete.mp3
 ```
 
-### Step 4: Push to Repository
+### Step 3: Restart the App
 
 ```bash
-# Add audio files to git
+# Clear cache and restart
+npx expo start --clear
+
+# Press 'w' for web, 'a' for Android, or 'i' for iOS
+```
+
+### Step 4: Enable Music in Settings
+
+1. Open the app
+2. Tap Settings ⚙️ (top right)
+3. Scroll to "Audio & Music"
+4. Toggle "Background Music" ON
+5. Adjust volume as desired
+6. Go back to home screen - you should hear your music!
+
+## ✅ No Code Changes Needed!
+
+Unlike before, you **don't need to edit any code files**. Just replace the MP3 files and restart. The audio manager is already configured to load them.
+
+### Step 5: Commit Your Changes (Optional)
+
+```bash
+# Add your new audio files
 git add assets/audio/music/*.mp3
 git add assets/audio/sfx/*.mp3
 
 # Commit
-git commit -m "Add music and sound effect files"
+git commit -m "Replace placeholder audio with custom music"
 
 # Push to your branch
 git push
 ```
 
-**Note**: Git may warn about large files. If your audio files are large (>10MB total), consider:
+**Note**: If your audio files are large (>10MB total), consider:
 - Compressing them further
-- Using lower bitrate
+- Using lower bitrate (128 kbps)
 - Using Git LFS (Large File Storage)
 
 ## File Size Guidelines

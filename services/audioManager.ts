@@ -8,17 +8,18 @@ import { Asset } from 'expo-asset';
 // 2. Uncomment the lines below and update with your filenames
 // 3. Restart with: npx expo start --clear
 
-// IMPORTANT: After adding MP3 files, uncomment the lines below:
+// Audio files - placeholder silent MP3s included
+// Replace these files with your own music in assets/audio/
 const AUDIO_FILES: Record<string, any> = {
-  // Music tracks - uncomment these when you add MP3 files:
-  // homeMusic: require('../assets/audio/music/home.mp3'),
-  // gameplayMusic: require('../assets/audio/music/gameplay.mp3'),
+  // Music tracks
+  homeMusic: require('../assets/audio/music/home.mp3'),
+  gameplayMusic: require('../assets/audio/music/gameplay.mp3'),
 
-  // Sound effects - uncomment these when you add SFX files:
-  // numberPlace: require('../assets/audio/sfx/place.mp3'),
-  // puzzleComplete: require('../assets/audio/sfx/complete.mp3'),
-  // buttonClick: require('../assets/audio/sfx/click.mp3'),
-  // errorSound: require('../assets/audio/sfx/error.mp3'),
+  // Sound effects
+  numberPlace: require('../assets/audio/sfx/place.mp3'),
+  puzzleComplete: require('../assets/audio/sfx/complete.mp3'),
+  buttonClick: require('../assets/audio/sfx/click.mp3'),
+  errorSound: require('../assets/audio/sfx/error.mp3'),
 };
 
 export type MusicTrack = 'homeMusic' | 'gameplayMusic';
