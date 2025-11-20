@@ -52,6 +52,7 @@ const SudokuGrid = () => {
   const [isComplete, setIsComplete] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [todayDate, setTodayDate] = useState('');
+  const [highlightedNumber, setHighlightedNumber] = useState<number | null>(null);
 
   // Count how many of each number (1-9) are in the grid
   const numberCounts = useMemo(() => {
@@ -149,6 +150,7 @@ const SudokuGrid = () => {
     setSelectedCell(null);
     setNoteMode(false);
     setIsPaused(false);
+    setHighlightedNumber(null);
     console.log('Loaded new daily puzzle for', getDateString(), difficulty);
   };
 
@@ -169,8 +171,16 @@ const SudokuGrid = () => {
   };
 
   const handleCellPress = (row: number, col: number) => {
-    if (original[row][col] !== 0) return;
+    // Select the cell
     setSelectedCell({ row, col });
+
+    // Highlight all instances of the number in this cell
+    const cellValue = grid[row][col];
+    if (cellValue !== 0) {
+      setHighlightedNumber(cellValue);
+    } else {
+      setHighlightedNumber(null);
+    }
   };
 
   const handleNumberPress = (num: number) => {
@@ -205,6 +215,13 @@ const SudokuGrid = () => {
       const newNotes = { ...notes };
       delete newNotes[key];
       setNotes(newNotes);
+    }
+
+    // Update highlighted number to match the newly placed number
+    if (num !== 0) {
+      setHighlightedNumber(num);
+    } else {
+      setHighlightedNumber(null);
     }
 
     // Play sound effects
@@ -316,6 +333,9 @@ const SudokuGrid = () => {
       setNotes(newNotes);
     }
 
+    // Highlight all instances of the hint number
+    setHighlightedNumber(solution[row][col]);
+
     Alert.alert('💡 Hint used', `Placed ${solution[row][col]} at (${row + 1}, ${col + 1})`);
   };
 
@@ -332,12 +352,14 @@ const SudokuGrid = () => {
     const isOriginal = original[row][col] !== 0;
     const isSelected = selectedCell?.row === row && selectedCell?.col === col;
     const isWrong = grid[row][col] !== 0 && grid[row][col] !== solution[row][col];
+    const isHighlighted = highlightedNumber !== null && grid[row][col] === highlightedNumber;
 
     return [
       styles.cell,
       isOriginal && styles.cellOriginal,
       isSelected && styles.cellSelected,
       isWrong && styles.cellWrong,
+      isHighlighted && !isSelected && styles.cellHighlighted,
       (col + 1) % 3 === 0 && col < 8 && styles.cellRightBorder,
       (row + 1) % 3 === 0 && row < 8 && styles.cellBottomBorder,
     ];
@@ -687,6 +709,9 @@ const styles = StyleSheet.create({
   },
   cellWrong: {
     backgroundColor: '#FEE2E2',
+  },
+  cellHighlighted: {
+    backgroundColor: '#FEF3C7',
   },
   cellRightBorder: {
     borderRightWidth: 2,
