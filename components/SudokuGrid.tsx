@@ -56,9 +56,13 @@ const SudokuGrid = () => {
   const [todayDate, setTodayDate] = useState('');
   const [highlightedNumber, setHighlightedNumber] = useState<number | null>(null);
 
-  // Zoom functionality
+  // Zoom and pan functionality
   const scale = useSharedValue(1);
   const savedScale = useSharedValue(1);
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const savedTranslateX = useSharedValue(0);
+  const savedTranslateY = useSharedValue(0);
 
   // Count how many of each number (1-9) are in the grid
   const numberCounts = useMemo(() => {
@@ -370,7 +374,22 @@ const SudokuGrid = () => {
   const handleZoomReset = () => {
     scale.value = withSpring(1);
     savedScale.value = 1;
+    translateX.value = withSpring(0);
+    translateY.value = withSpring(0);
+    savedTranslateX.value = 0;
+    savedTranslateY.value = 0;
   };
+
+  // Pan gesture for moving around when zoomed
+  const panGesture = Gesture.Pan()
+    .onUpdate((event) => {
+      translateX.value = savedTranslateX.value + event.translationX;
+      translateY.value = savedTranslateY.value + event.translationY;
+    })
+    .onEnd(() => {
+      savedTranslateX.value = translateX.value;
+      savedTranslateY.value = translateY.value;
+    });
 
   // Pinch gesture for zoom
   const pinchGesture = Gesture.Pinch()
@@ -381,8 +400,15 @@ const SudokuGrid = () => {
       savedScale.value = scale.value;
     });
 
+  // Combine gestures to allow both pan and pinch simultaneously
+  const composedGesture = Gesture.Simultaneous(panGesture, pinchGesture);
+
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { scale: scale.value },
+    ],
   }));
 
   const getCellStyle = (row: number, col: number) => {
@@ -533,8 +559,8 @@ const SudokuGrid = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Grid with Pinch-to-Zoom */}
-      <GestureDetector gesture={pinchGesture}>
+      {/* Grid with Pinch-to-Zoom and Pan */}
+      <GestureDetector gesture={composedGesture}>
         <Animated.View style={[styles.gridContainer, animatedStyle]}>
           <View style={styles.grid}>
             {grid.map((row, rowIndex) => (
