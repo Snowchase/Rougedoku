@@ -451,8 +451,9 @@ const SudokuGrid = () => {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
-      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.contentContainer}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
+        <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.contentContainer}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>SUDOKLE</Text>
@@ -616,6 +617,7 @@ const SudokuGrid = () => {
       )}
       </ScrollView>
     </SafeAreaView>
+    </GestureHandlerRootView>
   );
 };
 
