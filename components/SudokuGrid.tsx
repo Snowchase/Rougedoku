@@ -110,10 +110,10 @@ const SudokuGrid = () => {
       
       if (savedState) {
         const state: GameState = JSON.parse(savedState);
-        
+
         // Check if it's actually today's puzzle
-        if (state.lastPlayed === today && !state.isComplete) {
-          // Resume saved game
+        if (state.lastPlayed === today) {
+          // Resume saved game (even if complete, so users can see their finished puzzle)
           const { puzzle, solution: sol } = getDailyPuzzle(difficulty, new Date());
           setGrid(state.grid);
           setOriginal(puzzle);
@@ -123,7 +123,7 @@ const SudokuGrid = () => {
           setNotes(state.notes || {});
           setIsComplete(state.isComplete);
           setStartTime(Date.now() - (state.elapsedTime * 1000));
-          console.log('Resumed saved puzzle');
+          console.log(state.isComplete ? 'Loaded completed puzzle' : 'Resumed saved puzzle');
           return;
         }
       }
@@ -697,7 +697,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#1F2937',
   },
   cellText: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: '500',
     color: '#3B82F6',
   },
@@ -734,7 +734,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   numberButtonText: {
-    fontSize: 20,
+    fontSize: 26,
     fontWeight: 'bold',
     color: '#fff',
   },
