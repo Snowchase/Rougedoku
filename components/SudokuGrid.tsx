@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { GestureHandlerRootView, GestureDetector, Gesture } from 'react-native-gesture-handler';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { getDailyPuzzle, getDateString, isNewDay, type Difficulty } from './dailyPuzzleGenerator';
 import { submitDailyScore, initializeUser } from './friendService';
 import { useTheme } from '../contexts/ThemeContext';
@@ -53,6 +55,10 @@ const SudokuGrid = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [todayDate, setTodayDate] = useState('');
   const [highlightedNumber, setHighlightedNumber] = useState<number | null>(null);
+
+  // Zoom functionality
+  const scale = useSharedValue(1);
+  const savedScale = useSharedValue(1);
 
   // Count how many of each number (1-9) are in the grid
   const numberCounts = useMemo(() => {
@@ -348,6 +354,37 @@ const SudokuGrid = () => {
     }
   };
 
+  // Zoom controls
+  const handleZoomIn = () => {
+    const newScale = Math.min(savedScale.value + 0.2, 2.0);
+    scale.value = withSpring(newScale);
+    savedScale.value = newScale;
+  };
+
+  const handleZoomOut = () => {
+    const newScale = Math.max(savedScale.value - 0.2, 0.7);
+    scale.value = withSpring(newScale);
+    savedScale.value = newScale;
+  };
+
+  const handleZoomReset = () => {
+    scale.value = withSpring(1);
+    savedScale.value = 1;
+  };
+
+  // Pinch gesture for zoom
+  const pinchGesture = Gesture.Pinch()
+    .onUpdate((event) => {
+      scale.value = Math.max(0.7, Math.min(savedScale.value * event.scale, 2.0));
+    })
+    .onEnd(() => {
+      savedScale.value = scale.value;
+    });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   const getCellStyle = (row: number, col: number) => {
     const isOriginal = original[row][col] !== 0;
     const isSelected = selectedCell?.row === row && selectedCell?.col === col;
@@ -482,14 +519,31 @@ const SudokuGrid = () => {
         </View>
       )}
 
-      {/* Grid */}
-      <View style={styles.grid}>
-        {grid.map((row, rowIndex) => (
-          <View key={rowIndex} style={styles.row}>
-            {row.map((_, colIndex) => renderCell(rowIndex, colIndex))}
-          </View>
-        ))}
+      {/* Zoom Controls */}
+      <View style={styles.zoomControls}>
+        <TouchableOpacity style={styles.zoomButton} onPress={handleZoomOut}>
+          <Text style={styles.zoomButtonText}>−</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.zoomButton} onPress={handleZoomReset}>
+          <Text style={styles.zoomResetText}>Reset</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.zoomButton} onPress={handleZoomIn}>
+          <Text style={styles.zoomButtonText}>+</Text>
+        </TouchableOpacity>
       </View>
+
+      {/* Grid with Pinch-to-Zoom */}
+      <GestureDetector gesture={pinchGesture}>
+        <Animated.View style={[styles.gridContainer, animatedStyle]}>
+          <View style={styles.grid}>
+            {grid.map((row, rowIndex) => (
+              <View key={rowIndex} style={styles.row}>
+                {row.map((_, colIndex) => renderCell(rowIndex, colIndex))}
+              </View>
+            ))}
+          </View>
+        </Animated.View>
+      </GestureDetector>
 
       {!isComplete && (
         <>
@@ -683,11 +737,39 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
   },
+  zoomControls: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 15,
+  },
+  zoomButton: {
+    width: 50,
+    height: 36,
+    backgroundColor: '#6B7280',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  zoomButtonText: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  zoomResetText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  gridContainer: {
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
   grid: {
     alignSelf: 'center',
     borderWidth: 3,
     borderColor: '#1F2937',
-    marginBottom: 20,
   },
   row: {
     flexDirection: 'row',
