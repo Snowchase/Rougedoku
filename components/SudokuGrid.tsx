@@ -751,7 +751,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   numberButton: {
-    width: (width - 80) / 9,
+    width: (width - 92) / 9,
     height: 50,
     backgroundColor: '#3B82F6',
     justifyContent: 'center',
