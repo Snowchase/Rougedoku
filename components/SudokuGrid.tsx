@@ -10,9 +10,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { GestureHandlerRootView, GestureDetector, Gesture } from 'react-native-gesture-handler';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { getDailyPuzzle, getDateString, isNewDay, type Difficulty } from './dailyPuzzleGenerator';
 import { submitDailyScore, initializeUser } from './friendService';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAudio } from '../contexts/AudioContext';
 
 const GRID_SIZE = 9;
 const { width } = Dimensions.get('window');
@@ -37,6 +40,7 @@ interface GameState {
 
 const SudokuGrid = () => {
   const { theme } = useTheme();
+  const { playSoundEffect } = useAudio();
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [grid, setGrid] = useState<number[][]>([]);
   const [original, setOriginal] = useState<number[][]>([]);
@@ -50,6 +54,15 @@ const SudokuGrid = () => {
   const [isComplete, setIsComplete] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [todayDate, setTodayDate] = useState('');
+  const [highlightedNumber, setHighlightedNumber] = useState<number | null>(null);
+
+  // Zoom and pan functionality
+  const scale = useSharedValue(1);
+  const savedScale = useSharedValue(1);
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const savedTranslateX = useSharedValue(0);
+  const savedTranslateY = useSharedValue(0);
 
   // Count how many of each number (1-9) are in the grid
   const numberCounts = useMemo(() => {
@@ -108,10 +121,10 @@ const SudokuGrid = () => {
       
       if (savedState) {
         const state: GameState = JSON.parse(savedState);
-        
+
         // Check if it's actually today's puzzle
-        if (state.lastPlayed === today && !state.isComplete) {
-          // Resume saved game
+        if (state.lastPlayed === today) {
+          // Resume saved game (even if complete, so users can see their finished puzzle)
           const { puzzle, solution: sol } = getDailyPuzzle(difficulty, new Date());
           setGrid(state.grid);
           setOriginal(puzzle);
@@ -121,7 +134,7 @@ const SudokuGrid = () => {
           setNotes(state.notes || {});
           setIsComplete(state.isComplete);
           setStartTime(Date.now() - (state.elapsedTime * 1000));
-          console.log('Resumed saved puzzle');
+          console.log(state.isComplete ? 'Loaded completed puzzle' : 'Resumed saved puzzle');
           return;
         }
       }
@@ -147,6 +160,7 @@ const SudokuGrid = () => {
     setSelectedCell(null);
     setNoteMode(false);
     setIsPaused(false);
+    setHighlightedNumber(null);
     console.log('Loaded new daily puzzle for', getDateString(), difficulty);
   };
 
@@ -167,8 +181,16 @@ const SudokuGrid = () => {
   };
 
   const handleCellPress = (row: number, col: number) => {
-    if (original[row][col] !== 0) return;
+    // Select the cell
     setSelectedCell({ row, col });
+
+    // Highlight all instances of the number in this cell
+    const cellValue = grid[row][col];
+    if (cellValue !== 0) {
+      setHighlightedNumber(cellValue);
+    } else {
+      setHighlightedNumber(null);
+    }
   };
 
   const handleNumberPress = (num: number) => {
@@ -205,8 +227,21 @@ const SudokuGrid = () => {
       setNotes(newNotes);
     }
 
+    // Update highlighted number to match the newly placed number
+    if (num !== 0) {
+      setHighlightedNumber(num);
+    } else {
+      setHighlightedNumber(null);
+    }
+
+    // Play sound effects
     if (num !== 0 && num !== solution[row][col]) {
+      // Incorrect number
+      playSoundEffect('errorSound');
       Alert.alert('❌ Incorrect', "That number doesn't belong there!");
+    } else if (num !== 0) {
+      // Correct number placed
+      playSoundEffect('numberPlace');
     }
 
     checkCompletion(newGrid);
@@ -219,6 +254,9 @@ const SudokuGrid = () => {
 
     if (complete) {
       setIsComplete(true);
+
+      // Play completion sound
+      playSoundEffect('puzzleComplete');
 
       // Save completion
       const state: GameState = {
@@ -305,6 +343,9 @@ const SudokuGrid = () => {
       setNotes(newNotes);
     }
 
+    // Highlight all instances of the hint number
+    setHighlightedNumber(solution[row][col]);
+
     Alert.alert('💡 Hint used', `Placed ${solution[row][col]} at (${row + 1}, ${col + 1})`);
   };
 
@@ -317,16 +358,71 @@ const SudokuGrid = () => {
     }
   };
 
+  // Zoom controls
+  const handleZoomIn = () => {
+    const newScale = Math.min(savedScale.value + 0.2, 2.0);
+    scale.value = withSpring(newScale);
+    savedScale.value = newScale;
+  };
+
+  const handleZoomOut = () => {
+    const newScale = Math.max(savedScale.value - 0.2, 0.7);
+    scale.value = withSpring(newScale);
+    savedScale.value = newScale;
+  };
+
+  const handleZoomReset = () => {
+    scale.value = withSpring(1);
+    savedScale.value = 1;
+    translateX.value = withSpring(0);
+    translateY.value = withSpring(0);
+    savedTranslateX.value = 0;
+    savedTranslateY.value = 0;
+  };
+
+  // Pan gesture for moving around when zoomed
+  const panGesture = Gesture.Pan()
+    .onUpdate((event) => {
+      translateX.value = savedTranslateX.value + event.translationX;
+      translateY.value = savedTranslateY.value + event.translationY;
+    })
+    .onEnd(() => {
+      savedTranslateX.value = translateX.value;
+      savedTranslateY.value = translateY.value;
+    });
+
+  // Pinch gesture for zoom
+  const pinchGesture = Gesture.Pinch()
+    .onUpdate((event) => {
+      scale.value = Math.max(0.7, Math.min(savedScale.value * event.scale, 2.0));
+    })
+    .onEnd(() => {
+      savedScale.value = scale.value;
+    });
+
+  // Combine gestures to allow both pan and pinch simultaneously
+  const composedGesture = Gesture.Simultaneous(panGesture, pinchGesture);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { scale: scale.value },
+    ],
+  }));
+
   const getCellStyle = (row: number, col: number) => {
     const isOriginal = original[row][col] !== 0;
     const isSelected = selectedCell?.row === row && selectedCell?.col === col;
     const isWrong = grid[row][col] !== 0 && grid[row][col] !== solution[row][col];
+    const isHighlighted = highlightedNumber !== null && grid[row][col] === highlightedNumber;
 
     return [
       styles.cell,
       isOriginal && styles.cellOriginal,
       isSelected && styles.cellSelected,
       isWrong && styles.cellWrong,
+      isHighlighted && !isSelected && styles.cellHighlighted,
       (col + 1) % 3 === 0 && col < 8 && styles.cellRightBorder,
       (row + 1) % 3 === 0 && row < 8 && styles.cellBottomBorder,
     ];
@@ -381,8 +477,9 @@ const SudokuGrid = () => {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
-      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.contentContainer}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
+        <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.contentContainer}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>SUDOKLE</Text>
@@ -402,7 +499,10 @@ const SudokuGrid = () => {
                 borderColor: DIFFICULTY_CONFIG[diff].color,
               }
             ]}
-            onPress={() => setDifficulty(diff)}
+            onPress={() => {
+              playSoundEffect('buttonClick');
+              setDifficulty(diff);
+            }}
           >
             <Text style={[
               styles.difficultyTabText,
@@ -446,14 +546,31 @@ const SudokuGrid = () => {
         </View>
       )}
 
-      {/* Grid */}
-      <View style={styles.grid}>
-        {grid.map((row, rowIndex) => (
-          <View key={rowIndex} style={styles.row}>
-            {row.map((_, colIndex) => renderCell(rowIndex, colIndex))}
-          </View>
-        ))}
+      {/* Zoom Controls */}
+      <View style={styles.zoomControls}>
+        <TouchableOpacity style={styles.zoomButton} onPress={handleZoomOut}>
+          <Text style={styles.zoomButtonText}>−</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.zoomButton} onPress={handleZoomReset}>
+          <Text style={styles.zoomResetText}>Reset</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.zoomButton} onPress={handleZoomIn}>
+          <Text style={styles.zoomButtonText}>+</Text>
+        </TouchableOpacity>
       </View>
+
+      {/* Grid with Pinch-to-Zoom and Pan */}
+      <GestureDetector gesture={composedGesture}>
+        <Animated.View style={[styles.gridContainer, animatedStyle]}>
+          <View style={styles.grid}>
+            {grid.map((row, rowIndex) => (
+              <View key={rowIndex} style={styles.row}>
+                {row.map((_, colIndex) => renderCell(rowIndex, colIndex))}
+              </View>
+            ))}
+          </View>
+        </Animated.View>
+      </GestureDetector>
 
       {!isComplete && (
         <>
@@ -526,6 +643,7 @@ const SudokuGrid = () => {
       )}
       </ScrollView>
     </SafeAreaView>
+    </GestureHandlerRootView>
   );
 };
 
@@ -647,11 +765,39 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
   },
+  zoomControls: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 15,
+  },
+  zoomButton: {
+    width: 50,
+    height: 36,
+    backgroundColor: '#6B7280',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  zoomButtonText: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  zoomResetText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  gridContainer: {
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
   grid: {
     alignSelf: 'center',
     borderWidth: 3,
     borderColor: '#1F2937',
-    marginBottom: 20,
   },
   row: {
     flexDirection: 'row',
@@ -674,6 +820,9 @@ const styles = StyleSheet.create({
   cellWrong: {
     backgroundColor: '#FEE2E2',
   },
+  cellHighlighted: {
+    backgroundColor: '#FEF3C7',
+  },
   cellRightBorder: {
     borderRightWidth: 2,
     borderRightColor: '#1F2937',
@@ -683,7 +832,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#1F2937',
   },
   cellText: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: '500',
     color: '#3B82F6',
   },
@@ -712,7 +861,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   numberButton: {
-    width: (width - 80) / 9,
+    width: (width - 92) / 9,
     height: 50,
     backgroundColor: '#3B82F6',
     justifyContent: 'center',
@@ -720,7 +869,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   numberButtonText: {
-    fontSize: 20,
+    fontSize: 26,
     fontWeight: 'bold',
     color: '#fff',
   },

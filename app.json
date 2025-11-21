@@ -2,7 +2,7 @@
   "expo": {
     "name": "Sudokle",
     "slug": "sudokle",
-    "version": "1.0.0",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "sudokleapp",
@@ -24,7 +24,7 @@
     },
     "android": {
       "package": "com.yourcompany.sudokle",
-      "versionCode": 1,
+      "versionCode": 3,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -59,8 +59,10 @@
     },
     "extra": {
       "eas": {
-        "projectId": "YOUR_PROJECT_ID_WILL_BE_HERE"
-      }
-    }
+        "projectId": "3b5528a1-cc2b-49a4-8937-d5048657b147"
+      },
+      "router": {}
+    },
+    "owner": "chaseedie9"
   }
 }

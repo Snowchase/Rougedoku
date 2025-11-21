@@ -17,8 +17,11 @@ import {
   type DailyScore
 } from '../../components/friendService';
 import { getDateString } from '../../components/dailyPuzzleGenerator';
+import { getUserStats, formatStatsForDisplay, type FormattedStats } from '../../services/statsService';
+import StatsDisplay from '../../components/StatsDisplay';
+import { useTheme } from '../../contexts/ThemeContext';
 
-type TabType = 'allTime' | 'daily';
+type TabType = 'stats' | 'allTime' | 'daily';
 type ViewType = 'global' | 'friends';
 type Difficulty = 'easy' | 'medium' | 'hard' | 'expert';
 
@@ -30,7 +33,8 @@ const DIFFICULTY_COLORS = {
 };
 
 export default function LeaderboardsScreen() {
-  const [activeTab, setActiveTab] = useState<TabType>('daily');
+  const { theme } = useTheme();
+  const [activeTab, setActiveTab] = useState<TabType>('stats');
   const [viewType, setViewType] = useState<ViewType>('global');
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [scores, setScores] = useState<DailyScore[]>([]);
@@ -38,13 +42,16 @@ export default function LeaderboardsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [userStats, setUserStats] = useState<FormattedStats | null>(null);
 
   useEffect(() => {
     initAuth();
   }, []);
 
   useEffect(() => {
-    loadScores();
+    if (activeTab !== 'stats') {
+      loadScores();
+    }
   }, [activeTab, viewType, difficulty, selectedDate]);
 
   const initAuth = async () => {
@@ -53,8 +60,24 @@ export default function LeaderboardsScreen() {
       await initializeUser();
       const newUser = getCurrentUser();
       setCurrentUserId(newUser?.uid || null);
+      if (newUser) {
+        await loadUserStats(newUser.uid);
+      }
     } else {
       setCurrentUserId(user.uid);
+      await loadUserStats(user.uid);
+    }
+  };
+
+  const loadUserStats = async (userId: string) => {
+    try {
+      const stats = await getUserStats(userId);
+      if (stats) {
+        const formatted = formatStatsForDisplay(stats);
+        setUserStats(formatted);
+      }
+    } catch (error) {
+      console.error('Error loading user stats:', error);
     }
   };
 
@@ -86,7 +109,11 @@ export default function LeaderboardsScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadScores();
+    if (activeTab === 'stats' && currentUserId) {
+      await loadUserStats(currentUserId);
+    } else {
+      await loadScores();
+    }
     setRefreshing(false);
   };
 
@@ -195,14 +222,23 @@ export default function LeaderboardsScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Leaderboards</Text>
+      <View style={[styles.header, { backgroundColor: theme.colors.cardBackground }]}>
+        <Text style={[styles.title, { color: theme.colors.textPrimary }]}>Stats & Leaderboards</Text>
       </View>
 
-      {/* Tab Selector - All-Time vs Daily */}
+      {/* Tab Selector - Stats, All-Time, Daily */}
       <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'stats' && styles.tabActive]}
+          onPress={() => setActiveTab('stats')}
+        >
+          <Text style={[styles.tabText, activeTab === 'stats' && styles.tabTextActive]}>
+            📊 Your Stats
+          </Text>
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={[styles.tab, activeTab === 'allTime' && styles.tabActive]}
           onPress={() => setActiveTab('allTime')}
@@ -274,47 +310,61 @@ export default function LeaderboardsScreen() {
         </View>
       )}
 
-      {/* Difficulty Selector */}
-      <View style={styles.difficultyContainer}>
-        {(['easy', 'medium', 'hard', 'expert'] as Difficulty[]).map((diff) => (
-          <TouchableOpacity
-            key={diff}
-            style={[
-              styles.difficultyButton,
-              difficulty === diff && {
-                backgroundColor: DIFFICULTY_COLORS[diff],
-                borderColor: DIFFICULTY_COLORS[diff],
-              },
-            ]}
-            onPress={() => setDifficulty(diff)}
-          >
-            <Text
+      {/* Difficulty Selector (not shown for stats tab) */}
+      {activeTab !== 'stats' && (
+        <View style={styles.difficultyContainer}>
+          {(['easy', 'medium', 'hard', 'expert'] as Difficulty[]).map((diff) => (
+            <TouchableOpacity
+              key={diff}
               style={[
-                styles.difficultyText,
-                difficulty === diff && styles.difficultyTextActive,
+                styles.difficultyButton,
+                difficulty === diff && {
+                  backgroundColor: DIFFICULTY_COLORS[diff],
+                  borderColor: DIFFICULTY_COLORS[diff],
+                },
               ]}
+              onPress={() => setDifficulty(diff)}
             >
-              {diff.toUpperCase()}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+              <Text
+                style={[
+                  styles.difficultyText,
+                  difficulty === diff && styles.difficultyTextActive,
+                ]}
+              >
+                {diff.toUpperCase()}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
-      {/* Scores List */}
+      {/* Content Area */}
       <ScrollView
         style={styles.scrollView}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {loading ? (
+        {activeTab === 'stats' ? (
+          // Stats Display
+          <View style={styles.statsContainer}>
+            {userStats ? (
+              <StatsDisplay stats={userStats} theme={theme} />
+            ) : (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={theme.colors.primaryButton} />
+                <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>Loading your stats...</Text>
+              </View>
+            )}
+          </View>
+        ) : loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#3B82F6" />
-            <Text style={styles.loadingText}>Loading scores...</Text>
+            <ActivityIndicator size="large" color={theme.colors.primaryButton} />
+            <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>Loading scores...</Text>
           </View>
         ) : scores.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
+            <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
               {activeTab === 'allTime'
                 ? 'No scores recorded yet.\nComplete a puzzle to appear on the leaderboard!'
                 : viewType === 'friends'
@@ -561,6 +611,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6B7280',
     marginTop: 2,
+  },
+  statsContainer: {
+    padding: 20,
   },
   loadingContainer: {
     padding: 40,
