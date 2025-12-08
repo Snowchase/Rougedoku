@@ -3,6 +3,7 @@ import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { NavigationHeader } from '@/components/navigation-header';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -28,24 +29,32 @@ export default function TabLayout() {
         name="play"
         options={{
           href: null, // Hide from tab bar
+          headerShown: true,
+          header: () => <NavigationHeader title="Play" />,
         }}
       />
       <Tabs.Screen
         name="leaderboards"
         options={{
           href: null, // Hide from tab bar
+          headerShown: true,
+          header: () => <NavigationHeader title="Leaderboards" />,
         }}
       />
       <Tabs.Screen
         name="friends"
         options={{
           href: null, // Hide from tab bar
+          headerShown: true,
+          header: () => <NavigationHeader title="Friends" />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           href: null, // Hide from tab bar
+          headerShown: true,
+          header: () => <NavigationHeader title="Settings" />,
         }}
       />
       <Tabs.Screen
@@ -53,6 +62,8 @@ export default function TabLayout() {
         options={{
           title: 'Explore',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          headerShown: true,
+          header: () => <NavigationHeader title="Explore" />,
         }}
       />
     </Tabs>
