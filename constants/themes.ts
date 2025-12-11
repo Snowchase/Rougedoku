@@ -2,6 +2,8 @@
 
 export interface AppTheme {
   name: string;
+  price: number; // 0 means free/default unlocked
+  description: string;
   colors: {
     // Background colors
     background: string;
@@ -48,6 +50,8 @@ export interface AppTheme {
 export const themes: { [key: string]: AppTheme } = {
   default: {
     name: 'Classic Blue',
+    price: 0,
+    description: 'The classic Sudokle experience',
     colors: {
       background: '#F9FAFB',
       cardBackground: '#FFFFFF',
@@ -86,6 +90,8 @@ export const themes: { [key: string]: AppTheme } = {
 
   dark: {
     name: 'Dark Mode',
+    price: 0,
+    description: 'Easy on the eyes for night puzzling',
     colors: {
       background: '#111827',
       cardBackground: '#1F2937',
@@ -124,6 +130,8 @@ export const themes: { [key: string]: AppTheme } = {
 
   ocean: {
     name: 'Ocean Blue',
+    price: 150,
+    description: 'Dive into calm ocean waters',
     colors: {
       background: '#E0F2FE',
       cardBackground: '#FFFFFF',
@@ -162,6 +170,8 @@ export const themes: { [key: string]: AppTheme } = {
 
   forest: {
     name: 'Forest Green',
+    price: 150,
+    description: 'Peaceful woodland vibes',
     colors: {
       background: '#F0FDF4',
       cardBackground: '#FFFFFF',
@@ -200,6 +210,8 @@ export const themes: { [key: string]: AppTheme } = {
 
   sunset: {
     name: 'Sunset Orange',
+    price: 200,
+    description: 'Warm golden hour colors',
     colors: {
       background: '#FFF7ED',
       cardBackground: '#FFFFFF',
@@ -238,6 +250,8 @@ export const themes: { [key: string]: AppTheme } = {
 
   purple: {
     name: 'Royal Purple',
+    price: 250,
+    description: 'Majestic and elegant styling',
     colors: {
       background: '#FAF5FF',
       cardBackground: '#FFFFFF',

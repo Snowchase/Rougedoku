@@ -16,6 +16,8 @@ import { getDailyPuzzle, getDateString, isNewDay, type Difficulty } from './dail
 import { submitDailyScore, initializeUser } from './friendService';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAudio } from '../contexts/AudioContext';
+import { useSettings } from '../contexts/SettingsContext';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const GRID_SIZE = 9;
 const { width } = Dimensions.get('window');
@@ -41,6 +43,8 @@ interface GameState {
 const SudokuGrid = () => {
   const { theme } = useTheme();
   const { playSoundEffect } = useAudio();
+  const { settings } = useSettings();
+  const { coins, awardPuzzleCompletion } = useCurrency();
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [grid, setGrid] = useState<number[][]>([]);
   const [original, setOriginal] = useState<number[][]>([]);
@@ -269,6 +273,15 @@ const SudokuGrid = () => {
       };
       await AsyncStorage.setItem(getStorageKey(), JSON.stringify(state));
 
+      // Award coins for completion
+      let coinReward = { total: 0, breakdown: { baseReward: 0, timeBonus: 0, hintPenalty: 0, firstBonus: 0 } };
+      try {
+        coinReward = await awardPuzzleCompletion(todayDate, difficulty, elapsedTime, hintsUsed);
+        console.log('Coins awarded:', coinReward.total);
+      } catch (error) {
+        console.error('Error awarding coins:', error);
+      }
+
       // Submit score to Firebase
       try {
         const result = await submitDailyScore(todayDate, difficulty, elapsedTime, hintsUsed);
@@ -282,14 +295,14 @@ const SudokuGrid = () => {
         console.error('Error submitting score:', error);
       }
 
-      showCompletionScreen();
+      showCompletionScreen(coinReward);
     }
   };
 
-  const showCompletionScreen = () => {
+  const showCompletionScreen = (coinReward: { total: number; breakdown: { baseReward: number; timeBonus: number; hintPenalty: number; firstBonus: number } }) => {
     const minutes = Math.floor(elapsedTime / 60);
     const seconds = elapsedTime % 60;
-    
+
     const difficultyEmoji = {
       easy: '🟢',
       medium: '🟡',
@@ -297,7 +310,18 @@ const SudokuGrid = () => {
       expert: '🔴',
     };
 
-    const shareText = `Sudokle ${todayDate}\n${difficultyEmoji[difficulty]} ${difficulty.toUpperCase()}\n⏱️ ${minutes}:${seconds.toString().padStart(2, '0')}\n💡 ${hintsUsed} hints`;
+    let rewardText = `\n\n🪙 +${coinReward.total} coins earned!`;
+    if (coinReward.breakdown.timeBonus > 0) {
+      rewardText += `\n   ⚡ Time bonus: +${coinReward.breakdown.timeBonus}`;
+    }
+    if (coinReward.breakdown.firstBonus > 0) {
+      rewardText += `\n   ⭐ First clear: +${coinReward.breakdown.firstBonus}`;
+    }
+    if (coinReward.breakdown.hintPenalty > 0) {
+      rewardText += `\n   💡 Hints used: -${coinReward.breakdown.hintPenalty}`;
+    }
+
+    const shareText = `Sudokle ${todayDate}\n${difficultyEmoji[difficulty]} ${difficulty.toUpperCase()}\n⏱️ ${minutes}:${seconds.toString().padStart(2, '0')}\n💡 ${hintsUsed} hints${rewardText}`;
 
     Alert.alert(
       '🎉 Daily Puzzle Complete!',
@@ -382,6 +406,7 @@ const SudokuGrid = () => {
 
   // Pan gesture for moving around when zoomed
   const panGesture = Gesture.Pan()
+    .enabled(!settings.boardLocked)
     .onUpdate((event) => {
       translateX.value = savedTranslateX.value + event.translationX;
       translateY.value = savedTranslateY.value + event.translationY;
@@ -393,6 +418,7 @@ const SudokuGrid = () => {
 
   // Pinch gesture for zoom
   const pinchGesture = Gesture.Pinch()
+    .enabled(!settings.boardLocked)
     .onUpdate((event) => {
       scale.value = Math.max(0.7, Math.min(savedScale.value * event.scale, 2.0));
     })
@@ -483,7 +509,12 @@ const SudokuGrid = () => {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>SUDOKLE</Text>
-        <Text style={styles.date}>{todayDate}</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.date}>{todayDate}</Text>
+          <View style={styles.coinDisplay}>
+            <Text style={styles.coinText}>🪙 {coins}</Text>
+          </View>
+        </View>
         {isComplete && <Text style={styles.completedBadge}>✅ Completed!</Text>}
       </View>
 
@@ -548,14 +579,28 @@ const SudokuGrid = () => {
 
       {/* Zoom Controls */}
       <View style={styles.zoomControls}>
-        <TouchableOpacity style={styles.zoomButton} onPress={handleZoomOut}>
-          <Text style={styles.zoomButtonText}>−</Text>
+        <TouchableOpacity
+          style={[styles.zoomButton, settings.boardLocked && styles.zoomButtonDisabled]}
+          onPress={handleZoomOut}
+          disabled={settings.boardLocked}
+        >
+          <Text style={[styles.zoomButtonText, settings.boardLocked && styles.zoomButtonTextDisabled]}>−</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.zoomButton} onPress={handleZoomReset}>
-          <Text style={styles.zoomResetText}>Reset</Text>
+        <TouchableOpacity
+          style={[styles.zoomButton, settings.boardLocked && styles.zoomButtonDisabled]}
+          onPress={handleZoomReset}
+          disabled={settings.boardLocked}
+        >
+          <Text style={[styles.zoomResetText, settings.boardLocked && styles.zoomButtonTextDisabled]}>
+            {settings.boardLocked ? '🔒' : 'Reset'}
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.zoomButton} onPress={handleZoomIn}>
-          <Text style={styles.zoomButtonText}>+</Text>
+        <TouchableOpacity
+          style={[styles.zoomButton, settings.boardLocked && styles.zoomButtonDisabled]}
+          onPress={handleZoomIn}
+          disabled={settings.boardLocked}
+        >
+          <Text style={[styles.zoomButtonText, settings.boardLocked && styles.zoomButtonTextDisabled]}>+</Text>
         </TouchableOpacity>
       </View>
 
@@ -668,6 +713,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 15,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+    gap: 16,
+  },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
@@ -677,7 +729,19 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 14,
     color: '#6B7280',
-    marginTop: 4,
+  },
+  coinDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 16,
+  },
+  coinText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#92400E',
   },
   completedBadge: {
     fontSize: 16,
@@ -780,10 +844,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 8,
   },
+  zoomButtonDisabled: {
+    backgroundColor: '#D1D5DB',
+  },
   zoomButtonText: {
     color: '#fff',
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  zoomButtonTextDisabled: {
+    color: '#9CA3AF',
   },
   zoomResetText: {
     color: '#fff',

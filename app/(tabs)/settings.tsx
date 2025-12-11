@@ -9,8 +9,11 @@ import {
   Alert,
   Switch,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAudio } from '../../contexts/AudioContext';
+import { useSettings } from '../../contexts/SettingsContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { themes, themeKeys, ThemeKey } from '../../constants/themes';
 import {
   getUserProfile,
@@ -22,6 +25,7 @@ import {
 } from '../../components/friendService';
 
 export default function SettingsScreen() {
+  const router = useRouter();
   const { theme, themeKey, setTheme } = useTheme();
   const {
     settings: audioSettings,
@@ -30,6 +34,8 @@ export default function SettingsScreen() {
     setMusicVolume,
     setSfxVolume,
   } = useAudio();
+  const { settings: gameSettings, setBoardLocked } = useSettings();
+  const { coins, isThemeOwned } = useCurrency();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [username, setUsername] = useState('');
   const [isEditingUsername, setIsEditingUsername] = useState(false);
@@ -92,12 +98,25 @@ export default function SettingsScreen() {
   };
 
   const handleThemeSelect = async (key: ThemeKey) => {
+    const owned = isThemeOwned(key);
+    if (!owned) {
+      Alert.alert(
+        'Theme Locked',
+        'Visit the Shop to unlock this theme!',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Go to Shop', onPress: () => router.push('/shop') },
+        ]
+      );
+      return;
+    }
     await setTheme(key);
   };
 
   const renderThemePreview = (key: ThemeKey) => {
     const themeData = themes[key];
     const isSelected = key === themeKey;
+    const owned = isThemeOwned(key);
 
     return (
       <TouchableOpacity
@@ -106,6 +125,7 @@ export default function SettingsScreen() {
           styles.themeCard,
           { backgroundColor: themeData.colors.cardBackground },
           isSelected && styles.themeCardSelected,
+          !owned && styles.themeCardLocked,
         ]}
         onPress={() => handleThemeSelect(key)}
       >
@@ -113,7 +133,10 @@ export default function SettingsScreen() {
           <Text style={[styles.themeName, { color: themeData.colors.textPrimary }]}>
             {themeData.name}
           </Text>
-          {isSelected && (
+          {!owned && (
+            <Text style={styles.lockedBadge}>🔒</Text>
+          )}
+          {isSelected && owned && (
             <Text style={styles.selectedBadge}>✓</Text>
           )}
         </View>
@@ -153,6 +176,13 @@ export default function SettingsScreen() {
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={[styles.header, { backgroundColor: theme.colors.cardBackground }]}>
         <Text style={[styles.title, { color: theme.colors.textPrimary }]}>Settings</Text>
+        <TouchableOpacity
+          style={styles.coinHeader}
+          onPress={() => router.push('/shop')}
+        >
+          <Text style={styles.coinHeaderText}>🪙 {coins}</Text>
+          <Text style={styles.shopLink}>Shop →</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
@@ -266,6 +296,35 @@ export default function SettingsScreen() {
                 )}
               </TouchableOpacity>
             ))}
+          </View>
+        </View>
+
+        {/* Game Settings Section */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
+            Game Settings
+          </Text>
+          <Text style={[styles.sectionDescription, { color: theme.colors.textSecondary }]}>
+            Customize your gameplay experience
+          </Text>
+        </View>
+
+        <View style={[styles.gameSettingsCard, { backgroundColor: theme.colors.cardBackground }]}>
+          <View style={styles.settingRowWithSwitch}>
+            <View style={styles.settingLabelContainer}>
+              <Text style={[styles.settingLabel, { color: theme.colors.textPrimary }]}>
+                Lock Board Position
+              </Text>
+              <Text style={[styles.settingSubLabel, { color: theme.colors.textSecondary }]}>
+                Prevent accidental zoom and pan gestures
+              </Text>
+            </View>
+            <Switch
+              value={gameSettings.boardLocked}
+              onValueChange={setBoardLocked}
+              trackColor={{ false: '#D1D5DB', true: theme.colors.primaryButton }}
+              thumbColor="#fff"
+            />
           </View>
         </View>
 
@@ -436,6 +495,27 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
+  coinHeader: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 12,
+    gap: 12,
+  },
+  coinHeaderText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#92400E',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  shopLink: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#3B82F6',
+  },
   scrollView: {
     flex: 1,
   },
@@ -453,6 +533,30 @@ const styles = StyleSheet.create({
   sectionDescription: {
     fontSize: 14,
     lineHeight: 20,
+  },
+  gameSettingsCard: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  settingRowWithSwitch: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  settingLabelContainer: {
+    flex: 1,
+    marginRight: 16,
+  },
+  settingSubLabel: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 2,
   },
   profileCard: {
     borderRadius: 16,
@@ -589,6 +693,12 @@ const styles = StyleSheet.create({
   },
   themeCardSelected: {
     borderColor: '#3B82F6',
+  },
+  themeCardLocked: {
+    opacity: 0.7,
+  },
+  lockedBadge: {
+    fontSize: 16,
   },
   themeHeader: {
     flexDirection: 'row',
