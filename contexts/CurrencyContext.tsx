@@ -7,6 +7,8 @@ import {
   purchaseTheme,
   purchaseAvatar,
   purchaseCellStyle,
+  purchaseFont,
+  setSelectedFont as setFontSelection,
   calculatePuzzleReward,
   checkFirstCompletion,
   CurrencyData,
@@ -21,6 +23,8 @@ interface CurrencyContextType {
   unlockedThemes: string[];
   unlockedAvatars: string[];
   unlockedCellStyles: string[];
+  unlockedFonts: string[];
+  selectedFont: string;
   loading: boolean;
   refreshCurrency: () => Promise<void>;
   awardPuzzleCompletion: (
@@ -32,9 +36,12 @@ interface CurrencyContextType {
   buyTheme: (themeKey: string, price: number) => Promise<{ success: boolean; message: string }>;
   buyAvatar: (avatar: string, price: number) => Promise<{ success: boolean; message: string }>;
   buyCellStyle: (style: string, price: number) => Promise<{ success: boolean; message: string }>;
+  buyFont: (fontId: string, price: number) => Promise<{ success: boolean; message: string }>;
+  setSelectedFont: (fontId: string) => Promise<void>;
   isThemeOwned: (themeKey: string) => boolean;
   isAvatarOwned: (avatar: string) => boolean;
   isCellStyleOwned: (style: string) => boolean;
+  isFontOwned: (fontId: string) => boolean;
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
@@ -49,6 +56,8 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     unlockedThemes: ['default', 'dark'],
     unlockedAvatars: [],
     unlockedCellStyles: ['default'],
+    unlockedFonts: ['default'],
+    selectedFont: 'default',
   });
   const [loading, setLoading] = useState(true);
 
@@ -123,6 +132,19 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     return result;
   }, []);
 
+  const buyFont = useCallback(async (fontId: string, price: number) => {
+    const result = await purchaseFont(fontId, price);
+    if (result.success) {
+      await loadData();
+    }
+    return result;
+  }, []);
+
+  const setSelectedFont = useCallback(async (fontId: string) => {
+    await setFontSelection(fontId);
+    await loadData();
+  }, []);
+
   const isThemeOwned = useCallback((themeKey: string) => {
     return purchaseData.unlockedThemes.includes(themeKey);
   }, [purchaseData.unlockedThemes]);
@@ -135,6 +157,10 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     return purchaseData.unlockedCellStyles.includes(style);
   }, [purchaseData.unlockedCellStyles]);
 
+  const isFontOwned = useCallback((fontId: string) => {
+    return purchaseData.unlockedFonts.includes(fontId);
+  }, [purchaseData.unlockedFonts]);
+
   return (
     <CurrencyContext.Provider
       value={{
@@ -144,15 +170,20 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
         unlockedThemes: purchaseData.unlockedThemes,
         unlockedAvatars: purchaseData.unlockedAvatars,
         unlockedCellStyles: purchaseData.unlockedCellStyles,
+        unlockedFonts: purchaseData.unlockedFonts,
+        selectedFont: purchaseData.selectedFont,
         loading,
         refreshCurrency,
         awardPuzzleCompletion,
         buyTheme,
         buyAvatar,
         buyCellStyle,
+        buyFont,
+        setSelectedFont,
         isThemeOwned,
         isAvatarOwned,
         isCellStyleOwned,
+        isFontOwned,
       }}
     >
       {children}

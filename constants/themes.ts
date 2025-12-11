@@ -287,6 +287,166 @@ export const themes: { [key: string]: AppTheme } = {
       warning: '#F59E0B',
     },
   },
+
+  cherry: {
+    name: 'Cherry Blossom',
+    price: 300,
+    description: 'Delicate pink spring vibes',
+    colors: {
+      background: '#FDF2F8',
+      cardBackground: '#FFFFFF',
+
+      gridBorder: '#9D174D',
+      cellBorder: '#FBCFE8',
+      cellBackground: '#FFFFFF',
+      cellOriginal: '#FCE7F3',
+      cellSelected: '#FBCFE8',
+      cellWrong: '#FEE2E2',
+
+      textPrimary: '#9D174D',
+      textSecondary: '#BE185D',
+      textOriginal: '#9D174D',
+      textUser: '#EC4899',
+
+      primaryButton: '#EC4899',
+      primaryButtonText: '#FFFFFF',
+      secondaryButton: '#BE185D',
+      secondaryButtonText: '#FFFFFF',
+
+      difficultyEasy: '#10B981',
+      difficultyMedium: '#F59E0B',
+      difficultyHard: '#EF4444',
+      difficultyExpert: '#8B5CF6',
+
+      hintButton: '#8B5CF6',
+      clearButton: '#EF4444',
+      noteButton: '#10B981',
+
+      success: '#10B981',
+      error: '#EF4444',
+      warning: '#F59E0B',
+    },
+  },
+
+  midnight: {
+    name: 'Midnight Blue',
+    price: 350,
+    description: 'Deep starry night aesthetic',
+    colors: {
+      background: '#0F172A',
+      cardBackground: '#1E293B',
+
+      gridBorder: '#94A3B8',
+      cellBorder: '#334155',
+      cellBackground: '#1E293B',
+      cellOriginal: '#334155',
+      cellSelected: '#1E40AF',
+      cellWrong: '#7F1D1D',
+
+      textPrimary: '#E2E8F0',
+      textSecondary: '#94A3B8',
+      textOriginal: '#F1F5F9',
+      textUser: '#38BDF8',
+
+      primaryButton: '#0EA5E9',
+      primaryButtonText: '#FFFFFF',
+      secondaryButton: '#475569',
+      secondaryButtonText: '#E2E8F0',
+
+      difficultyEasy: '#34D399',
+      difficultyMedium: '#FBBF24',
+      difficultyHard: '#F87171',
+      difficultyExpert: '#A78BFA',
+
+      hintButton: '#A78BFA',
+      clearButton: '#F87171',
+      noteButton: '#34D399',
+
+      success: '#34D399',
+      error: '#F87171',
+      warning: '#FBBF24',
+    },
+  },
+
+  retro: {
+    name: 'Retro Vintage',
+    price: 400,
+    description: 'Classic 80s nostalgia',
+    colors: {
+      background: '#FEF3C7',
+      cardBackground: '#FFFBEB',
+
+      gridBorder: '#78350F',
+      cellBorder: '#FCD34D',
+      cellBackground: '#FFFBEB',
+      cellOriginal: '#FEF3C7',
+      cellSelected: '#FDE68A',
+      cellWrong: '#FECACA',
+
+      textPrimary: '#78350F',
+      textSecondary: '#92400E',
+      textOriginal: '#78350F',
+      textUser: '#B45309',
+
+      primaryButton: '#D97706',
+      primaryButtonText: '#FFFFFF',
+      secondaryButton: '#92400E',
+      secondaryButtonText: '#FFFFFF',
+
+      difficultyEasy: '#059669',
+      difficultyMedium: '#D97706',
+      difficultyHard: '#DC2626',
+      difficultyExpert: '#7C3AED',
+
+      hintButton: '#7C3AED',
+      clearButton: '#DC2626',
+      noteButton: '#059669',
+
+      success: '#059669',
+      error: '#DC2626',
+      warning: '#D97706',
+    },
+  },
+
+  neon: {
+    name: 'Neon Nights',
+    price: 500,
+    description: 'Vibrant cyberpunk glow',
+    colors: {
+      background: '#18181B',
+      cardBackground: '#27272A',
+
+      gridBorder: '#22D3EE',
+      cellBorder: '#3F3F46',
+      cellBackground: '#27272A',
+      cellOriginal: '#3F3F46',
+      cellSelected: '#7C3AED',
+      cellWrong: '#BE123C',
+
+      textPrimary: '#F4F4F5',
+      textSecondary: '#A1A1AA',
+      textOriginal: '#22D3EE',
+      textUser: '#A855F7',
+
+      primaryButton: '#A855F7',
+      primaryButtonText: '#FFFFFF',
+      secondaryButton: '#52525B',
+      secondaryButtonText: '#F4F4F5',
+
+      difficultyEasy: '#4ADE80',
+      difficultyMedium: '#FACC15',
+      difficultyHard: '#FB7185',
+      difficultyExpert: '#C084FC',
+
+      hintButton: '#C084FC',
+      clearButton: '#FB7185',
+      noteButton: '#4ADE80',
+
+      success: '#4ADE80',
+      error: '#FB7185',
+      warning: '#FACC15',
+    },
+  },
 };
 
 export type ThemeKey = keyof typeof themes;

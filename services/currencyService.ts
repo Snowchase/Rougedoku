@@ -14,6 +14,8 @@ export interface PurchaseData {
   unlockedThemes: string[];
   unlockedAvatars: string[];
   unlockedCellStyles: string[];
+  unlockedFonts: string[];
+  selectedFont: string;
 }
 
 // Coin rewards based on difficulty
@@ -55,6 +57,8 @@ const defaultPurchaseData: PurchaseData = {
   unlockedThemes: ['default', 'dark'], // Default themes are free
   unlockedAvatars: [],
   unlockedCellStyles: ['default'],
+  unlockedFonts: ['default'], // Default font is free
+  selectedFont: 'default',
 };
 
 export async function getCurrencyData(): Promise<CurrencyData> {
@@ -227,6 +231,40 @@ export async function isAvatarUnlocked(avatar: string): Promise<boolean> {
 export async function isCellStyleUnlocked(style: string): Promise<boolean> {
   const purchases = await getPurchaseData();
   return purchases.unlockedCellStyles.includes(style);
+}
+
+export async function purchaseFont(fontId: string, price: number): Promise<{ success: boolean; message: string }> {
+  const purchases = await getPurchaseData();
+
+  if (purchases.unlockedFonts.includes(fontId)) {
+    return { success: false, message: 'Font already owned' };
+  }
+
+  const result = await spendCoins(price);
+  if (!result.success) {
+    return { success: false, message: 'Not enough coins' };
+  }
+
+  purchases.unlockedFonts.push(fontId);
+  await savePurchaseData(purchases);
+
+  return { success: true, message: 'Font unlocked!' };
+}
+
+export async function setSelectedFont(fontId: string): Promise<void> {
+  const purchases = await getPurchaseData();
+  purchases.selectedFont = fontId;
+  await savePurchaseData(purchases);
+}
+
+export async function isFontUnlocked(fontId: string): Promise<boolean> {
+  const purchases = await getPurchaseData();
+  return purchases.unlockedFonts.includes(fontId);
+}
+
+export async function getSelectedFont(): Promise<string> {
+  const purchases = await getPurchaseData();
+  return purchases.selectedFont || 'default';
 }
 
 // Check if this is the first time completing a specific puzzle

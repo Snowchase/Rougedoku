@@ -28,7 +28,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="play"
         options={{
-          href: null, // Hide from tab bar
+          href: null,
           headerShown: true,
           header: () => <NavigationHeader title="Play" />,
         }}
@@ -36,7 +36,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="leaderboards"
         options={{
-          href: null, // Hide from tab bar
+          href: null,
           headerShown: true,
           header: () => <NavigationHeader title="Leaderboards" />,
         }}
@@ -44,7 +44,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="friends"
         options={{
-          href: null, // Hide from tab bar
+          href: null,
           headerShown: true,
           header: () => <NavigationHeader title="Friends" />,
         }}
@@ -52,18 +52,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          href: null, // Hide from tab bar
+          href: null,
           headerShown: true,
           header: () => <NavigationHeader title="Settings" />,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-          headerShown: true,
-          header: () => <NavigationHeader title="Explore" />,
         }}
       />
     </Tabs>

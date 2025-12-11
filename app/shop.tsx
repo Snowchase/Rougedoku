@@ -12,20 +12,31 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '../contexts/ThemeContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { themes, themeKeys, ThemeKey } from '../constants/themes';
+import { numberFonts, premiumAvatars, avatarCategories, AvatarCategory } from '../constants/customizations';
 
-type ShopTab = 'themes' | 'rewards';
+type ShopTab = 'themes' | 'fonts' | 'avatars' | 'rewards';
 
 export default function ShopScreen() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-  const { coins, isThemeOwned, buyTheme } = useCurrency();
+  const {
+    coins,
+    isThemeOwned,
+    buyTheme,
+    isFontOwned,
+    buyFont,
+    selectedFont,
+    setSelectedFont,
+    isAvatarOwned,
+    buyAvatar,
+  } = useCurrency();
   const [activeTab, setActiveTab] = useState<ShopTab>('themes');
+  const [avatarCategory, setAvatarCategory] = useState<AvatarCategory>('animals');
 
   const handlePurchaseTheme = async (key: ThemeKey) => {
     const themeData = themes[key];
 
     if (isThemeOwned(key)) {
-      // Already owned, just apply it
       await setTheme(key);
       Alert.alert('Theme Applied', `${themeData.name} is now active!`);
       return;
@@ -34,7 +45,7 @@ export default function ShopScreen() {
     if (coins < themeData.price) {
       Alert.alert(
         'Not Enough Coins',
-        `You need ${themeData.price - coins} more coins to unlock ${themeData.name}.\n\nComplete puzzles to earn more coins!`
+        `You need ${themeData.price - coins} more coins to unlock ${themeData.name}.`
       );
       return;
     }
@@ -50,9 +61,67 @@ export default function ShopScreen() {
             const result = await buyTheme(key, themeData.price);
             if (result.success) {
               await setTheme(key);
-              Alert.alert('Theme Unlocked!', `${themeData.name} is now yours and has been applied!`);
-            } else {
-              Alert.alert('Error', result.message);
+              Alert.alert('Theme Unlocked!', `${themeData.name} is now yours!`);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handlePurchaseFont = async (fontId: string, fontName: string, price: number) => {
+    if (isFontOwned(fontId)) {
+      await setSelectedFont(fontId);
+      Alert.alert('Font Applied', `${fontName} is now active!`);
+      return;
+    }
+
+    if (coins < price) {
+      Alert.alert('Not Enough Coins', `You need ${price - coins} more coins.`);
+      return;
+    }
+
+    Alert.alert(
+      'Unlock Font',
+      `Spend ${price} coins to unlock ${fontName}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Unlock',
+          onPress: async () => {
+            const result = await buyFont(fontId, price);
+            if (result.success) {
+              await setSelectedFont(fontId);
+              Alert.alert('Font Unlocked!', `${fontName} is now yours!`);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handlePurchaseAvatar = async (avatarId: string, emoji: string, name: string, price: number) => {
+    if (isAvatarOwned(avatarId)) {
+      Alert.alert('Already Owned', `You already own ${name}!`);
+      return;
+    }
+
+    if (coins < price) {
+      Alert.alert('Not Enough Coins', `You need ${price - coins} more coins.`);
+      return;
+    }
+
+    Alert.alert(
+      'Unlock Avatar',
+      `Spend ${price} coins to unlock ${emoji} ${name}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Unlock',
+          onPress: async () => {
+            const result = await buyAvatar(avatarId, price);
+            if (result.success) {
+              Alert.alert('Avatar Unlocked!', `${emoji} ${name} is now available in your profile!`);
             }
           },
         },
@@ -68,13 +137,9 @@ export default function ShopScreen() {
     return (
       <TouchableOpacity
         key={key}
-        style={[
-          styles.themeCard,
-          { backgroundColor: themeData.colors.cardBackground },
-        ]}
+        style={[styles.themeCard, { backgroundColor: themeData.colors.cardBackground }]}
         onPress={() => handlePurchaseTheme(key)}
       >
-        {/* Theme Preview */}
         <View style={styles.themePreview}>
           <View style={[styles.previewGrid, { borderColor: themeData.colors.gridBorder }]}>
             <View style={[styles.previewCell, { backgroundColor: themeData.colors.cellOriginal }]} />
@@ -82,8 +147,6 @@ export default function ShopScreen() {
             <View style={[styles.previewCell, { backgroundColor: themeData.colors.cellBackground }]} />
           </View>
         </View>
-
-        {/* Theme Info */}
         <View style={styles.themeInfo}>
           <Text style={[styles.themeName, { color: themeData.colors.textPrimary }]}>
             {themeData.name}
@@ -91,8 +154,6 @@ export default function ShopScreen() {
           <Text style={[styles.themeDescription, { color: themeData.colors.textSecondary }]}>
             {themeData.description}
           </Text>
-
-          {/* Color Swatches */}
           <View style={styles.colorSwatches}>
             <View style={[styles.swatch, { backgroundColor: themeData.colors.primaryButton }]} />
             <View style={[styles.swatch, { backgroundColor: themeData.colors.difficultyEasy }]} />
@@ -100,27 +161,137 @@ export default function ShopScreen() {
             <View style={[styles.swatch, { backgroundColor: themeData.colors.difficultyHard }]} />
           </View>
         </View>
-
-        {/* Price/Status Badge */}
         <View style={styles.priceBadge}>
           {owned ? (
             <View style={[styles.ownedBadge, { backgroundColor: theme.colors.success }]}>
               <Text style={styles.ownedText}>Owned</Text>
             </View>
           ) : (
-            <View
-              style={[
-                styles.priceTag,
-                { backgroundColor: canAfford ? '#FEF3C7' : '#FEE2E2' },
-              ]}
-            >
+            <View style={[styles.priceTag, { backgroundColor: canAfford ? '#FEF3C7' : '#FEE2E2' }]}>
               <Text style={[styles.priceText, { color: canAfford ? '#92400E' : '#991B1B' }]}>
-                🪙 {themeData.price}
+                {themeData.price}
               </Text>
             </View>
           )}
         </View>
       </TouchableOpacity>
+    );
+  };
+
+  const renderFontCard = (font: typeof numberFonts[0]) => {
+    const owned = isFontOwned(font.id);
+    const isSelected = selectedFont === font.id;
+    const canAfford = coins >= font.price;
+
+    return (
+      <TouchableOpacity
+        key={font.id}
+        style={[
+          styles.fontCard,
+          { backgroundColor: theme.colors.cardBackground },
+          isSelected && { borderColor: theme.colors.primaryButton, borderWidth: 2 },
+        ]}
+        onPress={() => handlePurchaseFont(font.id, font.name, font.price)}
+      >
+        <View style={styles.fontPreview}>
+          <Text
+            style={[
+              styles.fontPreviewText,
+              { color: theme.colors.textPrimary },
+              font.style,
+            ]}
+          >
+            123
+          </Text>
+        </View>
+        <View style={styles.fontInfo}>
+          <Text style={[styles.fontName, { color: theme.colors.textPrimary }]}>
+            {font.name}
+          </Text>
+          <Text style={[styles.fontDescription, { color: theme.colors.textSecondary }]}>
+            {font.description}
+          </Text>
+        </View>
+        <View style={styles.priceBadge}>
+          {owned ? (
+            <View style={[styles.ownedBadge, { backgroundColor: isSelected ? theme.colors.primaryButton : theme.colors.success }]}>
+              <Text style={styles.ownedText}>{isSelected ? 'Active' : 'Owned'}</Text>
+            </View>
+          ) : font.price === 0 ? (
+            <View style={[styles.ownedBadge, { backgroundColor: theme.colors.success }]}>
+              <Text style={styles.ownedText}>Free</Text>
+            </View>
+          ) : (
+            <View style={[styles.priceTag, { backgroundColor: canAfford ? '#FEF3C7' : '#FEE2E2' }]}>
+              <Text style={[styles.priceText, { color: canAfford ? '#92400E' : '#991B1B' }]}>
+                {font.price}
+              </Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderAvatarGrid = () => {
+    const categoryAvatars = premiumAvatars.filter(a => a.category === avatarCategory);
+
+    return (
+      <View>
+        <View style={styles.avatarCategoryTabs}>
+          {avatarCategories.map((cat) => (
+            <TouchableOpacity
+              key={cat.id}
+              style={[
+                styles.avatarCategoryTab,
+                avatarCategory === cat.id && { backgroundColor: theme.colors.primaryButton },
+              ]}
+              onPress={() => setAvatarCategory(cat.id)}
+            >
+              <Text style={styles.avatarCategoryIcon}>{cat.icon}</Text>
+              <Text
+                style={[
+                  styles.avatarCategoryName,
+                  { color: avatarCategory === cat.id ? theme.colors.primaryButtonText : theme.colors.textSecondary },
+                ]}
+              >
+                {cat.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.avatarGrid}>
+          {categoryAvatars.map((avatar) => {
+            const owned = isAvatarOwned(avatar.id);
+            const canAfford = coins >= avatar.price;
+
+            return (
+              <TouchableOpacity
+                key={avatar.id}
+                style={[
+                  styles.avatarCard,
+                  { backgroundColor: theme.colors.cardBackground },
+                  owned && { borderColor: theme.colors.success, borderWidth: 2 },
+                ]}
+                onPress={() => handlePurchaseAvatar(avatar.id, avatar.emoji, avatar.name, avatar.price)}
+              >
+                <Text style={styles.avatarEmoji}>{avatar.emoji}</Text>
+                <Text style={[styles.avatarName, { color: theme.colors.textPrimary }]} numberOfLines={1}>
+                  {avatar.name}
+                </Text>
+                {owned ? (
+                  <Text style={[styles.avatarOwned, { color: theme.colors.success }]}>Owned</Text>
+                ) : (
+                  <Text style={[styles.avatarPrice, { color: canAfford ? '#92400E' : '#991B1B' }]}>
+                    {avatar.price}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
     );
   };
 
@@ -182,86 +353,104 @@ export default function ShopScreen() {
 
       <View style={[styles.statsCard, { backgroundColor: theme.colors.cardBackground }]}>
         <Text style={[styles.statsTitle, { color: theme.colors.textPrimary }]}>
-          Your Stats
+          Your Balance
         </Text>
         <View style={styles.statsRow}>
           <Text style={[styles.statsLabel, { color: theme.colors.textSecondary }]}>
-            Current Balance
+            Current Coins
           </Text>
           <Text style={[styles.statsValue, { color: theme.colors.textPrimary }]}>
-            🪙 {coins}
+            {coins}
           </Text>
         </View>
       </View>
     </View>
   );
 
+  const tabs: { id: ShopTab; label: string; icon: string }[] = [
+    { id: 'themes', label: 'Themes', icon: '🎨' },
+    { id: 'fonts', label: 'Fonts', icon: '🔤' },
+    { id: 'avatars', label: 'Avatars', icon: '😀' },
+    { id: 'rewards', label: 'Info', icon: '💰' },
+  ];
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
-      {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.colors.cardBackground }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={[styles.backText, { color: theme.colors.primaryButton }]}>← Back</Text>
         </TouchableOpacity>
         <Text style={[styles.title, { color: theme.colors.textPrimary }]}>Shop</Text>
         <View style={styles.coinBalance}>
-          <Text style={styles.coinText}>🪙 {coins}</Text>
+          <Text style={styles.coinText}>{coins}</Text>
         </View>
       </View>
 
-      {/* Tabs */}
       <View style={[styles.tabs, { backgroundColor: theme.colors.cardBackground }]}>
-        <TouchableOpacity
-          style={[
-            styles.tab,
-            activeTab === 'themes' && { backgroundColor: theme.colors.primaryButton },
-          ]}
-          onPress={() => setActiveTab('themes')}
-        >
-          <Text
+        {tabs.map((tab) => (
+          <TouchableOpacity
+            key={tab.id}
             style={[
-              styles.tabText,
-              { color: activeTab === 'themes' ? theme.colors.primaryButtonText : theme.colors.textSecondary },
+              styles.tab,
+              activeTab === tab.id && { backgroundColor: theme.colors.primaryButton },
             ]}
+            onPress={() => setActiveTab(tab.id)}
           >
-            Themes
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.tab,
-            activeTab === 'rewards' && { backgroundColor: theme.colors.primaryButton },
-          ]}
-          onPress={() => setActiveTab('rewards')}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              { color: activeTab === 'rewards' ? theme.colors.primaryButtonText : theme.colors.textSecondary },
-            ]}
-          >
-            Rewards
-          </Text>
-        </TouchableOpacity>
+            <Text style={styles.tabIcon}>{tab.icon}</Text>
+            <Text
+              style={[
+                styles.tabText,
+                { color: activeTab === tab.id ? theme.colors.primaryButtonText : theme.colors.textSecondary },
+              ]}
+            >
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      {/* Content */}
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-        {activeTab === 'themes' ? (
+        {activeTab === 'themes' && (
           <>
             <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
-              Available Themes
+              Color Themes
             </Text>
             <Text style={[styles.sectionDesc, { color: theme.colors.textSecondary }]}>
-              Tap to preview and unlock new themes
+              Personalize your Sudokle experience
             </Text>
             <View style={styles.themesGrid}>
               {themeKeys.map(key => renderThemeCard(key))}
             </View>
           </>
-        ) : (
-          renderRewardsInfo()
         )}
+
+        {activeTab === 'fonts' && (
+          <>
+            <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
+              Number Fonts
+            </Text>
+            <Text style={[styles.sectionDesc, { color: theme.colors.textSecondary }]}>
+              Change how numbers look on the grid
+            </Text>
+            <View style={styles.fontsGrid}>
+              {numberFonts.map(font => renderFontCard(font))}
+            </View>
+          </>
+        )}
+
+        {activeTab === 'avatars' && (
+          <>
+            <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
+              Premium Avatars
+            </Text>
+            <Text style={[styles.sectionDesc, { color: theme.colors.textSecondary }]}>
+              Unlock special profile icons
+            </Text>
+            {renderAvatarGrid()}
+          </>
+        )}
+
+        {activeTab === 'rewards' && renderRewardsInfo()}
       </ScrollView>
     </SafeAreaView>
   );
@@ -304,16 +493,20 @@ const styles = StyleSheet.create({
   tabs: {
     flexDirection: 'row',
     padding: 8,
-    gap: 8,
+    gap: 4,
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderRadius: 8,
     alignItems: 'center',
+    gap: 2,
+  },
+  tabIcon: {
+    fontSize: 16,
   },
   tabText: {
-    fontSize: 16,
+    fontSize: 11,
     fontWeight: '600',
   },
   content: {
@@ -332,12 +525,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   themesGrid: {
-    gap: 16,
+    gap: 12,
   },
   themeCard: {
     flexDirection: 'row',
     borderRadius: 16,
-    padding: 16,
+    padding: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -345,11 +538,11 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   themePreview: {
-    marginRight: 16,
+    marginRight: 12,
   },
   previewGrid: {
-    width: 60,
-    height: 60,
+    width: 50,
+    height: 50,
     borderWidth: 2,
     borderRadius: 8,
     flexDirection: 'row',
@@ -364,44 +557,138 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   themeName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   themeDescription: {
-    fontSize: 14,
-    marginBottom: 8,
+    fontSize: 12,
+    marginBottom: 6,
   },
   colorSwatches: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 4,
   },
   swatch: {
-    width: 20,
-    height: 20,
+    width: 16,
+    height: 16,
     borderRadius: 4,
   },
   priceBadge: {
     justifyContent: 'center',
   },
   ownedBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
   },
   ownedText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
   },
   priceTag: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
   },
   priceText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
+  },
+  fontsGrid: {
+    gap: 12,
+  },
+  fontCard: {
+    flexDirection: 'row',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    alignItems: 'center',
+  },
+  fontPreview: {
+    width: 60,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+  },
+  fontPreviewText: {
+    fontSize: 24,
+  },
+  fontInfo: {
+    flex: 1,
+  },
+  fontName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  fontDescription: {
+    fontSize: 12,
+  },
+  avatarCategoryTabs: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    gap: 8,
+  },
+  avatarCategoryTab: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+  },
+  avatarCategoryIcon: {
+    fontSize: 16,
+  },
+  avatarCategoryName: {
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  avatarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  avatarCard: {
+    width: '30%',
+    aspectRatio: 0.85,
+    borderRadius: 12,
+    padding: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  avatarEmoji: {
+    fontSize: 32,
+    marginBottom: 4,
+  },
+  avatarName: {
+    fontSize: 11,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  avatarOwned: {
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  avatarPrice: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 2,
   },
   rewardsContainer: {
     gap: 16,
@@ -416,7 +703,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   rewardTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 16,
   },
@@ -433,13 +720,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   rewardLabel: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     marginBottom: 2,
   },
   rewardDesc: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
   },
   statsCard: {
     borderRadius: 16,
@@ -451,7 +738,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   statsTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 12,
   },
