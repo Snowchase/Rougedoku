@@ -11,8 +11,8 @@ import {
 const REWARDED_AD_UNIT_ID = __DEV__
   ? TestIds.REWARDED
   : Platform.select({
-      ios: 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX', // Replace with your iOS rewarded ad unit ID
-      android: 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX', // Replace with your Android rewarded ad unit ID
+      ios: 'ca-app-pub-4722969639622172~7306998501', // Replace with your iOS rewarded ad unit ID
+      android: 'ca-app-pub-4722969639622172~7306998501', // Replace with your Android rewarded ad unit ID
     }) || TestIds.REWARDED;
 
 class AdService {
