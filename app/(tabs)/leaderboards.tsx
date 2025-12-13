@@ -20,6 +20,8 @@ import { getDateString } from '../../components/dailyPuzzleGenerator';
 import { getUserStats, formatStatsForDisplay, type FormattedStats } from '../../services/statsService';
 import StatsDisplay from '../../components/StatsDisplay';
 import { useTheme } from '../../contexts/ThemeContext';
+import { NavigationHeader } from '../../components/navigation-header';
+import { SwipeableScreen } from '../../components/SwipeableScreen';
 
 type TabType = 'stats' | 'allTime' | 'daily';
 type ViewType = 'global' | 'friends';
@@ -222,13 +224,11 @@ export default function LeaderboardsScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: theme.colors.cardBackground }]}>
-        <Text style={[styles.title, { color: theme.colors.textPrimary }]}>Stats & Leaderboards</Text>
-      </View>
+    <SwipeableScreen>
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <NavigationHeader title="Leaderboards" />
 
-      {/* Tab Selector - Stats, All-Time, Daily */}
+        {/* Tab Selector - Stats, All-Time, Daily */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'stats' && styles.tabActive]}
@@ -378,7 +378,8 @@ export default function LeaderboardsScreen() {
           </View>
         )}
       </ScrollView>
-    </View>
+      </View>
+    </SwipeableScreen>
   );
 }
 
@@ -386,19 +387,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
-  },
-  header: {
-    padding: 20,
-    paddingTop: 60,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    textAlign: 'center',
   },
   tabContainer: {
     flexDirection: 'row',

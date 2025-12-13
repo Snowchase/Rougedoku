@@ -5,21 +5,16 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Switch,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAudio } from '../../contexts/AudioContext';
 import { useSettings } from '../../contexts/SettingsContext';
-import { useCurrency } from '../../contexts/CurrencyContext';
-import { themes, themeKeys, ThemeKey } from '../../constants/themes';
 import { NavigationHeader } from '../../components/navigation-header';
 import { SwipeableScreen } from '../../components/SwipeableScreen';
 
 export default function SettingsScreen() {
-  const router = useRouter();
-  const { theme, themeKey, setTheme } = useTheme();
+  const { theme } = useTheme();
   const {
     settings: audioSettings,
     setMusicEnabled,
@@ -28,82 +23,6 @@ export default function SettingsScreen() {
     setSfxVolume,
   } = useAudio();
   const { settings: gameSettings, setBoardLocked } = useSettings();
-  const { coins, isThemeOwned } = useCurrency();
-
-  const handleThemeSelect = async (key: ThemeKey) => {
-    const owned = isThemeOwned(key);
-    if (!owned) {
-      Alert.alert(
-        'Theme Locked',
-        'Visit the Shop to unlock this theme!',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Go to Shop', onPress: () => router.push('/shop') },
-        ]
-      );
-      return;
-    }
-    await setTheme(key);
-  };
-
-  const renderThemePreview = (key: ThemeKey) => {
-    const themeData = themes[key];
-    const isSelected = key === themeKey;
-    const owned = isThemeOwned(key);
-
-    return (
-      <TouchableOpacity
-        key={key}
-        style={[
-          styles.themeCard,
-          { backgroundColor: themeData.colors.cardBackground },
-          isSelected && styles.themeCardSelected,
-          !owned && styles.themeCardLocked,
-        ]}
-        onPress={() => handleThemeSelect(key)}
-      >
-        <View style={styles.themeHeader}>
-          <Text style={[styles.themeName, { color: themeData.colors.textPrimary }]}>
-            {themeData.name}
-          </Text>
-          {!owned && (
-            <Text style={styles.lockedBadge}>🔒</Text>
-          )}
-          {isSelected && owned && (
-            <Text style={styles.selectedBadge}>✓</Text>
-          )}
-        </View>
-
-        {/* Color Preview */}
-        <View style={styles.colorPreview}>
-          <View
-            style={[
-              styles.colorSwatch,
-              { backgroundColor: themeData.colors.primaryButton },
-            ]}
-          />
-          <View
-            style={[
-              styles.colorSwatch,
-              { backgroundColor: themeData.colors.cellSelected },
-            ]}
-          />
-          <View
-            style={[
-              styles.colorSwatch,
-              { backgroundColor: themeData.colors.difficultyEasy },
-            ]}
-          />
-          <View
-            style={[
-              styles.colorSwatch,
-              { backgroundColor: themeData.colors.difficultyMedium },
-            ]}
-          />
-        </View>
-      </TouchableOpacity>
-    );
-  };
 
   return (
     <SwipeableScreen>
@@ -138,20 +57,6 @@ export default function SettingsScreen() {
               thumbColor="#fff"
             />
           </View>
-        </View>
-
-        {/* Theme Section */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
-            Color Theme
-          </Text>
-          <Text style={[styles.sectionDescription, { color: theme.colors.textSecondary }]}>
-            Choose your preferred color scheme for the app
-          </Text>
-        </View>
-
-        <View style={styles.themesGrid}>
-          {themeKeys.map(key => renderThemePreview(key))}
         </View>
 
         {/* Audio Section */}
@@ -342,73 +247,6 @@ const styles = StyleSheet.create({
   settingLabel: {
     fontSize: 16,
     fontWeight: '600',
-  },
-  themesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 32,
-  },
-  themeCard: {
-    width: '48%',
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 2,
-    borderColor: 'transparent',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  themeCardSelected: {
-    borderColor: '#3B82F6',
-  },
-  themeCardLocked: {
-    opacity: 0.7,
-  },
-  lockedBadge: {
-    fontSize: 16,
-  },
-  themeHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  themeName: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  selectedBadge: {
-    fontSize: 18,
-    color: '#3B82F6',
-  },
-  colorPreview: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  colorRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  colorSwatch: {
-    flex: 1,
-    height: 28,
-    borderRadius: 6,
-  },
-  miniGrid: {
-    borderWidth: 2,
-    alignSelf: 'flex-start',
-  },
-  miniGridRow: {
-    flexDirection: 'row',
-  },
-  miniCell: {
-    width: 30,
-    height: 30,
-    borderWidth: 0.5,
-    borderColor: '#D1D5DB',
   },
   infoCard: {
     padding: 16,

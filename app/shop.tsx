@@ -7,8 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import { useTheme } from '../contexts/ThemeContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { themes, themeKeys, ThemeKey } from '../constants/themes';
@@ -516,16 +515,20 @@ export default function ShopScreen() {
   ];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: theme.colors.cardBackground }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={[styles.backText, { color: theme.colors.primaryButton }]}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: theme.colors.textPrimary }]}>Shop</Text>
-        <View style={styles.coinBalance}>
-          <Text style={styles.coinText}>{coins}</Text>
-        </View>
-      </View>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <Stack.Screen
+        options={{
+          title: 'Shop',
+          headerStyle: { backgroundColor: theme.colors.cardBackground },
+          headerTintColor: theme.colors.primaryButton,
+          headerTitleStyle: { color: theme.colors.textPrimary },
+          headerRight: () => (
+            <View style={styles.coinBalance}>
+              <Text style={styles.coinText}>{coins}</Text>
+            </View>
+          ),
+        }}
+      />
 
       <View style={[styles.tabs, { backgroundColor: theme.colors.cardBackground }]}>
         {tabs.map((tab) => (
@@ -605,7 +608,7 @@ export default function ShopScreen() {
 
         {activeTab === 'rewards' && renderRewardsInfo()}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -613,30 +616,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  backButton: {
-    padding: 8,
-  },
-  backText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
   coinBalance: {
     backgroundColor: '#FEF3C7',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
+    marginRight: 8,
   },
   coinText: {
     fontSize: 16,

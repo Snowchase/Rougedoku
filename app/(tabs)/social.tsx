@@ -14,6 +14,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
+import { themes, themeKeys, ThemeKey } from '../../constants/themes';
 import {
   initializeUser,
   getUserProfile,
@@ -38,8 +39,8 @@ type FriendsSubTab = 'friends' | 'requests';
 
 export default function SocialScreen() {
   const router = useRouter();
-  const { theme } = useTheme();
-  const { coins, isAvatarOwned } = useCurrency();
+  const { theme, themeKey, setTheme } = useTheme();
+  const { coins, isAvatarOwned, isThemeOwned } = useCurrency();
 
   // Tab state
   const [activeTab, setActiveTab] = useState<TabType>('profile');
@@ -141,6 +142,22 @@ export default function SocialScreen() {
     } else {
       setSelectedColor(profile?.profileColor || '#3B82F6');
     }
+  };
+
+  const handleThemeSelect = async (key: ThemeKey) => {
+    const owned = isThemeOwned(key);
+    if (!owned) {
+      Alert.alert(
+        'Theme Locked',
+        'Visit the Shop to unlock this theme!',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Go to Shop', onPress: () => router.push('/shop') },
+        ]
+      );
+      return;
+    }
+    await setTheme(key);
   };
 
   // Friends handlers
@@ -317,6 +334,50 @@ export default function SocialScreen() {
               )}
             </TouchableOpacity>
           ))}
+        </View>
+      </View>
+
+      {/* Theme Selection Card */}
+      <View style={[styles.themeCard, { backgroundColor: theme.colors.cardBackground }]}>
+        <Text style={[styles.themeCardTitle, { color: theme.colors.textPrimary }]}>
+          Color Theme
+        </Text>
+        <Text style={[styles.themeCardDesc, { color: theme.colors.textSecondary }]}>
+          Choose your app color scheme
+        </Text>
+        <View style={styles.themesGrid}>
+          {themeKeys.map((key) => {
+            const themeData = themes[key];
+            const isSelected = key === themeKey;
+            const owned = isThemeOwned(key);
+
+            return (
+              <TouchableOpacity
+                key={key}
+                style={[
+                  styles.themeOption,
+                  { backgroundColor: themeData.colors.cardBackground },
+                  isSelected && { borderColor: theme.colors.primaryButton, borderWidth: 2 },
+                  !owned && styles.themeOptionLocked,
+                ]}
+                onPress={() => handleThemeSelect(key)}
+              >
+                <View style={styles.themeHeader}>
+                  <Text style={[styles.themeName, { color: themeData.colors.textPrimary }]} numberOfLines={1}>
+                    {themeData.name}
+                  </Text>
+                  {!owned && <Text style={styles.lockedIcon}>🔒</Text>}
+                  {isSelected && owned && <Text style={styles.selectedIcon}>✓</Text>}
+                </View>
+                <View style={styles.themeSwatches}>
+                  <View style={[styles.themeSwatch, { backgroundColor: themeData.colors.primaryButton }]} />
+                  <View style={[styles.themeSwatch, { backgroundColor: themeData.colors.cellSelected }]} />
+                  <View style={[styles.themeSwatch, { backgroundColor: themeData.colors.difficultyEasy }]} />
+                  <View style={[styles.themeSwatch, { backgroundColor: themeData.colors.difficultyMedium }]} />
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
 
@@ -903,5 +964,66 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: 14,
     textAlign: 'center',
+  },
+  themeCard: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  themeCardTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  themeCardDesc: {
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  themesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  themeOption: {
+    width: '48%',
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  themeOptionLocked: {
+    opacity: 0.6,
+  },
+  themeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  themeName: {
+    fontSize: 13,
+    fontWeight: '600',
+    flex: 1,
+  },
+  lockedIcon: {
+    fontSize: 14,
+  },
+  selectedIcon: {
+    fontSize: 16,
+    color: '#3B82F6',
+  },
+  themeSwatches: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  themeSwatch: {
+    flex: 1,
+    height: 20,
+    borderRadius: 4,
   },
 });
