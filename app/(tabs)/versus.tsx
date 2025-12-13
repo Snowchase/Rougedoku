@@ -13,13 +13,20 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { NavigationHeader } from '../../components/navigation-header';
 import { SwipeableScreen } from '../../components/SwipeableScreen';
-import { generatePuzzle, type SudokuCell } from '../../components/dailyPuzzleGenerator';
+import { getDailyPuzzle, type Difficulty as PuzzleDifficulty } from '../../components/dailyPuzzleGenerator';
 import { getFriends, type UserProfile } from '../../components/friendService';
 
 type GameMode = 'ai' | 'friend';
 type Difficulty = 'easy' | 'medium' | 'hard' | 'expert';
 type GameState = 'menu' | 'playing' | 'finished';
 type Player = 'player1' | 'player2';
+
+interface SudokuCell {
+  value: number;
+  isOriginal: boolean;
+  isCorrect?: boolean;
+  hasError?: boolean;
+}
 
 interface PlayerScore {
   name: string;
@@ -90,11 +97,24 @@ export default function VersusScreen() {
   };
 
   const startGame = () => {
-    const puzzle = generatePuzzle(difficulty);
+    // Generate a puzzle using a random date for variety in versus mode
+    const randomDate = new Date();
+    randomDate.setDate(randomDate.getDate() + Math.floor(Math.random() * 10000));
+    const puzzleData = getDailyPuzzle(difficulty as PuzzleDifficulty, randomDate);
+
+    // Convert the puzzle to SudokuCell format
+    const board: SudokuCell[][] = puzzleData.puzzle.map(row =>
+      row.map(value => ({
+        value,
+        isOriginal: value !== 0,
+        isCorrect: value !== 0,
+        hasError: false,
+      }))
+    );
 
     // Count empty cells
     let emptyCells = 0;
-    puzzle.board.forEach(row => {
+    board.forEach(row => {
       row.forEach(cell => {
         if (!cell.isOriginal) emptyCells++;
       });
@@ -113,8 +133,8 @@ export default function VersusScreen() {
       : (selectedFriend?.profileColor || '#EF4444');
 
     setVersusGame({
-      board: puzzle.board,
-      solution: puzzle.solution,
+      board,
+      solution: puzzleData.solution,
       currentPlayer: 'player1',
       player1: {
         name: 'You',
