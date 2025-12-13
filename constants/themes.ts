@@ -4,6 +4,7 @@ export interface AppTheme {
   name: string;
   price: number; // 0 means free/default unlocked
   description: string;
+  isDark?: boolean; // Whether this is a dark theme
   colors: {
     // Background colors
     background: string;
@@ -13,9 +14,12 @@ export interface AppTheme {
     gridBorder: string;
     cellBorder: string;
     cellBackground: string;
+    cellBackgroundAlt: string; // Alternating 3x3 block background
     cellOriginal: string;
+    cellOriginalAlt: string; // Alternating 3x3 block original cell
     cellSelected: string;
     cellWrong: string;
+    cellHighlighted: string;
 
     // Text colors
     textPrimary: string;
@@ -52,6 +56,7 @@ export const themes: { [key: string]: AppTheme } = {
     name: 'Classic Blue',
     price: 0,
     description: 'The classic Sudokle experience',
+    isDark: false,
     colors: {
       background: '#F9FAFB',
       cardBackground: '#FFFFFF',
@@ -59,9 +64,12 @@ export const themes: { [key: string]: AppTheme } = {
       gridBorder: '#1F2937',
       cellBorder: '#D1D5DB',
       cellBackground: '#FFFFFF',
+      cellBackgroundAlt: '#F8FAFC',
       cellOriginal: '#F3F4F6',
+      cellOriginalAlt: '#E5E7EB',
       cellSelected: '#DBEAFE',
       cellWrong: '#FEE2E2',
+      cellHighlighted: '#FEF3C7',
 
       textPrimary: '#1F2937',
       textSecondary: '#6B7280',
@@ -92,26 +100,30 @@ export const themes: { [key: string]: AppTheme } = {
     name: 'Dark Mode',
     price: 0,
     description: 'Easy on the eyes for night puzzling',
+    isDark: true,
     colors: {
-      background: '#111827',
-      cardBackground: '#1F2937',
+      background: '#0A0A0B',
+      cardBackground: '#141416',
 
-      gridBorder: '#F9FAFB',
-      cellBorder: '#4B5563',
-      cellBackground: '#1F2937',
-      cellOriginal: '#374151',
+      gridBorder: '#3F3F46',
+      cellBorder: '#27272A',
+      cellBackground: '#18181B',
+      cellBackgroundAlt: '#1F1F23',
+      cellOriginal: '#27272A',
+      cellOriginalAlt: '#2E2E33',
       cellSelected: '#1E3A8A',
       cellWrong: '#7F1D1D',
+      cellHighlighted: '#422006',
 
-      textPrimary: '#F9FAFB',
-      textSecondary: '#9CA3AF',
-      textOriginal: '#F9FAFB',
+      textPrimary: '#FAFAFA',
+      textSecondary: '#A1A1AA',
+      textOriginal: '#E4E4E7',
       textUser: '#60A5FA',
 
       primaryButton: '#3B82F6',
       primaryButtonText: '#FFFFFF',
-      secondaryButton: '#4B5563',
-      secondaryButtonText: '#F9FAFB',
+      secondaryButton: '#3F3F46',
+      secondaryButtonText: '#FAFAFA',
 
       difficultyEasy: '#10B981',
       difficultyMedium: '#F59E0B',
@@ -132,6 +144,7 @@ export const themes: { [key: string]: AppTheme } = {
     name: 'Ocean Blue',
     price: 150,
     description: 'Dive into calm ocean waters',
+    isDark: false,
     colors: {
       background: '#E0F2FE',
       cardBackground: '#FFFFFF',
@@ -139,9 +152,12 @@ export const themes: { [key: string]: AppTheme } = {
       gridBorder: '#0C4A6E',
       cellBorder: '#BAE6FD',
       cellBackground: '#FFFFFF',
+      cellBackgroundAlt: '#F0F9FF',
       cellOriginal: '#F0F9FF',
+      cellOriginalAlt: '#E0F2FE',
       cellSelected: '#BAE6FD',
       cellWrong: '#FECDD3',
+      cellHighlighted: '#FEF3C7',
 
       textPrimary: '#0C4A6E',
       textSecondary: '#0369A1',
@@ -172,6 +188,7 @@ export const themes: { [key: string]: AppTheme } = {
     name: 'Forest Green',
     price: 150,
     description: 'Peaceful woodland vibes',
+    isDark: false,
     colors: {
       background: '#F0FDF4',
       cardBackground: '#FFFFFF',
@@ -179,9 +196,12 @@ export const themes: { [key: string]: AppTheme } = {
       gridBorder: '#14532D',
       cellBorder: '#BBF7D0',
       cellBackground: '#FFFFFF',
+      cellBackgroundAlt: '#F0FDF4',
       cellOriginal: '#F0FDF4',
+      cellOriginalAlt: '#DCFCE7',
       cellSelected: '#D1FAE5',
       cellWrong: '#FEE2E2',
+      cellHighlighted: '#FEF3C7',
 
       textPrimary: '#14532D',
       textSecondary: '#166534',
@@ -212,6 +232,7 @@ export const themes: { [key: string]: AppTheme } = {
     name: 'Sunset Orange',
     price: 200,
     description: 'Warm golden hour colors',
+    isDark: false,
     colors: {
       background: '#FFF7ED',
       cardBackground: '#FFFFFF',
@@ -219,9 +240,12 @@ export const themes: { [key: string]: AppTheme } = {
       gridBorder: '#7C2D12',
       cellBorder: '#FED7AA',
       cellBackground: '#FFFFFF',
+      cellBackgroundAlt: '#FFF7ED',
       cellOriginal: '#FFF7ED',
+      cellOriginalAlt: '#FFEDD5',
       cellSelected: '#FFEDD5',
       cellWrong: '#FEE2E2',
+      cellHighlighted: '#FEF3C7',
 
       textPrimary: '#7C2D12',
       textSecondary: '#9A3412',
@@ -252,6 +276,7 @@ export const themes: { [key: string]: AppTheme } = {
     name: 'Royal Purple',
     price: 250,
     description: 'Majestic and elegant styling',
+    isDark: false,
     colors: {
       background: '#FAF5FF',
       cardBackground: '#FFFFFF',
@@ -259,9 +284,12 @@ export const themes: { [key: string]: AppTheme } = {
       gridBorder: '#4C1D95',
       cellBorder: '#E9D5FF',
       cellBackground: '#FFFFFF',
+      cellBackgroundAlt: '#FAF5FF',
       cellOriginal: '#FAF5FF',
+      cellOriginalAlt: '#F3E8FF',
       cellSelected: '#F3E8FF',
       cellWrong: '#FEE2E2',
+      cellHighlighted: '#FEF3C7',
 
       textPrimary: '#4C1D95',
       textSecondary: '#6B21A8',
@@ -292,6 +320,7 @@ export const themes: { [key: string]: AppTheme } = {
     name: 'Cherry Blossom',
     price: 300,
     description: 'Delicate pink spring vibes',
+    isDark: false,
     colors: {
       background: '#FDF2F8',
       cardBackground: '#FFFFFF',
@@ -299,9 +328,12 @@ export const themes: { [key: string]: AppTheme } = {
       gridBorder: '#9D174D',
       cellBorder: '#FBCFE8',
       cellBackground: '#FFFFFF',
+      cellBackgroundAlt: '#FDF2F8',
       cellOriginal: '#FCE7F3',
+      cellOriginalAlt: '#FBCFE8',
       cellSelected: '#FBCFE8',
       cellWrong: '#FEE2E2',
+      cellHighlighted: '#FEF3C7',
 
       textPrimary: '#9D174D',
       textSecondary: '#BE185D',
@@ -332,16 +364,20 @@ export const themes: { [key: string]: AppTheme } = {
     name: 'Midnight Blue',
     price: 350,
     description: 'Deep starry night aesthetic',
+    isDark: true,
     colors: {
       background: '#0F172A',
       cardBackground: '#1E293B',
 
-      gridBorder: '#94A3B8',
+      gridBorder: '#475569',
       cellBorder: '#334155',
       cellBackground: '#1E293B',
+      cellBackgroundAlt: '#263449',
       cellOriginal: '#334155',
+      cellOriginalAlt: '#3D4F66',
       cellSelected: '#1E40AF',
       cellWrong: '#7F1D1D',
+      cellHighlighted: '#422006',
 
       textPrimary: '#E2E8F0',
       textSecondary: '#94A3B8',
@@ -372,6 +408,7 @@ export const themes: { [key: string]: AppTheme } = {
     name: 'Retro Vintage',
     price: 400,
     description: 'Classic 80s nostalgia',
+    isDark: false,
     colors: {
       background: '#FEF3C7',
       cardBackground: '#FFFBEB',
@@ -379,9 +416,12 @@ export const themes: { [key: string]: AppTheme } = {
       gridBorder: '#78350F',
       cellBorder: '#FCD34D',
       cellBackground: '#FFFBEB',
+      cellBackgroundAlt: '#FEF3C7',
       cellOriginal: '#FEF3C7',
+      cellOriginalAlt: '#FDE68A',
       cellSelected: '#FDE68A',
       cellWrong: '#FECACA',
+      cellHighlighted: '#D9F99D',
 
       textPrimary: '#78350F',
       textSecondary: '#92400E',
@@ -412,16 +452,20 @@ export const themes: { [key: string]: AppTheme } = {
     name: 'Neon Nights',
     price: 500,
     description: 'Vibrant cyberpunk glow',
+    isDark: true,
     colors: {
-      background: '#18181B',
-      cardBackground: '#27272A',
+      background: '#09090B',
+      cardBackground: '#18181B',
 
       gridBorder: '#22D3EE',
-      cellBorder: '#3F3F46',
-      cellBackground: '#27272A',
-      cellOriginal: '#3F3F46',
+      cellBorder: '#27272A',
+      cellBackground: '#18181B',
+      cellBackgroundAlt: '#1F1F23',
+      cellOriginal: '#27272A',
+      cellOriginalAlt: '#2E2E33',
       cellSelected: '#7C3AED',
       cellWrong: '#BE123C',
+      cellHighlighted: '#581C87',
 
       textPrimary: '#F4F4F5',
       textSecondary: '#A1A1AA',
@@ -430,7 +474,7 @@ export const themes: { [key: string]: AppTheme } = {
 
       primaryButton: '#A855F7',
       primaryButtonText: '#FFFFFF',
-      secondaryButton: '#52525B',
+      secondaryButton: '#3F3F46',
       secondaryButtonText: '#F4F4F5',
 
       difficultyEasy: '#4ADE80',

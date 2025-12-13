@@ -8,7 +8,9 @@ import {
   purchaseAvatar,
   purchaseCellStyle,
   purchaseFont,
+  purchaseSong,
   setSelectedFont as setFontSelection,
+  setSelectedSong as setSongSelection,
   calculatePuzzleReward,
   checkFirstCompletion,
   CurrencyData,
@@ -24,7 +26,9 @@ interface CurrencyContextType {
   unlockedAvatars: string[];
   unlockedCellStyles: string[];
   unlockedFonts: string[];
+  unlockedSongs: string[];
   selectedFont: string;
+  selectedSong: string | null;
   loading: boolean;
   refreshCurrency: () => Promise<void>;
   awardPuzzleCompletion: (
@@ -37,11 +41,14 @@ interface CurrencyContextType {
   buyAvatar: (avatar: string, price: number) => Promise<{ success: boolean; message: string }>;
   buyCellStyle: (style: string, price: number) => Promise<{ success: boolean; message: string }>;
   buyFont: (fontId: string, price: number) => Promise<{ success: boolean; message: string }>;
+  buySong: (songId: string, price: number) => Promise<{ success: boolean; message: string }>;
   setSelectedFont: (fontId: string) => Promise<void>;
+  setSelectedSong: (songId: string | null) => Promise<void>;
   isThemeOwned: (themeKey: string) => boolean;
   isAvatarOwned: (avatar: string) => boolean;
   isCellStyleOwned: (style: string) => boolean;
   isFontOwned: (fontId: string) => boolean;
+  isSongOwned: (songId: string) => boolean;
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
@@ -57,7 +64,9 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     unlockedAvatars: [],
     unlockedCellStyles: ['default'],
     unlockedFonts: ['default'],
+    unlockedSongs: [],
     selectedFont: 'default',
+    selectedSong: null,
   });
   const [loading, setLoading] = useState(true);
 
@@ -145,6 +154,19 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     await loadData();
   }, []);
 
+  const buySong = useCallback(async (songId: string, price: number) => {
+    const result = await purchaseSong(songId, price);
+    if (result.success) {
+      await loadData();
+    }
+    return result;
+  }, []);
+
+  const setSelectedSong = useCallback(async (songId: string | null) => {
+    await setSongSelection(songId);
+    await loadData();
+  }, []);
+
   const isThemeOwned = useCallback((themeKey: string) => {
     return purchaseData.unlockedThemes.includes(themeKey);
   }, [purchaseData.unlockedThemes]);
@@ -161,6 +183,10 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     return purchaseData.unlockedFonts.includes(fontId);
   }, [purchaseData.unlockedFonts]);
 
+  const isSongOwned = useCallback((songId: string) => {
+    return purchaseData.unlockedSongs.includes(songId);
+  }, [purchaseData.unlockedSongs]);
+
   return (
     <CurrencyContext.Provider
       value={{
@@ -171,7 +197,9 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
         unlockedAvatars: purchaseData.unlockedAvatars,
         unlockedCellStyles: purchaseData.unlockedCellStyles,
         unlockedFonts: purchaseData.unlockedFonts,
+        unlockedSongs: purchaseData.unlockedSongs,
         selectedFont: purchaseData.selectedFont,
+        selectedSong: purchaseData.selectedSong,
         loading,
         refreshCurrency,
         awardPuzzleCompletion,
@@ -179,11 +207,14 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
         buyAvatar,
         buyCellStyle,
         buyFont,
+        buySong,
         setSelectedFont,
+        setSelectedSong,
         isThemeOwned,
         isAvatarOwned,
         isCellStyleOwned,
         isFontOwned,
+        isSongOwned,
       }}
     >
       {children}

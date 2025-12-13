@@ -15,7 +15,9 @@ export interface PurchaseData {
   unlockedAvatars: string[];
   unlockedCellStyles: string[];
   unlockedFonts: string[];
+  unlockedSongs: string[];
   selectedFont: string;
+  selectedSong: string | null;
 }
 
 // Coin rewards based on difficulty
@@ -58,7 +60,9 @@ const defaultPurchaseData: PurchaseData = {
   unlockedAvatars: [],
   unlockedCellStyles: ['default'],
   unlockedFonts: ['default'], // Default font is free
+  unlockedSongs: [], // No songs unlocked by default (uses default music)
   selectedFont: 'default',
+  selectedSong: null, // null means use default music
 };
 
 export async function getCurrencyData(): Promise<CurrencyData> {
@@ -280,4 +284,39 @@ export async function checkFirstCompletion(date: string, difficulty: Difficulty)
   } catch (error) {
     return false;
   }
+}
+
+// Song purchase functions
+export async function purchaseSong(songId: string, price: number): Promise<{ success: boolean; message: string }> {
+  const purchases = await getPurchaseData();
+
+  if (purchases.unlockedSongs.includes(songId)) {
+    return { success: false, message: 'Song already owned' };
+  }
+
+  const result = await spendCoins(price);
+  if (!result.success) {
+    return { success: false, message: 'Not enough coins' };
+  }
+
+  purchases.unlockedSongs.push(songId);
+  await savePurchaseData(purchases);
+
+  return { success: true, message: 'Song unlocked!' };
+}
+
+export async function setSelectedSong(songId: string | null): Promise<void> {
+  const purchases = await getPurchaseData();
+  purchases.selectedSong = songId;
+  await savePurchaseData(purchases);
+}
+
+export async function isSongUnlocked(songId: string): Promise<boolean> {
+  const purchases = await getPurchaseData();
+  return purchases.unlockedSongs.includes(songId);
+}
+
+export async function getSelectedSong(): Promise<string | null> {
+  const purchases = await getPurchaseData();
+  return purchases.selectedSong;
 }

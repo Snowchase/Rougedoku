@@ -437,20 +437,42 @@ const SudokuGrid = () => {
     ],
   }));
 
+  // Determine if a cell is in an alternating 3x3 block (checkerboard pattern)
+  const isAlternatingBlock = (row: number, col: number) => {
+    const blockRow = Math.floor(row / 3);
+    const blockCol = Math.floor(col / 3);
+    // Checkerboard pattern: (0,0), (0,2), (1,1), (2,0), (2,2) are alternating
+    return (blockRow + blockCol) % 2 === 1;
+  };
+
   const getCellStyle = (row: number, col: number) => {
     const isOriginal = original[row][col] !== 0;
     const isSelected = selectedCell?.row === row && selectedCell?.col === col;
     const isWrong = grid[row][col] !== 0 && grid[row][col] !== solution[row][col];
     const isHighlighted = highlightedNumber !== null && grid[row][col] === highlightedNumber;
+    const isAlt = isAlternatingBlock(row, col);
+
+    // Get the appropriate background color based on state
+    let backgroundColor = isAlt ? theme.colors.cellBackgroundAlt : theme.colors.cellBackground;
+    if (isOriginal) {
+      backgroundColor = isAlt ? theme.colors.cellOriginalAlt : theme.colors.cellOriginal;
+    }
+    if (isHighlighted && !isSelected) {
+      backgroundColor = theme.colors.cellHighlighted;
+    }
+    if (isSelected) {
+      backgroundColor = theme.colors.cellSelected;
+    }
+    if (isWrong) {
+      backgroundColor = theme.colors.cellWrong;
+    }
 
     return [
       styles.cell,
-      isOriginal && styles.cellOriginal,
-      isSelected && styles.cellSelected,
-      isWrong && styles.cellWrong,
-      isHighlighted && !isSelected && styles.cellHighlighted,
-      (col + 1) % 3 === 0 && col < 8 && styles.cellRightBorder,
-      (row + 1) % 3 === 0 && row < 8 && styles.cellBottomBorder,
+      { backgroundColor },
+      { borderColor: theme.colors.cellBorder },
+      (col + 1) % 3 === 0 && col < 8 && [styles.cellRightBorder, { borderRightColor: theme.colors.gridBorder }],
+      (row + 1) % 3 === 0 && row < 8 && [styles.cellBottomBorder, { borderBottomColor: theme.colors.gridBorder }],
     ];
   };
 
@@ -464,6 +486,7 @@ const SudokuGrid = () => {
     const value = grid[row][col];
     const key = `${row}-${col}`;
     const cellNotes = notes[key] || [];
+    const isOriginalCell = original[row][col] !== 0;
 
     return (
       <TouchableOpacity
@@ -475,14 +498,14 @@ const SudokuGrid = () => {
         {value !== 0 ? (
           <Text style={[
             styles.cellText,
-            original[row][col] !== 0 && styles.cellTextOriginal
+            { color: isOriginalCell ? theme.colors.textOriginal : theme.colors.textUser }
           ]}>
             {isPaused ? '' : value}
           </Text>
         ) : cellNotes.length > 0 && !isPaused ? (
           <View style={styles.notesContainer}>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
-              <Text key={num} style={styles.noteText}>
+              <Text key={num} style={[styles.noteText, { color: theme.colors.textSecondary }]}>
                 {cellNotes.includes(num) ? num : ' '}
               </Text>
             ))}
@@ -506,65 +529,84 @@ const SudokuGrid = () => {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
         <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.contentContainer}>
-      {/* Header */}
+      {/* Header with Date and Coins */}
       <View style={styles.header}>
-        <Text style={styles.title}>SUDOKLE</Text>
-        <View style={styles.headerRow}>
-          <Text style={styles.date}>{todayDate}</Text>
-          <View style={styles.coinDisplay}>
-            <Text style={styles.coinText}>🪙 {coins}</Text>
+        <View style={styles.headerLeft}>
+          <Text style={[styles.title, { color: theme.colors.textPrimary }]}>SUDOKLE</Text>
+          <Text style={[styles.date, { color: theme.colors.textSecondary }]}>{todayDate}</Text>
+        </View>
+        <View style={[styles.coinDisplay, { backgroundColor: theme.isDark ? '#422006' : '#FEF3C7' }]}>
+          <Text style={[styles.coinText, { color: theme.isDark ? '#FCD34D' : '#92400E' }]}>🪙 {coins}</Text>
+        </View>
+      </View>
+      {isComplete && (
+        <View style={styles.completedBadgeContainer}>
+          <Text style={[styles.completedBadge, { color: theme.colors.success }]}>✅ Completed!</Text>
+        </View>
+      )}
+
+      {/* Game Info Card - Grouped difficulty, timer, hints */}
+      <View style={[styles.gameInfoCard, { backgroundColor: theme.colors.cardBackground }]}>
+        {/* Difficulty Tabs */}
+        <View style={styles.difficultyTabs}>
+          {(Object.keys(DIFFICULTY_CONFIG) as Difficulty[]).map(diff => (
+            <TouchableOpacity
+              key={diff}
+              style={[
+                styles.difficultyTab,
+                { backgroundColor: theme.isDark ? '#27272A' : '#F3F4F6' },
+                difficulty === diff && {
+                  backgroundColor: DIFFICULTY_CONFIG[diff].color,
+                }
+              ]}
+              onPress={() => {
+                playSoundEffect('buttonClick');
+                setDifficulty(diff);
+              }}
+            >
+              <Text style={[
+                styles.difficultyTabText,
+                { color: theme.colors.textSecondary },
+                difficulty === diff && styles.difficultyTabTextActive
+              ]}>
+                {diff.charAt(0).toUpperCase() + diff.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Divider */}
+        <View style={[styles.divider, { backgroundColor: theme.isDark ? '#3F3F46' : '#E5E7EB' }]} />
+
+        {/* Timer and Hints Row */}
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <Text style={styles.statIcon}>⏱️</Text>
+            <View style={styles.statInfo}>
+              <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>Time</Text>
+              <Text style={[styles.statValue, { color: theme.colors.textPrimary }]}>{formatTime(elapsedTime)}</Text>
+            </View>
           </View>
-        </View>
-        {isComplete && <Text style={styles.completedBadge}>✅ Completed!</Text>}
-      </View>
 
-      {/* Difficulty Tabs */}
-      <View style={styles.difficultyTabs}>
-        {(Object.keys(DIFFICULTY_CONFIG) as Difficulty[]).map(diff => (
-          <TouchableOpacity
-            key={diff}
-            style={[
-              styles.difficultyTab,
-              difficulty === diff && { 
-                backgroundColor: DIFFICULTY_CONFIG[diff].color,
-                borderColor: DIFFICULTY_CONFIG[diff].color,
-              }
-            ]}
-            onPress={() => {
-              playSoundEffect('buttonClick');
-              setDifficulty(diff);
-            }}
-          >
-            <Text style={[
-              styles.difficultyTabText,
-              difficulty === diff && styles.difficultyTabTextActive
-            ]}>
-              {diff.toUpperCase()}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statIcon}>💡</Text>
+            <View style={styles.statInfo}>
+              <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>Hints</Text>
+              <Text style={[styles.statValue, { color: theme.colors.textPrimary }]}>
+                {hintsUsed}/{DIFFICULTY_CONFIG[difficulty].maxHints}
+              </Text>
+            </View>
+          </View>
 
-      {/* Stats Bar */}
-      <View style={styles.statsBar}>
-        <View style={styles.stat}>
-          <Text style={styles.statLabel}>⏱️</Text>
-          <Text style={styles.statValue}>{formatTime(elapsedTime)}</Text>
+          {!isComplete && (
+            <TouchableOpacity
+              style={[styles.pauseButton, { backgroundColor: theme.isDark ? '#27272A' : '#F3F4F6' }]}
+              onPress={togglePause}
+            >
+              <Text style={styles.pauseButtonText}>{isPaused ? '▶️' : '⏸️'}</Text>
+            </TouchableOpacity>
+          )}
         </View>
-        <View style={styles.stat}>
-          <Text style={styles.statLabel}>💡</Text>
-          <Text style={styles.statValue}>
-            {hintsUsed}/{DIFFICULTY_CONFIG[difficulty].maxHints}
-          </Text>
-        </View>
-        {!isComplete && (
-          <TouchableOpacity 
-            style={styles.pauseButton}
-            onPress={togglePause}
-          >
-            <Text style={styles.pauseButtonText}>{isPaused ? '▶️' : '⏸️'}</Text>
-          </TouchableOpacity>
-        )}
       </View>
 
       {/* Pause Overlay */}
@@ -580,34 +622,34 @@ const SudokuGrid = () => {
       {/* Zoom Controls */}
       <View style={styles.zoomControls}>
         <TouchableOpacity
-          style={[styles.zoomButton, settings.boardLocked && styles.zoomButtonDisabled]}
+          style={[styles.zoomButton, { backgroundColor: theme.colors.secondaryButton }, settings.boardLocked && { backgroundColor: theme.isDark ? '#27272A' : '#D1D5DB' }]}
           onPress={handleZoomOut}
           disabled={settings.boardLocked}
         >
-          <Text style={[styles.zoomButtonText, settings.boardLocked && styles.zoomButtonTextDisabled]}>−</Text>
+          <Text style={[styles.zoomButtonText, { color: theme.colors.secondaryButtonText }, settings.boardLocked && { color: theme.colors.textSecondary }]}>−</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.zoomButton, settings.boardLocked && styles.zoomButtonDisabled]}
+          style={[styles.zoomButton, { backgroundColor: theme.colors.secondaryButton }, settings.boardLocked && { backgroundColor: theme.isDark ? '#27272A' : '#D1D5DB' }]}
           onPress={handleZoomReset}
           disabled={settings.boardLocked}
         >
-          <Text style={[styles.zoomResetText, settings.boardLocked && styles.zoomButtonTextDisabled]}>
+          <Text style={[styles.zoomResetText, { color: theme.colors.secondaryButtonText }, settings.boardLocked && { color: theme.colors.textSecondary }]}>
             {settings.boardLocked ? '🔒' : 'Reset'}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.zoomButton, settings.boardLocked && styles.zoomButtonDisabled]}
+          style={[styles.zoomButton, { backgroundColor: theme.colors.secondaryButton }, settings.boardLocked && { backgroundColor: theme.isDark ? '#27272A' : '#D1D5DB' }]}
           onPress={handleZoomIn}
           disabled={settings.boardLocked}
         >
-          <Text style={[styles.zoomButtonText, settings.boardLocked && styles.zoomButtonTextDisabled]}>+</Text>
+          <Text style={[styles.zoomButtonText, { color: theme.colors.secondaryButtonText }, settings.boardLocked && { color: theme.colors.textSecondary }]}>+</Text>
         </TouchableOpacity>
       </View>
 
       {/* Grid with Pinch-to-Zoom and Pan */}
       <GestureDetector gesture={composedGesture}>
         <Animated.View style={[styles.gridContainer, animatedStyle]}>
-          <View style={styles.grid}>
+          <View style={[styles.grid, { borderColor: theme.colors.gridBorder }]}>
             {grid.map((row, rowIndex) => (
               <View key={rowIndex} style={styles.row}>
                 {row.map((_, colIndex) => renderCell(rowIndex, colIndex))}
@@ -651,7 +693,7 @@ const SudokuGrid = () => {
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
             <TouchableOpacity
-              style={[styles.actionButton, noteMode && styles.actionButtonActive]}
+              style={[styles.actionButton, { backgroundColor: theme.colors.secondaryButton }, noteMode && { backgroundColor: theme.colors.noteButton }]}
               onPress={() => setNoteMode(!noteMode)}
               disabled={isPaused}
             >
@@ -659,17 +701,17 @@ const SudokuGrid = () => {
                 {noteMode ? '📝 ON' : '📝 Notes'}
               </Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
-              style={[styles.actionButton, styles.hintButton]}
+              style={[styles.actionButton, { backgroundColor: theme.colors.hintButton }]}
               onPress={useHint}
               disabled={isPaused}
             >
               <Text style={styles.actionButtonText}>💡 Hint</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
-              style={[styles.actionButton, styles.clearButton]}
+              style={[styles.actionButton, { backgroundColor: theme.colors.clearButton }]}
               onPress={() => handleNumberPress(0)}
               disabled={isPaused}
             >
@@ -680,8 +722,8 @@ const SudokuGrid = () => {
       )}
 
       {isComplete && (
-        <View style={styles.completedContainer}>
-          <Text style={styles.completedText}>
+        <View style={[styles.completedContainer, { backgroundColor: theme.isDark ? '#052e16' : '#F0FDF4' }]}>
+          <Text style={[styles.completedText, { color: theme.colors.success }]}>
             🎉 Come back tomorrow for a new puzzle!
           </Text>
         </View>
@@ -710,96 +752,105 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   header: {
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  headerRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 4,
-    gap: 16,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  headerLeft: {
+    flex: 1,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#1F2937',
     letterSpacing: 2,
   },
   date: {
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: 13,
+    marginTop: 2,
   },
   coinDisplay: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF3C7',
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 6,
     borderRadius: 16,
   },
   coinText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#92400E',
+  },
+  completedBadgeContainer: {
+    alignItems: 'center',
+    marginBottom: 8,
   },
   completedBadge: {
-    fontSize: 16,
-    color: '#10B981',
+    fontSize: 15,
     fontWeight: 'bold',
-    marginTop: 8,
+  },
+  gameInfoCard: {
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   difficultyTabs: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 15,
-    gap: 8,
+    gap: 6,
   },
   difficultyTab: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    backgroundColor: '#F3F4F6',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
     borderRadius: 8,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#F3F4F6',
   },
   difficultyTabText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#6B7280',
+    fontSize: 12,
+    fontWeight: '600',
   },
   difficultyTabTextActive: {
     color: '#fff',
   },
-  statsBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-    backgroundColor: '#F9FAFB',
-    padding: 12,
-    borderRadius: 10,
+  divider: {
+    height: 1,
+    marginVertical: 10,
   },
-  stat: {
+  statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'space-between',
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  statIcon: {
+    fontSize: 18,
+  },
+  statInfo: {
+    alignItems: 'flex-start',
   },
   statLabel: {
-    fontSize: 20,
+    fontSize: 10,
+    fontWeight: '500',
   },
   statValue: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontSize: 16,
+    fontWeight: '700',
   },
   pauseButton: {
-    padding: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
   pauseButtonText: {
-    fontSize: 20,
+    fontSize: 18,
   },
   pauseOverlay: {
     position: 'absolute',
@@ -839,24 +890,15 @@ const styles = StyleSheet.create({
   zoomButton: {
     width: 50,
     height: 36,
-    backgroundColor: '#6B7280',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
   },
-  zoomButtonDisabled: {
-    backgroundColor: '#D1D5DB',
-  },
   zoomButtonText: {
-    color: '#fff',
     fontSize: 24,
     fontWeight: 'bold',
   },
-  zoomButtonTextDisabled: {
-    color: '#9CA3AF',
-  },
   zoomResetText: {
-    color: '#fff',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -867,7 +909,6 @@ const styles = StyleSheet.create({
   grid: {
     alignSelf: 'center',
     borderWidth: 3,
-    borderColor: '#1F2937',
   },
   row: {
     flexDirection: 'row',
@@ -876,39 +917,18 @@ const styles = StyleSheet.create({
     width: CELL_SIZE,
     height: CELL_SIZE,
     borderWidth: 0.5,
-    borderColor: '#D1D5DB',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  cellOriginal: {
-    backgroundColor: '#F3F4F6',
-  },
-  cellSelected: {
-    backgroundColor: '#DBEAFE',
-  },
-  cellWrong: {
-    backgroundColor: '#FEE2E2',
-  },
-  cellHighlighted: {
-    backgroundColor: '#FEF3C7',
   },
   cellRightBorder: {
     borderRightWidth: 2,
-    borderRightColor: '#1F2937',
   },
   cellBottomBorder: {
     borderBottomWidth: 2,
-    borderBottomColor: '#1F2937',
   },
   cellText: {
     fontSize: 24,
-    fontWeight: '500',
-    color: '#3B82F6',
-  },
-  cellTextOriginal: {
-    color: '#1F2937',
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   notesContainer: {
     flexDirection: 'row',
@@ -921,7 +941,6 @@ const styles = StyleSheet.create({
     fontSize: 8,
     width: '33.33%',
     textAlign: 'center',
-    color: '#6B7280',
   },
   numberPad: {
     flexDirection: 'row',
@@ -958,18 +977,8 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     paddingVertical: 12,
-    backgroundColor: '#6B7280',
     borderRadius: 8,
     alignItems: 'center',
-  },
-  actionButtonActive: {
-    backgroundColor: '#10B981',
-  },
-  hintButton: {
-    backgroundColor: '#8B5CF6',
-  },
-  clearButton: {
-    backgroundColor: '#EF4444',
   },
   actionButtonText: {
     color: '#fff',
@@ -978,13 +987,11 @@ const styles = StyleSheet.create({
   },
   completedContainer: {
     padding: 20,
-    backgroundColor: '#F0FDF4',
     borderRadius: 10,
     alignItems: 'center',
   },
   completedText: {
     fontSize: 18,
-    color: '#10B981',
     fontWeight: '600',
     textAlign: 'center',
   },

@@ -12,9 +12,9 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '../contexts/ThemeContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { themes, themeKeys, ThemeKey } from '../constants/themes';
-import { numberFonts, premiumAvatars, avatarCategories, AvatarCategory } from '../constants/customizations';
+import { numberFonts, premiumAvatars, avatarCategories, AvatarCategory, premiumSongs, songCategories, SongCategory } from '../constants/customizations';
 
-type ShopTab = 'themes' | 'fonts' | 'avatars' | 'rewards';
+type ShopTab = 'themes' | 'fonts' | 'avatars' | 'songs' | 'rewards';
 
 export default function ShopScreen() {
   const router = useRouter();
@@ -29,9 +29,14 @@ export default function ShopScreen() {
     setSelectedFont,
     isAvatarOwned,
     buyAvatar,
+    isSongOwned,
+    buySong,
+    selectedSong,
+    setSelectedSong,
   } = useCurrency();
   const [activeTab, setActiveTab] = useState<ShopTab>('themes');
   const [avatarCategory, setAvatarCategory] = useState<AvatarCategory>('animals');
+  const [songCategory, setSongCategory] = useState<SongCategory>('ambient');
 
   const handlePurchaseTheme = async (key: ThemeKey) => {
     const themeData = themes[key];
@@ -122,6 +127,37 @@ export default function ShopScreen() {
             const result = await buyAvatar(avatarId, price);
             if (result.success) {
               Alert.alert('Avatar Unlocked!', `${emoji} ${name} is now available in your profile!`);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handlePurchaseSong = async (songId: string, name: string, price: number) => {
+    if (isSongOwned(songId)) {
+      await setSelectedSong(songId);
+      Alert.alert('Song Selected', `${name} is now your background music!`);
+      return;
+    }
+
+    if (coins < price) {
+      Alert.alert('Not Enough Coins', `You need ${price - coins} more coins.`);
+      return;
+    }
+
+    Alert.alert(
+      'Unlock Song',
+      `Spend ${price} coins to unlock "${name}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Unlock',
+          onPress: async () => {
+            const result = await buySong(songId, price);
+            if (result.success) {
+              await setSelectedSong(songId);
+              Alert.alert('Song Unlocked!', `${name} is now yours!`);
             }
           },
         },
@@ -295,6 +331,110 @@ export default function ShopScreen() {
     );
   };
 
+  const renderSongsGrid = () => {
+    const categorySongs = premiumSongs.filter(s => s.category === songCategory);
+
+    return (
+      <View>
+        <View style={styles.songCategoryTabs}>
+          {songCategories.map((cat) => (
+            <TouchableOpacity
+              key={cat.id}
+              style={[
+                styles.songCategoryTab,
+                { backgroundColor: theme.colors.cardBackground },
+                songCategory === cat.id && { backgroundColor: theme.colors.primaryButton },
+              ]}
+              onPress={() => setSongCategory(cat.id)}
+            >
+              <Text style={styles.songCategoryIcon}>{cat.icon}</Text>
+              <Text
+                style={[
+                  styles.songCategoryName,
+                  { color: songCategory === cat.id ? theme.colors.primaryButtonText : theme.colors.textSecondary },
+                ]}
+              >
+                {cat.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Default music option */}
+        <TouchableOpacity
+          style={[
+            styles.songCard,
+            { backgroundColor: theme.colors.cardBackground },
+            selectedSong === null && { borderColor: theme.colors.primaryButton, borderWidth: 2 },
+          ]}
+          onPress={() => {
+            setSelectedSong(null);
+            Alert.alert('Default Music', 'Using default background music!');
+          }}
+        >
+          <View style={styles.songIcon}>
+            <Text style={styles.songIconText}>🎵</Text>
+          </View>
+          <View style={styles.songInfo}>
+            <Text style={[styles.songName, { color: theme.colors.textPrimary }]}>Default Music</Text>
+            <Text style={[styles.songArtist, { color: theme.colors.textSecondary }]}>Built-in</Text>
+            <Text style={[styles.songDesc, { color: theme.colors.textSecondary }]}>Original Sudokle music</Text>
+          </View>
+          <View style={styles.priceBadge}>
+            <View style={[styles.ownedBadge, { backgroundColor: selectedSong === null ? theme.colors.primaryButton : theme.colors.success }]}>
+              <Text style={styles.ownedText}>{selectedSong === null ? 'Active' : 'Free'}</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+
+        <View style={styles.songsGrid}>
+          {categorySongs.map((song) => {
+            const owned = isSongOwned(song.id);
+            const isSelected = selectedSong === song.id;
+            const canAfford = coins >= song.price;
+
+            return (
+              <TouchableOpacity
+                key={song.id}
+                style={[
+                  styles.songCard,
+                  { backgroundColor: theme.colors.cardBackground },
+                  isSelected && { borderColor: theme.colors.primaryButton, borderWidth: 2 },
+                ]}
+                onPress={() => handlePurchaseSong(song.id, song.name, song.price)}
+              >
+                <View style={[styles.songIcon, { backgroundColor: theme.isDark ? '#27272A' : '#F3F4F6' }]}>
+                  <Text style={styles.songIconText}>🎶</Text>
+                </View>
+                <View style={styles.songInfo}>
+                  <Text style={[styles.songName, { color: theme.colors.textPrimary }]}>{song.name}</Text>
+                  <Text style={[styles.songArtist, { color: theme.colors.textSecondary }]}>{song.artist}</Text>
+                  <Text style={[styles.songDesc, { color: theme.colors.textSecondary }]} numberOfLines={1}>
+                    {song.description}
+                  </Text>
+                </View>
+                <View style={styles.songMeta}>
+                  <Text style={[styles.songDuration, { color: theme.colors.textSecondary }]}>{song.duration}</Text>
+                  {owned ? (
+                    <View style={[styles.ownedBadge, { backgroundColor: isSelected ? theme.colors.primaryButton : theme.colors.success }]}>
+                      <Text style={styles.ownedText}>{isSelected ? 'Active' : 'Owned'}</Text>
+                    </View>
+                  ) : (
+                    <View style={[styles.priceTag, { backgroundColor: canAfford ? '#FEF3C7' : '#FEE2E2' }]}>
+                      <Text style={[styles.priceText, { color: canAfford ? '#92400E' : '#991B1B' }]}>
+                        {song.price}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+    );
+  };
+
   const renderRewardsInfo = () => (
     <View style={styles.rewardsContainer}>
       <View style={[styles.rewardCard, { backgroundColor: theme.colors.cardBackground }]}>
@@ -371,6 +511,7 @@ export default function ShopScreen() {
     { id: 'themes', label: 'Themes', icon: '🎨' },
     { id: 'fonts', label: 'Fonts', icon: '🔤' },
     { id: 'avatars', label: 'Avatars', icon: '😀' },
+    { id: 'songs', label: 'Music', icon: '🎵' },
     { id: 'rewards', label: 'Info', icon: '💰' },
   ];
 
@@ -447,6 +588,18 @@ export default function ShopScreen() {
               Unlock special profile icons
             </Text>
             {renderAvatarGrid()}
+          </>
+        )}
+
+        {activeTab === 'songs' && (
+          <>
+            <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
+              Background Music
+            </Text>
+            <Text style={[styles.sectionDesc, { color: theme.colors.textSecondary }]}>
+              Unlock premium tracks for gameplay
+            </Text>
+            {renderSongsGrid()}
           </>
         )}
 
@@ -753,5 +906,75 @@ const styles = StyleSheet.create({
   statsValue: {
     fontSize: 18,
     fontWeight: '600',
+  },
+  songCategoryTabs: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    gap: 8,
+  },
+  songCategoryTab: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  songCategoryIcon: {
+    fontSize: 16,
+  },
+  songCategoryName: {
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  songsGrid: {
+    gap: 12,
+  },
+  songCard: {
+    flexDirection: 'row',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    alignItems: 'center',
+  },
+  songIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 10,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  songIconText: {
+    fontSize: 24,
+  },
+  songInfo: {
+    flex: 1,
+  },
+  songName: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  songArtist: {
+    fontSize: 12,
+    marginBottom: 2,
+  },
+  songDesc: {
+    fontSize: 11,
+  },
+  songMeta: {
+    alignItems: 'flex-end',
+    gap: 6,
+  },
+  songDuration: {
+    fontSize: 11,
+    fontWeight: '500',
   },
 });
