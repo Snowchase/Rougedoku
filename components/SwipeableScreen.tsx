@@ -27,16 +27,18 @@ export function SwipeableScreen({ children, enabled = true }: SwipeableScreenPro
 
   const panGesture = Gesture.Pan()
     .enabled(enabled)
-    .activeOffsetX(20) // Start recognizing after 20px horizontal movement
-    .failOffsetY([-20, 20]) // Fail if vertical movement exceeds 20px (for scrolling)
+    .activeOffsetX(15) // Start recognizing after 15px horizontal movement
+    .failOffsetY([-30, 30]) // Fail if vertical movement exceeds 30px (for scrolling)
     .onUpdate((event) => {
-      // Only allow right swipe (positive translationX) starting from left edge
-      if (event.translationX > 0 && event.x < 50) {
+      // Only allow right swipe (positive translationX) starting from left edge area
+      if (event.translationX > 0 && event.absoluteX - event.translationX < 80) {
         translateX.value = Math.min(event.translationX, SCREEN_WIDTH * 0.5);
       }
     })
     .onEnd((event) => {
-      if (event.translationX > SWIPE_THRESHOLD && event.x < 100) {
+      // Check if we've swiped far enough from the left edge
+      const startedFromEdge = event.absoluteX - event.translationX < 80;
+      if (event.translationX > SWIPE_THRESHOLD && startedFromEdge) {
         // Swipe threshold reached, navigate back
         translateX.value = withSpring(SCREEN_WIDTH, { damping: 20 });
         runOnJS(goBack)();

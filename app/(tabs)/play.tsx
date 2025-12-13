@@ -2,10 +2,14 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useAudio } from '../../contexts/AudioContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import SudokuGrid from '../../components/SudokuGrid';
+import { NavigationHeader } from '../../components/navigation-header';
+import { SwipeableScreen } from '../../components/SwipeableScreen';
 
 export default function PlayScreen() {
   const { playMusic, stopMusic } = useAudio();
+  const { theme } = useTheme();
 
   // Play gameplay music when screen is focused, stop when unfocused
   useFocusEffect(
@@ -21,15 +25,17 @@ export default function PlayScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      <SudokuGrid difficulty="medium" />
-    </View>
+    <SwipeableScreen>
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <NavigationHeader title="Daily Puzzle" />
+        <SudokuGrid difficulty="medium" />
+      </View>
+    </SwipeableScreen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
 });
