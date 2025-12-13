@@ -87,15 +87,6 @@ export default function HomeScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.error || '#EF4444' }]}
-            onPress={() => router.push('/(tabs)/versus')}
-          >
-            <Text style={styles.menuButtonIcon}>⚔️</Text>
-            <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]}>Versus</Text>
-            <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]}>Battle friends or AI</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
             style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.success }]}
             onPress={() => router.push('/(tabs)/social')}
           >
