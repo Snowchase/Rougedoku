@@ -31,6 +31,7 @@ interface CurrencyContextType {
   selectedSong: string | null;
   loading: boolean;
   refreshCurrency: () => Promise<void>;
+  addBonusCoins: (amount: number) => Promise<void>;
   awardPuzzleCompletion: (
     date: string,
     difficulty: Difficulty,
@@ -92,6 +93,11 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
   const refreshCurrency = useCallback(async () => {
     await loadData();
+  }, []);
+
+  const addBonusCoins = useCallback(async (amount: number) => {
+    const newData = await addCoins(amount);
+    setCurrencyData(newData);
   }, []);
 
   const awardPuzzleCompletion = useCallback(async (
@@ -202,6 +208,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
         selectedSong: purchaseData.selectedSong,
         loading,
         refreshCurrency,
+        addBonusCoins,
         awardPuzzleCompletion,
         buyTheme,
         buyAvatar,
