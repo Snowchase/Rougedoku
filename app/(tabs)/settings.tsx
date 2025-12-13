@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   Alert,
   Switch,
 } from 'react-native';
@@ -15,14 +14,8 @@ import { useAudio } from '../../contexts/AudioContext';
 import { useSettings } from '../../contexts/SettingsContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { themes, themeKeys, ThemeKey } from '../../constants/themes';
-import {
-  getUserProfile,
-  getCurrentUser,
-  updateProfile,
-  AVATAR_OPTIONS,
-  PROFILE_COLORS,
-  type UserProfile,
-} from '../../components/friendService';
+import { NavigationHeader } from '../../components/navigation-header';
+import { SwipeableScreen } from '../../components/SwipeableScreen';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -36,66 +29,6 @@ export default function SettingsScreen() {
   } = useAudio();
   const { settings: gameSettings, setBoardLocked } = useSettings();
   const { coins, isThemeOwned } = useCurrency();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [username, setUsername] = useState('');
-  const [isEditingUsername, setIsEditingUsername] = useState(false);
-  const [selectedAvatar, setSelectedAvatar] = useState('');
-  const [selectedColor, setSelectedColor] = useState('');
-
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  const loadProfile = async () => {
-    const user = getCurrentUser();
-    if (user) {
-      const userProfile = await getUserProfile(user.uid);
-      if (userProfile) {
-        setProfile(userProfile);
-        setUsername(userProfile.username);
-        setSelectedAvatar(userProfile.avatar || '😀');
-        setSelectedColor(userProfile.profileColor || '#3B82F6');
-      }
-    }
-  };
-
-  const handleSaveUsername = async () => {
-    if (username.trim().length < 3) {
-      Alert.alert('Invalid Username', 'Username must be at least 3 characters long');
-      return;
-    }
-
-    const result = await updateProfile({ username: username.trim() });
-    if (result.success) {
-      setIsEditingUsername(false);
-      await loadProfile();
-      Alert.alert('Success', 'Username updated successfully!');
-    } else {
-      Alert.alert('Error', result.error || 'Failed to update username');
-    }
-  };
-
-  const handleAvatarSelect = async (avatar: string) => {
-    setSelectedAvatar(avatar);
-    const result = await updateProfile({ avatar });
-    if (result.success) {
-      await loadProfile();
-    } else {
-      // Revert on failure
-      setSelectedAvatar(profile?.avatar || '😀');
-    }
-  };
-
-  const handleColorSelect = async (color: string) => {
-    setSelectedColor(color);
-    const result = await updateProfile({ profileColor: color });
-    if (result.success) {
-      await loadProfile();
-    } else {
-      // Revert on failure
-      setSelectedColor(profile?.profileColor || '#3B82F6');
-    }
-  };
 
   const handleThemeSelect = async (key: ThemeKey) => {
     const owned = isThemeOwned(key);
@@ -173,133 +106,12 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={[styles.header, { backgroundColor: theme.colors.cardBackground }]}>
-        <Text style={[styles.title, { color: theme.colors.textPrimary }]}>Settings</Text>
-        <TouchableOpacity
-          style={styles.coinHeader}
-          onPress={() => router.push('/shop')}
-        >
-          <Text style={styles.coinHeaderText}>🪙 {coins}</Text>
-          <Text style={styles.shopLink}>Shop →</Text>
-        </TouchableOpacity>
-      </View>
+    <SwipeableScreen>
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <NavigationHeader title="Settings" />
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* Profile Section */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
-            Profile
-          </Text>
-          <Text style={[styles.sectionDescription, { color: theme.colors.textSecondary }]}>
-            Customize your profile - changes will appear on leaderboards
-          </Text>
-        </View>
-
-        {/* Profile Card */}
-        <View style={[styles.profileCard, { backgroundColor: theme.colors.cardBackground }]}>
-          {/* Profile Preview */}
-          <View style={styles.profilePreview}>
-            <View style={[styles.avatarCircle, { backgroundColor: selectedColor }]}>
-              <Text style={styles.avatarText}>{selectedAvatar}</Text>
-            </View>
-            <View style={styles.profileInfo}>
-              <Text style={[styles.profileUsername, { color: theme.colors.textPrimary }]}>
-                {username}
-              </Text>
-              <Text style={[styles.friendCode, { color: theme.colors.textSecondary }]}>
-                Friend Code: {profile?.friendCode || '------'}
-              </Text>
-            </View>
-          </View>
-
-          {/* Username Editor */}
-          <View style={styles.settingRow}>
-            <Text style={[styles.settingLabel, { color: theme.colors.textPrimary }]}>
-              Username
-            </Text>
-            {isEditingUsername ? (
-              <View style={styles.usernameEditContainer}>
-                <TextInput
-                  style={[
-                    styles.usernameInput,
-                    {
-                      color: theme.colors.textPrimary,
-                      borderColor: theme.colors.cellBorder,
-                    },
-                  ]}
-                  value={username}
-                  onChangeText={setUsername}
-                  placeholder="Enter username"
-                  placeholderTextColor={theme.colors.textSecondary}
-                  maxLength={20}
-                />
-                <TouchableOpacity
-                  style={[styles.saveButton, { backgroundColor: theme.colors.primaryButton }]}
-                  onPress={handleSaveUsername}
-                >
-                  <Text style={[styles.saveButtonText, { color: theme.colors.primaryButtonText }]}>
-                    Save
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity onPress={() => setIsEditingUsername(true)}>
-                <Text style={{ color: theme.colors.primaryButton }}>Edit</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Avatar Selector */}
-          <View style={styles.settingRow}>
-            <Text style={[styles.settingLabel, { color: theme.colors.textPrimary }]}>
-              Avatar
-            </Text>
-          </View>
-          <View style={styles.avatarGrid}>
-            {AVATAR_OPTIONS.map((avatar) => (
-              <TouchableOpacity
-                key={avatar}
-                style={[
-                  styles.avatarOption,
-                  selectedAvatar === avatar && {
-                    borderColor: theme.colors.primaryButton,
-                    borderWidth: 3,
-                  },
-                ]}
-                onPress={() => handleAvatarSelect(avatar)}
-              >
-                <Text style={styles.avatarOptionText}>{avatar}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Color Selector */}
-          <View style={styles.settingRow}>
-            <Text style={[styles.settingLabel, { color: theme.colors.textPrimary }]}>
-              Profile Color
-            </Text>
-          </View>
-          <View style={styles.colorGrid}>
-            {PROFILE_COLORS.map((color) => (
-              <TouchableOpacity
-                key={color}
-                style={[
-                  styles.colorOption,
-                  { backgroundColor: color },
-                  selectedColor === color && styles.colorOptionSelected,
-                ]}
-                onPress={() => handleColorSelect(color)}
-              >
-                {selectedColor === color && (
-                  <Text style={styles.colorCheckmark}>✓</Text>
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Game Settings Section */}
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+          {/* Game Settings Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
             Game Settings
@@ -475,46 +287,15 @@ export default function SettingsScreen() {
             </Text>
           </View>
         </View>
-      </ScrollView>
-    </View>
+        </ScrollView>
+      </View>
+    </SwipeableScreen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    padding: 20,
-    paddingTop: 60,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  coinHeader: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 12,
-    gap: 12,
-  },
-  coinHeaderText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#92400E',
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  shopLink: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#3B82F6',
   },
   scrollView: {
     flex: 1,
@@ -558,120 +339,9 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginTop: 2,
   },
-  profileCard: {
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 32,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  profilePreview: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  avatarCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    fontSize: 40,
-  },
-  profileInfo: {
-    marginLeft: 16,
-    flex: 1,
-  },
-  profileUsername: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  friendCode: {
-    fontSize: 14,
-  },
-  settingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
   settingLabel: {
     fontSize: 16,
     fontWeight: '600',
-  },
-  usernameEditContainer: {
-    flexDirection: 'row',
-    flex: 1,
-    marginLeft: 16,
-    gap: 8,
-  },
-  usernameInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 16,
-  },
-  saveButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    justifyContent: 'center',
-  },
-  saveButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  avatarGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 24,
-  },
-  avatarOption: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  avatarOptionText: {
-    fontSize: 32,
-  },
-  colorGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 16,
-  },
-  colorOption: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  colorOptionSelected: {
-    borderWidth: 3,
-    borderColor: '#000',
-  },
-  colorCheckmark: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
   },
   themesGrid: {
     flexDirection: 'row',

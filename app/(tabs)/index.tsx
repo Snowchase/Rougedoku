@@ -87,21 +87,30 @@ export default function HomeScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
+            style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.success }]}
+            onPress={() => router.push('/(tabs)/social')}
+          >
+            <Text style={styles.menuButtonIcon}>👥</Text>
+            <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]}>Social</Text>
+            <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]}>Profile & friends</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.isDark ? '#F59E0B' : '#D97706' }]}
+            onPress={() => router.push('/shop')}
+          >
+            <Text style={styles.menuButtonIcon}>🛒</Text>
+            <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]}>Shop</Text>
+            <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]}>Unlock themes & more</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
             style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.warning }]}
             onPress={() => router.push('/(tabs)/leaderboards')}
           >
             <Text style={styles.menuButtonIcon}>🏆</Text>
             <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]}>Leaderboards</Text>
             <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]}>Compare your times</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.success }]}
-            onPress={() => router.push('/(tabs)/friends')}
-          >
-            <Text style={styles.menuButtonIcon}>👥</Text>
-            <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]}>Friends</Text>
-            <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]}>Manage your friends</Text>
           </TouchableOpacity>
         </View>
       </View>
