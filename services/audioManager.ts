@@ -8,9 +8,8 @@ import { Asset } from 'expo-asset';
 // 2. Uncomment the lines below and update with your filenames
 // 3. Restart with: npx expo start --clear
 
-// Audio files - placeholder silent MP3s included
-// Replace these files with your own music in assets/audio/
-const AUDIO_FILES: Record<string, any> = {
+// Default/built-in audio files
+const DEFAULT_AUDIO_FILES: Record<string, any> = {
   // Music tracks
   homeMusic: require('../assets/audio/music/home.mp3'),
   gameplayMusic: require('../assets/audio/music/gameplay.mp3'),
@@ -22,7 +21,40 @@ const AUDIO_FILES: Record<string, any> = {
   errorSound: require('../assets/audio/sfx/error.mp3'),
 };
 
+// Premium song audio files - Add your MP3 files to assets/audio/music/premium/
+// The song ID must match the file name (e.g., 'lofi-chill' -> 'lofi-chill.mp3')
+// Uncomment and add the require statements for each song you add
+const PREMIUM_SONG_FILES: Record<string, any> = {
+  // Lo-fi tracks
+  // 'lofi-chill': require('../assets/audio/music/premium/lofi-chill.mp3'),
+  // 'lofi-study': require('../assets/audio/music/premium/lofi-study.mp3'),
+  // 'lofi-cafe': require('../assets/audio/music/premium/lofi-cafe.mp3'),
+  // 'lofi-sunset': require('../assets/audio/music/premium/lofi-sunset.mp3'),
+
+  // Jazz tracks
+  // 'jazz-piano': require('../assets/audio/music/premium/jazz-piano.mp3'),
+  // 'jazz-saxophone': require('../assets/audio/music/premium/jazz-saxophone.mp3'),
+  // 'jazz-swing': require('../assets/audio/music/premium/jazz-swing.mp3'),
+  // 'jazz-bossa': require('../assets/audio/music/premium/jazz-bossa.mp3'),
+
+  // Electronic tracks
+  // 'electronic-synth': require('../assets/audio/music/premium/electronic-synth.mp3'),
+  // 'electronic-space': require('../assets/audio/music/premium/electronic-space.mp3'),
+  // 'electronic-neon': require('../assets/audio/music/premium/electronic-neon.mp3'),
+  // 'electronic-zen': require('../assets/audio/music/premium/electronic-zen.mp3'),
+};
+
+// Combined audio files for lookup
+const AUDIO_FILES: Record<string, any> = {
+  ...DEFAULT_AUDIO_FILES,
+  ...PREMIUM_SONG_FILES,
+};
+
 export type MusicTrack = 'homeMusic' | 'gameplayMusic';
+export type PremiumSongId =
+  | 'lofi-chill' | 'lofi-study' | 'lofi-cafe' | 'lofi-sunset'
+  | 'jazz-piano' | 'jazz-saxophone' | 'jazz-swing' | 'jazz-bossa'
+  | 'electronic-synth' | 'electronic-space' | 'electronic-neon' | 'electronic-zen';
 export type SoundEffect = 'numberPlace' | 'puzzleComplete' | 'buttonClick' | 'errorSound';
 
 interface AudioSettings {
@@ -32,9 +64,12 @@ interface AudioSettings {
   sfxVolume: number; // 0.0 to 1.0
 }
 
+// Type for any playable music (default tracks or premium songs)
+export type PlayableMusic = MusicTrack | PremiumSongId | string;
+
 class AudioManager {
   private currentMusic: Audio.Sound | null = null;
-  private currentTrack: MusicTrack | null = null;
+  private currentTrack: PlayableMusic | null = null;
   private settings: AudioSettings = {
     musicEnabled: true,
     soundEffectsEnabled: true,
@@ -118,8 +153,23 @@ class AudioManager {
     await this.saveSettings();
   }
 
+  // Check if a premium song audio file is available
+  isSongAvailable(songId: string): boolean {
+    return songId in AUDIO_FILES && AUDIO_FILES[songId] !== undefined;
+  }
+
+  // Get the appropriate audio source for a song (premium or default fallback)
+  private getAudioSource(songIdOrTrack: PlayableMusic, fallbackTrack: MusicTrack = 'homeMusic'): any {
+    // If it's a premium song ID, check if the file is available
+    if (songIdOrTrack && AUDIO_FILES[songIdOrTrack]) {
+      return AUDIO_FILES[songIdOrTrack];
+    }
+    // Fall back to default track
+    return AUDIO_FILES[fallbackTrack] || null;
+  }
+
   // Music Playback with Fade
-  async playMusic(track: MusicTrack, fadeInDuration: number = 1000) {
+  async playMusic(track: PlayableMusic, fadeInDuration: number = 1000) {
     if (!this.isInitialized) {
       await this.initialize();
     }
@@ -128,8 +178,10 @@ class AudioManager {
       return;
     }
 
+    const audioSource = this.getAudioSource(track);
+
     // Check if audio file exists
-    if (!AUDIO_FILES[track]) {
+    if (!audioSource) {
       console.log(`Audio file for ${track} not found. Add your MP3 files to enable music.`);
       return;
     }
@@ -149,7 +201,7 @@ class AudioManager {
 
     try {
       const { sound } = await Audio.Sound.createAsync(
-        AUDIO_FILES[track],
+        audioSource,
         {
           shouldPlay: true,
           isLooping: true,
@@ -166,6 +218,24 @@ class AudioManager {
       console.log(`Playing music: ${track}`);
     } catch (error) {
       console.error(`Error playing music ${track}:`, error);
+    }
+  }
+
+  // Play selected song or fall back to default music
+  async playSelectedSong(selectedSongId: string | null, fallbackTrack: MusicTrack = 'homeMusic', fadeInDuration: number = 1000) {
+    // If no selected song or it's null, play the fallback (default music)
+    if (!selectedSongId) {
+      await this.playMusic(fallbackTrack, fadeInDuration);
+      return;
+    }
+
+    // Try to play the selected premium song
+    if (this.isSongAvailable(selectedSongId)) {
+      await this.playMusic(selectedSongId, fadeInDuration);
+    } else {
+      // Premium song file not yet added, fall back to default
+      console.log(`Premium song ${selectedSongId} not available, using default music`);
+      await this.playMusic(fallbackTrack, fadeInDuration);
     }
   }
 
@@ -335,7 +405,7 @@ class AudioManager {
   }
 
   // Utility
-  getCurrentTrack(): MusicTrack | null {
+  getCurrentTrack(): PlayableMusic | null {
     return this.currentTrack;
   }
 

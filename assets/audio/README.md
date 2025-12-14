@@ -12,7 +12,20 @@ This directory contains all audio files for Sudokle.
 assets/audio/
 ├── music/           # Background music tracks
 │   ├── home.mp3     # Home screen music (PLACEHOLDER - replace me!)
-│   └── gameplay.mp3 # Gameplay music (PLACEHOLDER - replace me!)
+│   ├── gameplay.mp3 # Gameplay music (PLACEHOLDER - replace me!)
+│   └── premium/     # Premium purchasable songs (shop items)
+│       ├── lofi-chill.mp3
+│       ├── lofi-study.mp3
+│       ├── lofi-cafe.mp3
+│       ├── lofi-sunset.mp3
+│       ├── jazz-piano.mp3
+│       ├── jazz-saxophone.mp3
+│       ├── jazz-swing.mp3
+│       ├── jazz-bossa.mp3
+│       ├── electronic-synth.mp3
+│       ├── electronic-space.mp3
+│       ├── electronic-neon.mp3
+│       └── electronic-zen.mp3
 └── sfx/             # Sound effects
     ├── place.mp3    # Number placement sound (placeholder)
     ├── complete.mp3 # Puzzle completion sound (placeholder)
@@ -110,6 +123,49 @@ After adding files:
 2. Clear cache if needed: `npm start --clear`
 3. Test on device/simulator
 4. Check Settings panel for music/SFX controls
+
+## 🎶 Premium Songs (Shop Items)
+
+The shop includes 12 premium songs that users can purchase with in-game coins. To enable these songs:
+
+### Step 1: Add Premium Song Files
+
+Place your MP3 files in `assets/audio/music/premium/` with exact filenames:
+
+| Song ID | Filename | Category |
+|---------|----------|----------|
+| lofi-chill | lofi-chill.mp3 | Lo-Fi |
+| lofi-study | lofi-study.mp3 | Lo-Fi |
+| lofi-cafe | lofi-cafe.mp3 | Lo-Fi |
+| lofi-sunset | lofi-sunset.mp3 | Lo-Fi |
+| jazz-piano | jazz-piano.mp3 | Jazz |
+| jazz-saxophone | jazz-saxophone.mp3 | Jazz |
+| jazz-swing | jazz-swing.mp3 | Jazz |
+| jazz-bossa | jazz-bossa.mp3 | Jazz |
+| electronic-synth | electronic-synth.mp3 | Electronic |
+| electronic-space | electronic-space.mp3 | Electronic |
+| electronic-neon | electronic-neon.mp3 | Electronic |
+| electronic-zen | electronic-zen.mp3 | Electronic |
+
+### Step 2: Uncomment in audioManager.ts
+
+After adding each song file, uncomment the corresponding line in `services/audioManager.ts`:
+
+```typescript
+// Before (commented out)
+// 'lofi-chill': require('../assets/audio/music/premium/lofi-chill.mp3'),
+
+// After (uncommented)
+'lofi-chill': require('../assets/audio/music/premium/lofi-chill.mp3'),
+```
+
+### Step 3: Restart
+
+```bash
+npx expo start --clear
+```
+
+**Note**: Users can still purchase songs in the shop even if the audio files aren't added yet. The app will gracefully fall back to the default music until the premium file is available.
 
 ## Free Music Resources
 
