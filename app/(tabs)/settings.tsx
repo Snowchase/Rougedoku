@@ -1,17 +1,22 @@
 import React from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
+  Linking,
   ScrollView,
-  TouchableOpacity,
+  StyleSheet,
   Switch,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useTheme } from '../../contexts/ThemeContext';
-import { useAudio } from '../../contexts/AudioContext';
-import { useSettings } from '../../contexts/SettingsContext';
 import { NavigationHeader } from '../../components/navigation-header';
 import { SwipeableScreen } from '../../components/SwipeableScreen';
+import { useAudio } from '../../contexts/AudioContext';
+import { useSettings } from '../../contexts/SettingsContext';
+import { useTheme } from '../../contexts/ThemeContext';
+
+// TODO: Replace these URLs with your actual hosted policy URLs
+const PRIVACY_POLICY_URL = 'https://sudokleprivacy.netlify.app/';
+const TERMS_OF_SERVICE_URL = 'https://sudokleterms.netlify.app/';
 
 export default function SettingsScreen() {
   const { theme } = useTheme();
@@ -23,6 +28,10 @@ export default function SettingsScreen() {
     setSfxVolume,
   } = useAudio();
   const { settings: gameSettings, setBoardLocked } = useSettings();
+
+  const openLink = (url: string) => {
+    Linking.openURL(url).catch((err) => console.error('Failed to open URL:', err));
+  };
 
   return (
     <SwipeableScreen>
@@ -179,6 +188,39 @@ export default function SettingsScreen() {
           )}
         </View>
 
+        {/* Legal Section */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
+            Legal
+          </Text>
+          <View style={[styles.legalCard, { backgroundColor: theme.colors.cardBackground }]}>
+            <TouchableOpacity
+              style={styles.legalLink}
+              onPress={() => openLink(PRIVACY_POLICY_URL)}
+            >
+              <Text style={[styles.legalLinkText, { color: theme.colors.textPrimary }]}>
+                Privacy Policy
+              </Text>
+              <Text style={[styles.legalLinkArrow, { color: theme.colors.textSecondary }]}>
+                {'>'}
+              </Text>
+            </TouchableOpacity>
+            <View style={[styles.legalDivider, { backgroundColor: theme.colors.cellBackground }]} />
+            <TouchableOpacity
+              style={styles.legalLink}
+              onPress={() => openLink(TERMS_OF_SERVICE_URL)}
+            >
+              <Text style={[styles.legalLinkText, { color: theme.colors.textPrimary }]}>
+                Terms of Service
+              </Text>
+              <Text style={[styles.legalLinkArrow, { color: theme.colors.textSecondary }]}>
+                {'>'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* About Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
             About
@@ -188,7 +230,7 @@ export default function SettingsScreen() {
               Sudokle - Daily Sudoku Challenge
             </Text>
             <Text style={[styles.infoText, { color: theme.colors.textSecondary }]}>
-              Version 1.0.0
+              Version 1.0.2
             </Text>
           </View>
         </View>
@@ -255,6 +297,33 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 14,
+  },
+  legalCard: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  legalLink: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+  },
+  legalLinkText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  legalLinkArrow: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  legalDivider: {
+    height: 1,
+    marginHorizontal: 16,
   },
   audioCard: {
     borderRadius: 16,
