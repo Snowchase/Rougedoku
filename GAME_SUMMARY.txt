@@ -1,0 +1,207 @@
+================================================================================
+                              SUDOKLE
+                         Game Summary & Keywords
+================================================================================
+
+GAME OVERVIEW
+-------------
+Sudokle is a modern mobile Sudoku puzzle game that combines classic gameplay
+with social features, customization options, and a rewarding progression system.
+Players solve daily puzzles across four difficulty levels while earning coins
+to unlock themes, avatars, fonts, and music tracks.
+
+
+CORE GAMEPLAY
+-------------
+- Classic 9x9 Sudoku puzzles with standard rules
+- Daily puzzles generated with consistent seeding (same puzzle for all players)
+- Four difficulty levels: Easy, Medium, Hard, Expert
+- Tap-based input with intuitive number pad
+- Hint system for assistance (coin cost)
+- Timer tracking for each puzzle
+- Error highlighting for incorrect entries
+
+
+PROGRESSION SYSTEM
+------------------
+Coin Rewards:
+  - Easy puzzle completion: 10 coins
+  - Medium puzzle completion: 25 coins
+  - Hard puzzle completion: 50 coins
+  - Expert puzzle completion: 100 coins
+
+Bonuses:
+  - Time bonus (under 3 min): +50 coins
+  - Time bonus (under 5 min): +30 coins
+  - Time bonus (under 10 min): +15 coins
+  - First clear bonus: +50 coins
+  - Rewarded ad: +25 coins
+
+Penalties:
+  - Hint usage: -5 coins per hint
+
+
+CUSTOMIZATION OPTIONS
+---------------------
+Themes:
+  - Classic (default, free)
+  - Dark (default, free)
+  - Ocean Blue
+  - Forest Green
+  - Sunset Orange
+  - Lavender Purple
+  - Midnight
+
+Number Fonts:
+  - Default (free)
+  - Bold
+  - Rounded
+  - Serif
+  - Handwritten
+
+Avatars (by category):
+  - Animals
+  - Nature
+  - Food
+  - Sports
+  - Fantasy
+
+Background Music:
+  - Ambient tracks
+  - Classical pieces
+  - Electronic/Lo-fi beats
+
+
+SOCIAL FEATURES
+---------------
+- User profiles with customizable avatars
+- Friends list with add/remove functionality
+- Friend codes for easy connection
+- Global and friends leaderboards
+- Stats comparison
+
+
+SETTINGS & OPTIONS
+------------------
+- Board lock (prevent accidental input)
+- Music toggle (on/off)
+- Sound effects toggle (on/off)
+- Haptic feedback
+- Theme selection
+- Dark mode support
+
+
+================================================================================
+                              KEYWORDS
+================================================================================
+
+PRIMARY KEYWORDS
+----------------
+Sudoku
+Puzzle game
+Number puzzle
+Logic game
+Brain teaser
+Daily puzzle
+Mobile game
+
+FEATURE KEYWORDS
+----------------
+Customization
+Themes
+Dark mode
+Avatars
+Profile
+Friends
+Leaderboards
+Social gaming
+Multiplayer
+Versus mode
+
+GAMEPLAY KEYWORDS
+-----------------
+Easy mode
+Medium mode
+Hard mode
+Expert mode
+Hints
+Timer
+Statistics
+High score
+Completion time
+Puzzle solving
+
+ECONOMY KEYWORDS
+----------------
+Coins
+Rewards
+Shop
+In-app purchases
+Unlockables
+Bonuses
+Achievements
+Progression
+
+TECHNICAL KEYWORDS
+------------------
+React Native
+Expo
+Cross-platform
+iOS
+Android
+Mobile app
+Offline play
+Daily challenges
+
+AUDIENCE KEYWORDS
+-----------------
+Casual gaming
+Brain training
+Mind games
+Relaxing
+Stress relief
+Focus
+Concentration
+Mental exercise
+
+APP STORE KEYWORDS
+------------------
+sudoku, puzzle, brain, logic, number, daily, challenge, classic,
+modern, beautiful, themes, customization, friends, leaderboard,
+offline, free, coins, rewards, hints, timer, statistics,
+easy, medium, hard, expert, relax, focus, train, mind
+
+
+================================================================================
+                           TARGET AUDIENCE
+================================================================================
+
+Primary: Adults 25-55 who enjoy puzzle games during commutes or relaxation
+Secondary: Younger players (18-24) interested in social/competitive features
+Tertiary: Seniors (55+) looking for brain training and mental exercise
+
+
+================================================================================
+                          UNIQUE SELLING POINTS
+================================================================================
+
+1. Daily puzzles with consistent seeding - compete fairly with friends
+2. Extensive customization - themes, fonts, avatars, music
+3. Fair free-to-play model - earn everything through gameplay
+4. Social features - friends, leaderboards, profiles
+5. Beautiful modern UI with dark mode support
+6. Rewarded ads for bonus coins (optional, non-intrusive)
+7. Cross-platform - works on iOS and Android
+
+
+================================================================================
+                            VERSION INFO
+================================================================================
+
+Current Version: 1.0.2
+Platform: iOS, Android
+Framework: React Native / Expo
+Last Updated: December 2024
+
+
+================================================================================
