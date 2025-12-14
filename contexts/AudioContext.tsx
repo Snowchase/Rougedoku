@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { audioManager, MusicTrack, SoundEffect } from '../services/audioManager';
+import { audioManager, MusicTrack, SoundEffect, PlayableMusic } from '../services/audioManager';
 import { AppState, AppStateStatus } from 'react-native';
 
 interface AudioSettings {
@@ -11,7 +11,8 @@ interface AudioSettings {
 
 interface AudioContextType {
   settings: AudioSettings;
-  playMusic: (track: MusicTrack, fadeInDuration?: number) => Promise<void>;
+  playMusic: (track: PlayableMusic, fadeInDuration?: number) => Promise<void>;
+  playSelectedSong: (selectedSongId: string | null, fallbackTrack?: MusicTrack, fadeInDuration?: number) => Promise<void>;
   stopMusic: (fadeOutDuration?: number) => Promise<void>;
   pauseMusic: (fadeOutDuration?: number) => Promise<void>;
   resumeMusic: (fadeInDuration?: number) => Promise<void>;
@@ -20,7 +21,8 @@ interface AudioContextType {
   setSoundEffectsEnabled: (enabled: boolean) => Promise<void>;
   setMusicVolume: (volume: number) => Promise<void>;
   setSfxVolume: (volume: number) => Promise<void>;
-  currentTrack: MusicTrack | null;
+  currentTrack: PlayableMusic | null;
+  isSongAvailable: (songId: string) => boolean;
 }
 
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
@@ -32,7 +34,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     musicVolume: 0.5,
     sfxVolume: 0.7,
   });
-  const [currentTrack, setCurrentTrack] = useState<MusicTrack | null>(null);
+  const [currentTrack, setCurrentTrack] = useState<PlayableMusic | null>(null);
 
   // Initialize audio manager
   useEffect(() => {
@@ -69,9 +71,18 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const playMusic = async (track: MusicTrack, fadeInDuration: number = 1000) => {
+  const playMusic = async (track: PlayableMusic, fadeInDuration: number = 1000) => {
     await audioManager.playMusic(track, fadeInDuration);
     setCurrentTrack(audioManager.getCurrentTrack());
+  };
+
+  const playSelectedSong = async (selectedSongId: string | null, fallbackTrack: MusicTrack = 'homeMusic', fadeInDuration: number = 1000) => {
+    await audioManager.playSelectedSong(selectedSongId, fallbackTrack, fadeInDuration);
+    setCurrentTrack(audioManager.getCurrentTrack());
+  };
+
+  const isSongAvailable = (songId: string): boolean => {
+    return audioManager.isSongAvailable(songId);
   };
 
   const stopMusic = async (fadeOutDuration: number = 500) => {
@@ -121,6 +132,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const value: AudioContextType = {
     settings,
     playMusic,
+    playSelectedSong,
     stopMusic,
     pauseMusic,
     resumeMusic,
@@ -130,6 +142,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     setMusicVolume,
     setSfxVolume,
     currentTrack,
+    isSongAvailable,
   };
 
   return <AudioContext.Provider value={value}>{children}</AudioContext.Provider>;

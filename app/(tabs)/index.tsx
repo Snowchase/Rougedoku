@@ -11,16 +11,16 @@ const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { playMusic, stopMusic } = useAudio();
+  const { playSelectedSong, stopMusic } = useAudio();
   const { theme } = useTheme();
-  const { coins } = useCurrency();
+  const { coins, selectedSong } = useCurrency();
   const [currentStreak, setCurrentStreak] = useState<number>(0);
 
-  // Play home music when screen is focused, stop when unfocused
+  // Play selected song (or default home music) when screen is focused, stop when unfocused
   useFocusEffect(
     React.useCallback(() => {
-      // Start playing home music with fade in
-      playMusic('homeMusic', 1500);
+      // Start playing selected song (or fall back to home music) with fade in
+      playSelectedSong(selectedSong, 'homeMusic', 1500);
 
       // Load streak
       loadStreak();
@@ -29,7 +29,7 @@ export default function HomeScreen() {
         // Fade out music when leaving screen
         stopMusic(800);
       };
-    }, [])
+    }, [selectedSong])
   );
 
   const loadStreak = async () => {

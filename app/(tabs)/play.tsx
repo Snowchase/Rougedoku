@@ -3,25 +3,27 @@ import { View, StyleSheet } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useAudio } from '../../contexts/AudioContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import SudokuGrid from '../../components/SudokuGrid';
 import { NavigationHeader } from '../../components/navigation-header';
 import { SwipeableScreen } from '../../components/SwipeableScreen';
 
 export default function PlayScreen() {
-  const { playMusic, stopMusic } = useAudio();
+  const { playSelectedSong, stopMusic } = useAudio();
   const { theme } = useTheme();
+  const { selectedSong } = useCurrency();
 
-  // Play gameplay music when screen is focused, stop when unfocused
+  // Play selected song (or default gameplay music) when screen is focused, stop when unfocused
   useFocusEffect(
     React.useCallback(() => {
-      // Start playing gameplay music with fade in
-      playMusic('gameplayMusic', 1500);
+      // Start playing selected song (or fall back to gameplay music) with fade in
+      playSelectedSong(selectedSong, 'gameplayMusic', 1500);
 
       return () => {
         // Fade out music when leaving screen
         stopMusic(800);
       };
-    }, [])
+    }, [selectedSong])
   );
 
   return (

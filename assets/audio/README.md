@@ -12,7 +12,24 @@ This directory contains all audio files for Sudokle.
 assets/audio/
 ├── music/           # Background music tracks
 │   ├── home.mp3     # Home screen music (PLACEHOLDER - replace me!)
-│   └── gameplay.mp3 # Gameplay music (PLACEHOLDER - replace me!)
+│   ├── gameplay.mp3 # Gameplay music (PLACEHOLDER - replace me!)
+│   └── premium/     # Premium purchasable songs (shop items)
+│       ├── ambient-rain.mp3
+│       ├── ambient-forest.mp3
+│       ├── ambient-ocean.mp3
+│       ├── ambient-night.mp3
+│       ├── lofi-chill.mp3
+│       ├── lofi-study.mp3
+│       ├── lofi-cafe.mp3
+│       ├── lofi-sunset.mp3
+│       ├── classical-piano.mp3
+│       ├── classical-strings.mp3
+│       ├── classical-nocturne.mp3
+│       ├── classical-morning.mp3
+│       ├── electronic-synth.mp3
+│       ├── electronic-space.mp3
+│       ├── electronic-neon.mp3
+│       └── electronic-zen.mp3
 └── sfx/             # Sound effects
     ├── place.mp3    # Number placement sound (placeholder)
     ├── complete.mp3 # Puzzle completion sound (placeholder)
@@ -110,6 +127,53 @@ After adding files:
 2. Clear cache if needed: `npm start --clear`
 3. Test on device/simulator
 4. Check Settings panel for music/SFX controls
+
+## 🎶 Premium Songs (Shop Items)
+
+The shop includes 16 premium songs that users can purchase with in-game coins. To enable these songs:
+
+### Step 1: Add Premium Song Files
+
+Place your MP3 files in `assets/audio/music/premium/` with exact filenames:
+
+| Song ID | Filename | Category |
+|---------|----------|----------|
+| ambient-rain | ambient-rain.mp3 | Ambient |
+| ambient-forest | ambient-forest.mp3 | Ambient |
+| ambient-ocean | ambient-ocean.mp3 | Ambient |
+| ambient-night | ambient-night.mp3 | Ambient |
+| lofi-chill | lofi-chill.mp3 | Lo-Fi |
+| lofi-study | lofi-study.mp3 | Lo-Fi |
+| lofi-cafe | lofi-cafe.mp3 | Lo-Fi |
+| lofi-sunset | lofi-sunset.mp3 | Lo-Fi |
+| classical-piano | classical-piano.mp3 | Classical |
+| classical-strings | classical-strings.mp3 | Classical |
+| classical-nocturne | classical-nocturne.mp3 | Classical |
+| classical-morning | classical-morning.mp3 | Classical |
+| electronic-synth | electronic-synth.mp3 | Electronic |
+| electronic-space | electronic-space.mp3 | Electronic |
+| electronic-neon | electronic-neon.mp3 | Electronic |
+| electronic-zen | electronic-zen.mp3 | Electronic |
+
+### Step 2: Uncomment in audioManager.ts
+
+After adding each song file, uncomment the corresponding line in `services/audioManager.ts`:
+
+```typescript
+// Before (commented out)
+// 'ambient-rain': require('../assets/audio/music/premium/ambient-rain.mp3'),
+
+// After (uncommented)
+'ambient-rain': require('../assets/audio/music/premium/ambient-rain.mp3'),
+```
+
+### Step 3: Restart
+
+```bash
+npx expo start --clear
+```
+
+**Note**: Users can still purchase songs in the shop even if the audio files aren't added yet. The app will gracefully fall back to the default music until the premium file is available.
 
 ## Free Music Resources
 
