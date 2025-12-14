@@ -471,42 +471,55 @@ export default function ShopScreen() {
     );
   };
 
-  const renderRewardsInfo = () => (
-    <View style={styles.rewardsContainer}>
-      {/* Watch Ad for Coins */}
-      <View style={[styles.adCard, { backgroundColor: theme.colors.cardBackground }]}>
-        <View style={styles.adHeader}>
-          <Text style={styles.adEmoji}>🎬</Text>
-          <View style={styles.adInfo}>
-            <Text style={[styles.adTitle, { color: theme.colors.textPrimary }]}>
-              Watch Ad for Coins
-            </Text>
-            <Text style={[styles.adDesc, { color: theme.colors.textSecondary }]}>
-              Watch a short video to earn bonus coins
-            </Text>
-          </View>
-        </View>
-        <TouchableOpacity
-          style={[
-            styles.adButton,
-            { backgroundColor: isAdReady ? theme.colors.primaryButton : theme.colors.cellBorder },
-          ]}
-          onPress={handleWatchAd}
-          disabled={!isAdReady || isAdLoading}
-        >
-          {isAdLoading ? (
-            <ActivityIndicator color={theme.colors.primaryButtonText} />
-          ) : (
-            <>
-              <Text style={[styles.adButtonText, { color: theme.colors.primaryButtonText }]}>
-                {isAdReady ? 'Watch Ad' : 'Loading...'}
+  const renderRewardsInfo = () => {
+    const isInExpoGo = adService.isExpoGo();
+
+    return (
+      <View style={styles.rewardsContainer}>
+        {/* Watch Ad for Coins */}
+        <View style={[styles.adCard, { backgroundColor: theme.colors.cardBackground }]}>
+          <View style={styles.adHeader}>
+            <Text style={styles.adEmoji}>🎬</Text>
+            <View style={styles.adInfo}>
+              <Text style={[styles.adTitle, { color: theme.colors.textPrimary }]}>
+                Watch Ad for Coins
               </Text>
-              <View style={styles.adReward}>
-                <Text style={styles.adRewardText}>+25</Text>
-              </View>
-            </>
+              <Text style={[styles.adDesc, { color: theme.colors.textSecondary }]}>
+                {isInExpoGo
+                  ? 'Ads require a development build'
+                  : 'Watch a short video to earn bonus coins'}
+              </Text>
+            </View>
+          </View>
+          {isInExpoGo ? (
+            <View style={[styles.adButton, { backgroundColor: theme.colors.cellBorder }]}>
+              <Text style={[styles.adButtonText, { color: theme.colors.textSecondary }]}>
+                Not Available in Expo Go
+              </Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[
+                styles.adButton,
+                { backgroundColor: isAdReady ? theme.colors.primaryButton : theme.colors.cellBorder },
+              ]}
+              onPress={handleWatchAd}
+              disabled={!isAdReady || isAdLoading}
+            >
+              {isAdLoading ? (
+                <ActivityIndicator color={theme.colors.primaryButtonText} />
+              ) : (
+                <>
+                  <Text style={[styles.adButtonText, { color: theme.colors.primaryButtonText }]}>
+                    {isAdReady ? 'Watch Ad' : 'Loading...'}
+                  </Text>
+                  <View style={styles.adReward}>
+                    <Text style={styles.adRewardText}>+25</Text>
+                  </View>
+                </>
+              )}
+            </TouchableOpacity>
           )}
-        </TouchableOpacity>
       </View>
 
       <View style={[styles.rewardCard, { backgroundColor: theme.colors.cardBackground }]}>
@@ -577,7 +590,8 @@ export default function ShopScreen() {
         </View>
       </View>
     </View>
-  );
+    );
+  };
 
   const tabs: { id: ShopTab; label: string; icon: string }[] = [
     { id: 'themes', label: 'Themes', icon: '🎨' },

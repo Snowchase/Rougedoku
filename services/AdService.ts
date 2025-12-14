@@ -1,112 +1,78 @@
 import { Platform } from 'react-native';
-import {
-  RewardedAd,
-  RewardedAdEventType,
-  TestIds,
-  AdEventType,
-} from 'react-native-google-mobile-ads';
+import Constants from 'expo-constants';
+
+// Check if running in Expo Go (where native modules aren't available)
+const isExpoGo = Constants.appOwnership === 'expo';
 
 // Use test IDs during development, replace with real IDs for production
 // To get real Ad Unit IDs, create them in your AdMob console: https://admob.google.com
-const REWARDED_AD_UNIT_ID = __DEV__
-  ? TestIds.REWARDED
-  : Platform.select({
-      ios: 'ca-app-pub-4722969639622172~7306998501', // Replace with your iOS rewarded ad unit ID
-      android: 'ca-app-pub-4722969639622172~7306998501', // Replace with your Android rewarded ad unit ID
-    }) || TestIds.REWARDED;
+const TEST_REWARDED_AD_ID = Platform.select({
+  ios: 'ca-app-pub-3940256099942544/1712485313',
+  android: 'ca-app-pub-3940256099942544/5224354917',
+}) || '';
 
-class AdService {
-  private rewardedAd: RewardedAd | null = null;
-  private isLoading: boolean = false;
-  private isLoaded: boolean = false;
+const PRODUCTION_REWARDED_AD_ID = Platform.select({
+  ios: 'ca-app-pub-4722969639622172/XXXXXXXXXX', // Replace XXXXXXXXXX with your iOS rewarded ad unit ID
+  android: 'ca-app-pub-4722969639622172/XXXXXXXXXX', // Replace XXXXXXXXXX with your Android rewarded ad unit ID
+}) || '';
 
-  constructor() {
-    this.loadRewardedAd();
+const REWARDED_AD_UNIT_ID = __DEV__ ? TEST_REWARDED_AD_ID : PRODUCTION_REWARDED_AD_ID;
+
+interface IAdService {
+  isAdsAvailable(): boolean;
+  isExpoGo(): boolean;
+  initialize(): Promise<void>;
+  isRewardedAdReady(): boolean;
+  showRewardedAd(): Promise<boolean>;
+}
+
+// Stub implementation - works in Expo Go without crashing
+// To enable real ads, create a development build: npx expo run:android or npx expo run:ios
+class AdServiceStub implements IAdService {
+  isAdsAvailable(): boolean {
+    return false;
   }
 
-  /**
-   * Load a rewarded ad
-   */
-  loadRewardedAd(): void {
-    if (this.isLoading || this.isLoaded) return;
-
-    this.isLoading = true;
-    this.rewardedAd = RewardedAd.createForAdRequest(REWARDED_AD_UNIT_ID, {
-      requestNonPersonalizedAdsOnly: true,
-    });
-
-    const unsubscribeLoaded = this.rewardedAd.addAdEventListener(
-      RewardedAdEventType.LOADED,
-      () => {
-        this.isLoaded = true;
-        this.isLoading = false;
-        unsubscribeLoaded();
-      }
-    );
-
-    const unsubscribeError = this.rewardedAd.addAdEventListener(
-      AdEventType.ERROR,
-      (error) => {
-        console.log('Rewarded ad failed to load:', error);
-        this.isLoading = false;
-        this.isLoaded = false;
-        unsubscribeError();
-        // Retry loading after a delay
-        setTimeout(() => this.loadRewardedAd(), 30000);
-      }
-    );
-
-    this.rewardedAd.load();
+  isExpoGo(): boolean {
+    return isExpoGo;
   }
 
-  /**
-   * Check if a rewarded ad is ready to show
-   */
+  async initialize(): Promise<void> {
+    if (isExpoGo) {
+      console.log('Ads not available in Expo Go. Create a development build to enable ads.');
+      console.log('Run: npx expo run:android or npx expo run:ios');
+    }
+  }
+
   isRewardedAdReady(): boolean {
-    return this.isLoaded && this.rewardedAd !== null;
+    return false;
   }
 
-  /**
-   * Show a rewarded ad
-   * @returns Promise that resolves with true if user earned reward, false otherwise
-   */
   async showRewardedAd(): Promise<boolean> {
-    return new Promise((resolve) => {
-      if (!this.rewardedAd || !this.isLoaded) {
-        console.log('Rewarded ad not ready');
-        resolve(false);
-        return;
-      }
-
-      let earned = false;
-
-      const unsubscribeEarned = this.rewardedAd.addAdEventListener(
-        RewardedAdEventType.EARNED_REWARD,
-        (reward) => {
-          console.log('User earned reward:', reward);
-          earned = true;
-        }
-      );
-
-      const unsubscribeClosed = this.rewardedAd.addAdEventListener(
-        AdEventType.CLOSED,
-        () => {
-          unsubscribeEarned();
-          unsubscribeClosed();
-
-          // Reset state and load next ad
-          this.isLoaded = false;
-          this.rewardedAd = null;
-          this.loadRewardedAd();
-
-          resolve(earned);
-        }
-      );
-
-      this.rewardedAd.show();
-    });
+    console.log('Ads not available. Create a development build to enable ads.');
+    return false;
   }
 }
 
-// Export singleton instance
-export const adService = new AdService();
+// Export the stub service
+// When you create a development build, you can update this to use the real implementation
+export const adService: IAdService = new AdServiceStub();
+
+/*
+ * ============================================
+ * DEVELOPMENT BUILD IMPLEMENTATION
+ * ============================================
+ *
+ * When you're ready to test ads with a development build:
+ *
+ * 1. Install the package: npx expo install react-native-google-mobile-ads
+ * 2. Add to app.json plugins:
+ *    ["react-native-google-mobile-ads", {
+ *      "androidAppId": "ca-app-pub-4722969639622172~7306998501",
+ *      "iosAppId": "ca-app-pub-4722969639622172~7306998501"
+ *    }]
+ * 3. Build with: npx expo run:android or npx expo run:ios
+ * 4. Update this file to import and use the real implementation
+ *
+ * AdMob App ID: ca-app-pub-4722969639622172~7306998501
+ */
