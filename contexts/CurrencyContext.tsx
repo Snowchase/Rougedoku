@@ -36,8 +36,9 @@ interface CurrencyContextType {
     date: string,
     difficulty: Difficulty,
     elapsedTime: number,
-    hintsUsed: number
-  ) => Promise<{ total: number; breakdown: { baseReward: number; timeBonus: number; hintPenalty: number; firstBonus: number } }>;
+    hintsUsed: number,
+    mistakesCount: number
+  ) => Promise<{ total: number; breakdown: { baseReward: number; timeBonus: number; hintPenalty: number; mistakePenalty: number; firstBonus: number } }>;
   buyTheme: (themeKey: string, price: number) => Promise<{ success: boolean; message: string }>;
   buyAvatar: (avatar: string, price: number) => Promise<{ success: boolean; message: string }>;
   buyCellStyle: (style: string, price: number) => Promise<{ success: boolean; message: string }>;
@@ -104,10 +105,11 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     date: string,
     difficulty: Difficulty,
     elapsedTime: number,
-    hintsUsed: number
+    hintsUsed: number,
+    mistakesCount: number
   ) => {
     const isFirst = await checkFirstCompletion(date, difficulty);
-    const reward = calculatePuzzleReward(difficulty, elapsedTime, hintsUsed, isFirst);
+    const reward = calculatePuzzleReward(difficulty, elapsedTime, hintsUsed, mistakesCount, isFirst);
 
     const newData = await addCoins(reward.total);
     setCurrencyData(newData);
@@ -118,6 +120,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
         baseReward: reward.baseReward,
         timeBonus: reward.timeBonus,
         hintPenalty: reward.hintPenalty,
+        mistakePenalty: reward.mistakePenalty,
         firstBonus: reward.firstBonus,
       },
     };
