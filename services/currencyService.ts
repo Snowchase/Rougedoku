@@ -39,6 +39,9 @@ const TIME_BONUSES: { threshold: number; bonus: number }[] = [
 // Hint penalty (coins deducted per hint used)
 const HINT_PENALTY = 5;
 
+// Mistake penalty (coins deducted per mistake made)
+const MISTAKE_PENALTY = 5;
+
 // First completion bonus for each difficulty
 const FIRST_COMPLETION_BONUS = 50;
 
@@ -114,8 +117,9 @@ export function calculatePuzzleReward(
   difficulty: Difficulty,
   elapsedTime: number,
   hintsUsed: number,
+  mistakesCount: number = 0,
   isFirstCompletion: boolean = false
-): { baseReward: number; timeBonus: number; hintPenalty: number; firstBonus: number; total: number } {
+): { baseReward: number; timeBonus: number; hintPenalty: number; mistakePenalty: number; firstBonus: number; total: number } {
   const baseReward = DIFFICULTY_BASE_REWARDS[difficulty];
 
   // Calculate time bonus
@@ -130,16 +134,20 @@ export function calculatePuzzleReward(
   // Calculate hint penalty
   const hintPenalty = hintsUsed * HINT_PENALTY;
 
+  // Calculate mistake penalty
+  const mistakePenalty = mistakesCount * MISTAKE_PENALTY;
+
   // First completion bonus
   const firstBonus = isFirstCompletion ? FIRST_COMPLETION_BONUS : 0;
 
   // Calculate total (minimum 1 coin)
-  const total = Math.max(1, baseReward + timeBonus - hintPenalty + firstBonus);
+  const total = Math.max(1, baseReward + timeBonus - hintPenalty - mistakePenalty + firstBonus);
 
   return {
     baseReward,
     timeBonus,
     hintPenalty,
+    mistakePenalty,
     firstBonus,
     total,
   };

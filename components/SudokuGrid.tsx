@@ -34,6 +34,7 @@ const DIFFICULTY_CONFIG = {
 interface GameState {
   grid: number[][];
   hintsUsed: number;
+  mistakesCount: number;
   elapsedTime: number;
   isComplete: boolean;
   notes: {[key: string]: number[]};
@@ -53,6 +54,7 @@ const SudokuGrid = () => {
   const [startTime, setStartTime] = useState(Date.now());
   const [elapsedTime, setElapsedTime] = useState(0);
   const [hintsUsed, setHintsUsed] = useState(0);
+  const [mistakesCount, setMistakesCount] = useState(0);
   const [noteMode, setNoteMode] = useState(false);
   const [notes, setNotes] = useState<{[key: string]: number[]}>({});
   const [isComplete, setIsComplete] = useState(false);
@@ -110,7 +112,7 @@ const SudokuGrid = () => {
     if (grid.length > 0 && !isComplete) {
       saveGameState();
     }
-  }, [grid, hintsUsed, elapsedTime, notes]);
+  }, [grid, hintsUsed, mistakesCount, elapsedTime, notes]);
 
   const getStorageKey = () => `sudokle_${todayDate}_${difficulty}`;
 
@@ -134,6 +136,7 @@ const SudokuGrid = () => {
           setOriginal(puzzle);
           setSolution(sol);
           setHintsUsed(state.hintsUsed);
+          setMistakesCount(state.mistakesCount || 0);
           setElapsedTime(state.elapsedTime);
           setNotes(state.notes || {});
           setIsComplete(state.isComplete);
@@ -159,6 +162,7 @@ const SudokuGrid = () => {
     setStartTime(Date.now());
     setElapsedTime(0);
     setHintsUsed(0);
+    setMistakesCount(0);
     setNotes({});
     setIsComplete(false);
     setSelectedCell(null);
@@ -173,6 +177,7 @@ const SudokuGrid = () => {
       const state: GameState = {
         grid,
         hintsUsed,
+        mistakesCount,
         elapsedTime,
         isComplete,
         notes,
@@ -242,6 +247,7 @@ const SudokuGrid = () => {
     if (num !== 0 && num !== solution[row][col]) {
       // Incorrect number
       playSoundEffect('errorSound');
+      setMistakesCount(mistakesCount + 1);
       Alert.alert('❌ Incorrect', "That number doesn't belong there!");
     } else if (num !== 0) {
       // Correct number placed
@@ -266,6 +272,7 @@ const SudokuGrid = () => {
       const state: GameState = {
         grid: currentGrid,
         hintsUsed,
+        mistakesCount,
         elapsedTime,
         isComplete: true,
         notes,
@@ -274,9 +281,9 @@ const SudokuGrid = () => {
       await AsyncStorage.setItem(getStorageKey(), JSON.stringify(state));
 
       // Award coins for completion
-      let coinReward = { total: 0, breakdown: { baseReward: 0, timeBonus: 0, hintPenalty: 0, firstBonus: 0 } };
+      let coinReward = { total: 0, breakdown: { baseReward: 0, timeBonus: 0, hintPenalty: 0, mistakePenalty: 0, firstBonus: 0 } };
       try {
-        coinReward = await awardPuzzleCompletion(todayDate, difficulty, elapsedTime, hintsUsed);
+        coinReward = await awardPuzzleCompletion(todayDate, difficulty, elapsedTime, hintsUsed, mistakesCount);
         console.log('Coins awarded:', coinReward.total);
       } catch (error) {
         console.error('Error awarding coins:', error);
@@ -299,7 +306,7 @@ const SudokuGrid = () => {
     }
   };
 
-  const showCompletionScreen = (coinReward: { total: number; breakdown: { baseReward: number; timeBonus: number; hintPenalty: number; firstBonus: number } }) => {
+  const showCompletionScreen = (coinReward: { total: number; breakdown: { baseReward: number; timeBonus: number; hintPenalty: number; mistakePenalty: number; firstBonus: number } }) => {
     const minutes = Math.floor(elapsedTime / 60);
     const seconds = elapsedTime % 60;
 
@@ -320,8 +327,11 @@ const SudokuGrid = () => {
     if (coinReward.breakdown.hintPenalty > 0) {
       rewardText += `\n   💡 Hints used: -${coinReward.breakdown.hintPenalty}`;
     }
+    if (coinReward.breakdown.mistakePenalty > 0) {
+      rewardText += `\n   ❌ Mistakes: -${coinReward.breakdown.mistakePenalty}`;
+    }
 
-    const shareText = `Sudokle ${todayDate}\n${difficultyEmoji[difficulty]} ${difficulty.toUpperCase()}\n⏱️ ${minutes}:${seconds.toString().padStart(2, '0')}\n💡 ${hintsUsed} hints${rewardText}`;
+    const shareText = `Sudokle ${todayDate}\n${difficultyEmoji[difficulty]} ${difficulty.toUpperCase()}\n⏱️ ${minutes}:${seconds.toString().padStart(2, '0')}\n💡 ${hintsUsed} hints\n❌ ${mistakesCount} mistakes${rewardText}`;
 
     Alert.alert(
       '🎉 Daily Puzzle Complete!',
@@ -578,7 +588,7 @@ const SudokuGrid = () => {
         {/* Divider */}
         <View style={[styles.divider, { backgroundColor: theme.isDark ? '#3F3F46' : '#E5E7EB' }]} />
 
-        {/* Timer and Hints Row */}
+        {/* Timer, Hints, and Mistakes Row */}
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
             <Text style={styles.statIcon}>⏱️</Text>
@@ -594,6 +604,16 @@ const SudokuGrid = () => {
               <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>Hints</Text>
               <Text style={[styles.statValue, { color: theme.colors.textPrimary }]}>
                 {hintsUsed}/{DIFFICULTY_CONFIG[difficulty].maxHints}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.statItem}>
+            <Text style={styles.statIcon}>❌</Text>
+            <View style={styles.statInfo}>
+              <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>Mistakes</Text>
+              <Text style={[styles.statValue, { color: theme.colors.textPrimary }]}>
+                {mistakesCount}
               </Text>
             </View>
           </View>
