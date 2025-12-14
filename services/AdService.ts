@@ -65,20 +65,14 @@ export const adService: IAdService = new AdServiceStub();
  *
  * When you're ready to test ads with a development build:
  *
- * 1. Run: npx expo run:android or npx expo run:ios
- * 2. Uncomment the RealAdService class below and update the export
+ * 1. Install the package: npx expo install react-native-google-mobile-ads
+ * 2. Add to app.json plugins:
+ *    ["react-native-google-mobile-ads", {
+ *      "androidAppId": "ca-app-pub-4722969639622172~7306998501",
+ *      "iosAppId": "ca-app-pub-4722969639622172~7306998501"
+ *    }]
+ * 3. Build with: npx expo run:android or npx expo run:ios
+ * 4. Update this file to import and use the real implementation
  *
- * Example real implementation (uncomment when using dev build):
- *
- * import { RewardedAd, RewardedAdEventType, AdEventType } from 'react-native-google-mobile-ads';
- *
- * class RealAdService implements IAdService {
- *   private rewardedAd: RewardedAd | null = null;
- *   private isLoading = false;
- *   private isLoaded = false;
- *
- *   // ... full implementation
- * }
- *
- * export const adService: IAdService = isExpoGo ? new AdServiceStub() : new RealAdService();
+ * AdMob App ID: ca-app-pub-4722969639622172~7306998501
  */
