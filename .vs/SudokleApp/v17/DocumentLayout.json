@@ -1,0 +1,156 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\SwipeableScreen.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:components\\SwipeableScreen.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\SudokuGrid.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:components\\SudokuGrid.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\StatsDisplay.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:components\\StatsDisplay.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\navigation-header.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:components\\navigation-header.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\ui\\icon-symbol.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:components\\ui\\icon-symbol.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\firebaseConfig.ts||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:components\\firebaseConfig.ts||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\dailyPuzzleGenerator.ts||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:components\\dailyPuzzleGenerator.ts||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\AUDIO_SYSTEM.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:AUDIO_SYSTEM.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "SwipeableScreen.tsx",
+              "DocumentMoniker": "C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\SwipeableScreen.tsx",
+              "RelativeDocumentMoniker": "components\\SwipeableScreen.tsx",
+              "ToolTip": "C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\SwipeableScreen.tsx",
+              "RelativeToolTip": "components\\SwipeableScreen.tsx",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAAAB0AAABKAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
+              "WhenOpened": "2025-12-13T08:42:58.662Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "SudokuGrid.tsx",
+              "DocumentMoniker": "C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\SudokuGrid.tsx",
+              "RelativeDocumentMoniker": "components\\SudokuGrid.tsx",
+              "ToolTip": "C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\SudokuGrid.tsx",
+              "RelativeToolTip": "components\\SudokuGrid.tsx",
+              "ViewState": "AgIAAIEBAAAAAAAAAAAAAC8AAABFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
+              "WhenOpened": "2025-12-13T06:30:33.001Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "StatsDisplay.tsx",
+              "DocumentMoniker": "C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\StatsDisplay.tsx",
+              "RelativeDocumentMoniker": "components\\StatsDisplay.tsx",
+              "ToolTip": "C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\StatsDisplay.tsx",
+              "RelativeToolTip": "components\\StatsDisplay.tsx",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
+              "WhenOpened": "2025-12-13T06:30:32.059Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "navigation-header.tsx",
+              "DocumentMoniker": "C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\navigation-header.tsx",
+              "RelativeDocumentMoniker": "components\\navigation-header.tsx",
+              "ToolTip": "C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\navigation-header.tsx",
+              "RelativeToolTip": "components\\navigation-header.tsx",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
+              "WhenOpened": "2025-12-13T06:30:24.459Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "icon-symbol.tsx",
+              "DocumentMoniker": "C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\ui\\icon-symbol.tsx",
+              "RelativeDocumentMoniker": "components\\ui\\icon-symbol.tsx",
+              "ToolTip": "C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\ui\\icon-symbol.tsx",
+              "RelativeToolTip": "components\\ui\\icon-symbol.tsx",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAAA0AAABVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
+              "WhenOpened": "2025-12-13T06:29:48.176Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "firebaseConfig.ts",
+              "DocumentMoniker": "C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\firebaseConfig.ts",
+              "RelativeDocumentMoniker": "components\\firebaseConfig.ts",
+              "ToolTip": "C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\firebaseConfig.ts",
+              "RelativeToolTip": "components\\firebaseConfig.ts",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
+              "WhenOpened": "2025-12-13T06:29:24.383Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "dailyPuzzleGenerator.ts",
+              "DocumentMoniker": "C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\dailyPuzzleGenerator.ts",
+              "RelativeDocumentMoniker": "components\\dailyPuzzleGenerator.ts",
+              "ToolTip": "C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\components\\dailyPuzzleGenerator.ts",
+              "RelativeToolTip": "components\\dailyPuzzleGenerator.ts",
+              "ViewState": "AgIAACEAAAAAAAAAAAAowBoAAAA0AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
+              "WhenOpened": "2025-12-13T06:19:24.209Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "AUDIO_SYSTEM.md",
+              "DocumentMoniker": "C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\AUDIO_SYSTEM.md",
+              "RelativeDocumentMoniker": "AUDIO_SYSTEM.md",
+              "ToolTip": "C:\\Users\\Chase\\Desktop\\Sudokle\\SudokleApp\\AUDIO_SYSTEM.md",
+              "RelativeToolTip": "AUDIO_SYSTEM.md",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2025-12-13T06:18:40.323Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

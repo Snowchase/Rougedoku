@@ -80,50 +80,6 @@ Sudokle/
 └── assets/                # Images, sounds, fonts
 ```
 
-## Getting Started
-
-### Prerequisites
-- Node.js 18+
-- npm or yarn
-- Expo CLI
-- iOS Simulator / Android Emulator or physical device
-
-### Installation
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd Sudokle
-
-# Install dependencies
-npm install
-
-# Start the development server
-npx expo start
-```
-
-### Running the App
-
-- **Expo Go (Development)**: Scan QR code with Expo Go app
-- **iOS Simulator**: Press `i` in terminal
-- **Android Emulator**: Press `a` in terminal
-- **Development Build** (for ads): `npx expo run:android` or `npx expo run:ios`
-
-## Configuration
-
-### AdMob Setup
-1. Create an AdMob account at https://admob.google.com
-2. Create an app and get your App ID
-3. Create a Rewarded Ad Unit
-4. Update IDs in:
-   - `app.json` (GADApplicationIdentifier, googleMobileAdsAppId)
-   - `services/AdService.ts` (PRODUCTION_REWARDED_AD_ID)
-
-### Firebase Setup
-1. Create a Firebase project
-2. Enable Authentication and Firestore
-3. Update `components/firebaseConfig.ts` with your config
-
 ## Version
 
 **Current Version**: 1.0.2
@@ -134,4 +90,39 @@ Private - All rights reserved
 
 ## Author
 
+Robert Edie
 Sudokle Team
+
+# Audio System Documentation
+
+This document explains the audio system in Sudokle and how to add your own music and sound effects.
+
+## Overview
+
+Sudokle features a complete audio system with:
+- **Background Music**: Different tracks for home screen and gameplay
+- **Fade In/Out**: Smooth transitions between screens
+- **Sound Effects**: Button clicks, number placement, puzzle completion, etc.
+- **User Controls**: Toggle music/SFX on/off and adjust volumes
+- **Background Playback**: Music continues when app is minimized (iOS only)
+
+## Architecture
+
+### 1. Audio Manager (`services/audioManager.ts`)
+Core service that handles all audio playback:
+- Loads and plays audio files
+- Manages fade in/out transitions
+- Handles volume control
+- Persists user settings with AsyncStorage
+
+### 2. Audio Context (`contexts/AudioContext.tsx`)
+React Context that provides audio controls to all components:
+- Wraps the app at root level
+- Handles app state changes (background/foreground)
+- Provides hooks for music and sound effects
+- Manages audio settings globally
+
+### 3. Integration Points
+- **Home Screen** (`app/(tabs)/index.tsx`): Plays `homeMusic`
+- **Gameplay Screen** (`app/(tabs)/play.tsx`): Plays `gameplayMusic`
+- **Settings Screen** (`app/(tabs)/settings.tsx`): Music/SFX controls
