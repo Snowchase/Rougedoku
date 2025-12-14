@@ -14,18 +14,14 @@ assets/audio/
 │   ├── home.mp3     # Home screen music (PLACEHOLDER - replace me!)
 │   ├── gameplay.mp3 # Gameplay music (PLACEHOLDER - replace me!)
 │   └── premium/     # Premium purchasable songs (shop items)
-│       ├── ambient-rain.mp3
-│       ├── ambient-forest.mp3
-│       ├── ambient-ocean.mp3
-│       ├── ambient-night.mp3
 │       ├── lofi-chill.mp3
 │       ├── lofi-study.mp3
 │       ├── lofi-cafe.mp3
 │       ├── lofi-sunset.mp3
-│       ├── classical-piano.mp3
-│       ├── classical-strings.mp3
-│       ├── classical-nocturne.mp3
-│       ├── classical-morning.mp3
+│       ├── jazz-piano.mp3
+│       ├── jazz-saxophone.mp3
+│       ├── jazz-swing.mp3
+│       ├── jazz-bossa.mp3
 │       ├── electronic-synth.mp3
 │       ├── electronic-space.mp3
 │       ├── electronic-neon.mp3
@@ -130,7 +126,7 @@ After adding files:
 
 ## 🎶 Premium Songs (Shop Items)
 
-The shop includes 16 premium songs that users can purchase with in-game coins. To enable these songs:
+The shop includes 12 premium songs that users can purchase with in-game coins. To enable these songs:
 
 ### Step 1: Add Premium Song Files
 
@@ -138,18 +134,14 @@ Place your MP3 files in `assets/audio/music/premium/` with exact filenames:
 
 | Song ID | Filename | Category |
 |---------|----------|----------|
-| ambient-rain | ambient-rain.mp3 | Ambient |
-| ambient-forest | ambient-forest.mp3 | Ambient |
-| ambient-ocean | ambient-ocean.mp3 | Ambient |
-| ambient-night | ambient-night.mp3 | Ambient |
 | lofi-chill | lofi-chill.mp3 | Lo-Fi |
 | lofi-study | lofi-study.mp3 | Lo-Fi |
 | lofi-cafe | lofi-cafe.mp3 | Lo-Fi |
 | lofi-sunset | lofi-sunset.mp3 | Lo-Fi |
-| classical-piano | classical-piano.mp3 | Classical |
-| classical-strings | classical-strings.mp3 | Classical |
-| classical-nocturne | classical-nocturne.mp3 | Classical |
-| classical-morning | classical-morning.mp3 | Classical |
+| jazz-piano | jazz-piano.mp3 | Jazz |
+| jazz-saxophone | jazz-saxophone.mp3 | Jazz |
+| jazz-swing | jazz-swing.mp3 | Jazz |
+| jazz-bossa | jazz-bossa.mp3 | Jazz |
 | electronic-synth | electronic-synth.mp3 | Electronic |
 | electronic-space | electronic-space.mp3 | Electronic |
 | electronic-neon | electronic-neon.mp3 | Electronic |
@@ -161,10 +153,10 @@ After adding each song file, uncomment the corresponding line in `services/audio
 
 ```typescript
 // Before (commented out)
-// 'ambient-rain': require('../assets/audio/music/premium/ambient-rain.mp3'),
+// 'lofi-chill': require('../assets/audio/music/premium/lofi-chill.mp3'),
 
 // After (uncommented)
-'ambient-rain': require('../assets/audio/music/premium/ambient-rain.mp3'),
+'lofi-chill': require('../assets/audio/music/premium/lofi-chill.mp3'),
 ```
 
 ### Step 3: Restart

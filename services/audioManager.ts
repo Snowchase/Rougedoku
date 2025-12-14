@@ -22,26 +22,20 @@ const DEFAULT_AUDIO_FILES: Record<string, any> = {
 };
 
 // Premium song audio files - Add your MP3 files to assets/audio/music/premium/
-// The song ID must match the file name (e.g., 'ambient-rain' -> 'ambient-rain.mp3')
+// The song ID must match the file name (e.g., 'lofi-chill' -> 'lofi-chill.mp3')
 // Uncomment and add the require statements for each song you add
 const PREMIUM_SONG_FILES: Record<string, any> = {
-  // Ambient tracks
-  // 'ambient-rain': require('../assets/audio/music/premium/ambient-rain.mp3'),
-  // 'ambient-forest': require('../assets/audio/music/premium/ambient-forest.mp3'),
-  // 'ambient-ocean': require('../assets/audio/music/premium/ambient-ocean.mp3'),
-  // 'ambient-night': require('../assets/audio/music/premium/ambient-night.mp3'),
-
   // Lo-fi tracks
   // 'lofi-chill': require('../assets/audio/music/premium/lofi-chill.mp3'),
   // 'lofi-study': require('../assets/audio/music/premium/lofi-study.mp3'),
   // 'lofi-cafe': require('../assets/audio/music/premium/lofi-cafe.mp3'),
   // 'lofi-sunset': require('../assets/audio/music/premium/lofi-sunset.mp3'),
 
-  // Classical tracks
-  // 'classical-piano': require('../assets/audio/music/premium/classical-piano.mp3'),
-  // 'classical-strings': require('../assets/audio/music/premium/classical-strings.mp3'),
-  // 'classical-nocturne': require('../assets/audio/music/premium/classical-nocturne.mp3'),
-  // 'classical-morning': require('../assets/audio/music/premium/classical-morning.mp3'),
+  // Jazz tracks
+  // 'jazz-piano': require('../assets/audio/music/premium/jazz-piano.mp3'),
+  // 'jazz-saxophone': require('../assets/audio/music/premium/jazz-saxophone.mp3'),
+  // 'jazz-swing': require('../assets/audio/music/premium/jazz-swing.mp3'),
+  // 'jazz-bossa': require('../assets/audio/music/premium/jazz-bossa.mp3'),
 
   // Electronic tracks
   // 'electronic-synth': require('../assets/audio/music/premium/electronic-synth.mp3'),
@@ -58,9 +52,8 @@ const AUDIO_FILES: Record<string, any> = {
 
 export type MusicTrack = 'homeMusic' | 'gameplayMusic';
 export type PremiumSongId =
-  | 'ambient-rain' | 'ambient-forest' | 'ambient-ocean' | 'ambient-night'
   | 'lofi-chill' | 'lofi-study' | 'lofi-cafe' | 'lofi-sunset'
-  | 'classical-piano' | 'classical-strings' | 'classical-nocturne' | 'classical-morning'
+  | 'jazz-piano' | 'jazz-saxophone' | 'jazz-swing' | 'jazz-bossa'
   | 'electronic-synth' | 'electronic-space' | 'electronic-neon' | 'electronic-zen';
 export type SoundEffect = 'numberPlace' | 'puzzleComplete' | 'buttonClick' | 'errorSound';
 
