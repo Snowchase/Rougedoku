@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { themes, themeKeys, ThemeKey } from '../../constants/themes';
+import { premiumAvatars } from '../../constants/customizations';
 import {
   initializeUser,
   getUserProfile,
@@ -295,6 +296,7 @@ export default function SocialScreen() {
           Avatar
         </Text>
         <View style={styles.avatarGrid}>
+          {/* Free avatars */}
           {AVATAR_OPTIONS.map((avatar) => (
             <TouchableOpacity
               key={avatar}
@@ -311,6 +313,25 @@ export default function SocialScreen() {
               <Text style={styles.avatarOptionText}>{avatar}</Text>
             </TouchableOpacity>
           ))}
+          {/* Purchased premium avatars */}
+          {premiumAvatars
+            .filter((premiumAvatar) => isAvatarOwned(premiumAvatar.id))
+            .map((premiumAvatar) => (
+              <TouchableOpacity
+                key={premiumAvatar.id}
+                style={[
+                  styles.avatarOption,
+                  { backgroundColor: theme.colors.cellBackground },
+                  selectedAvatar === premiumAvatar.emoji && {
+                    borderColor: theme.colors.primaryButton,
+                    borderWidth: 3,
+                  },
+                ]}
+                onPress={() => handleAvatarSelect(premiumAvatar.emoji)}
+              >
+                <Text style={styles.avatarOptionText}>{premiumAvatar.emoji}</Text>
+              </TouchableOpacity>
+            ))}
         </View>
 
         {/* Color Selector */}
