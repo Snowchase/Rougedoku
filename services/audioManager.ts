@@ -20,28 +20,24 @@ const DEFAULT_AUDIO_FILES: Record<string, any> = {
   buttonClick: require('../assets/audio/sfx/click.mp3'),
   errorSound: require('../assets/audio/sfx/error.mp3'),
 };
-
-// Premium song audio files - Add your MP3 files to assets/audio/music/premium/
-// The song ID must match the file name (e.g., 'lofi-chill' -> 'lofi-chill.mp3')
-// Uncomment and add the require statements for each song you add
 const PREMIUM_SONG_FILES: Record<string, any> = {
   // Lo-fi tracks
-  // 'lofi-chill': require('../assets/audio/music/premium/lofi-chill.mp3'),
-  // 'lofi-study': require('../assets/audio/music/premium/lofi-study.mp3'),
-  // 'lofi-cafe': require('../assets/audio/music/premium/lofi-cafe.mp3'),
-  // 'lofi-sunset': require('../assets/audio/music/premium/lofi-sunset.mp3'),
+   'lofi-chill': require('../assets/audio/music/premium/lofi-chill.mp3'),
+   'lofi-study': require('../assets/audio/music/premium/lofi-study.mp3'),
+   'lofi-cafe': require('../assets/audio/music/premium/lofi-cafe.mp3'),
+   'lofi-sunset': require('../assets/audio/music/premium/lofi-sunset.mp3'),
 
   // Jazz tracks
-  // 'jazz-piano': require('../assets/audio/music/premium/jazz-piano.mp3'),
-  // 'jazz-saxophone': require('../assets/audio/music/premium/jazz-saxophone.mp3'),
-  // 'jazz-swing': require('../assets/audio/music/premium/jazz-swing.mp3'),
-  // 'jazz-bossa': require('../assets/audio/music/premium/jazz-bossa.mp3'),
+   'jazz-piano': require('../assets/audio/music/premium/jazz-piano.mp3'),
+   'jazz-saxophone': require('../assets/audio/music/premium/jazz-saxophone.mp3'),
+   'jazz-swing': require('../assets/audio/music/premium/jazz-swing.mp3'),
+   'jazz-bossa': require('../assets/audio/music/premium/jazz-bossa.mp3'),
 
   // Electronic tracks
-  // 'electronic-synth': require('../assets/audio/music/premium/electronic-synth.mp3'),
-  // 'electronic-space': require('../assets/audio/music/premium/electronic-space.mp3'),
-  // 'electronic-neon': require('../assets/audio/music/premium/electronic-neon.mp3'),
-  // 'electronic-zen': require('../assets/audio/music/premium/electronic-zen.mp3'),
+   'electronic-synth': require('../assets/audio/music/premium/electronic-synth.mp3'),
+   'electronic-space': require('../assets/audio/music/premium/electronic-space.mp3'),
+   'electronic-neon': require('../assets/audio/music/premium/electronic-neon.mp3'),
+   'electronic-zen': require('../assets/audio/music/premium/electronic-zen.mp3'),
 };
 
 // Combined audio files for lookup
