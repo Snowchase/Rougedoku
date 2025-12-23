@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,14 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useTheme } from '../contexts/ThemeContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { themes, themeKeys, ThemeKey } from '../constants/themes';
 import { numberFonts, premiumAvatars, avatarCategories, AvatarCategory, premiumSongs, songCategories, SongCategory } from '../constants/customizations';
-import { adService } from '../services/AdService';
 
 type ShopTab = 'themes' | 'fonts' | 'avatars' | 'songs' | 'rewards';
 
@@ -34,45 +32,10 @@ export default function ShopScreen() {
     buySong,
     selectedSong,
     setSelectedSong,
-    addBonusCoins,
   } = useCurrency();
   const [activeTab, setActiveTab] = useState<ShopTab>('themes');
   const [avatarCategory, setAvatarCategory] = useState<AvatarCategory>('animals');
   const [songCategory, setSongCategory] = useState<SongCategory>('ambient');
-  const [isAdLoading, setIsAdLoading] = useState(false);
-  const [isAdReady, setIsAdReady] = useState(false);
-
-  // Check if ad is ready periodically
-  useEffect(() => {
-    const checkAdReady = () => {
-      setIsAdReady(adService.isRewardedAdReady());
-    };
-
-    checkAdReady();
-    const interval = setInterval(checkAdReady, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleWatchAd = async () => {
-    if (!adService.isRewardedAdReady()) {
-      Alert.alert('Ad Not Ready', 'Please wait a moment and try again.');
-      return;
-    }
-
-    setIsAdLoading(true);
-    try {
-      const earned = await adService.showRewardedAd();
-      if (earned) {
-        await addBonusCoins(25);
-        Alert.alert('Reward Earned!', 'You earned 25 bonus coins!');
-      }
-    } catch (error) {
-      console.error('Error showing ad:', error);
-      Alert.alert('Error', 'Could not show ad. Please try again later.');
-    } finally {
-      setIsAdLoading(false);
-    }
-  };
 
   const handlePurchaseTheme = async (key: ThemeKey) => {
     const themeData = themes[key];
@@ -472,55 +435,8 @@ export default function ShopScreen() {
   };
 
   const renderRewardsInfo = () => {
-    const isInExpoGo = adService.isExpoGo();
-
     return (
       <View style={styles.rewardsContainer}>
-        {/* Watch Ad for Coins */}
-        <View style={[styles.adCard, { backgroundColor: theme.colors.cardBackground }]}>
-          <View style={styles.adHeader}>
-            <Text style={styles.adEmoji}>🎬</Text>
-            <View style={styles.adInfo}>
-              <Text style={[styles.adTitle, { color: theme.colors.textPrimary }]}>
-                Watch Ad for Coins
-              </Text>
-              <Text style={[styles.adDesc, { color: theme.colors.textSecondary }]}>
-                {isInExpoGo
-                  ? 'Ads require a development build'
-                  : 'Watch a short video to earn bonus coins'}
-              </Text>
-            </View>
-          </View>
-          {isInExpoGo ? (
-            <View style={[styles.adButton, { backgroundColor: theme.colors.cellBorder }]}>
-              <Text style={[styles.adButtonText, { color: theme.colors.textSecondary }]}>
-                Not Available in Expo Go
-              </Text>
-            </View>
-          ) : (
-            <TouchableOpacity
-              style={[
-                styles.adButton,
-                { backgroundColor: isAdReady ? theme.colors.primaryButton : theme.colors.cellBorder },
-              ]}
-              onPress={handleWatchAd}
-              disabled={!isAdReady || isAdLoading}
-            >
-              {isAdLoading ? (
-                <ActivityIndicator color={theme.colors.primaryButtonText} />
-              ) : (
-                <>
-                  <Text style={[styles.adButtonText, { color: theme.colors.primaryButtonText }]}>
-                    {isAdReady ? 'Watch Ad' : 'Loading...'}
-                  </Text>
-                  <View style={styles.adReward}>
-                    <Text style={styles.adRewardText}>+25</Text>
-                  </View>
-                </>
-              )}
-            </TouchableOpacity>
-          )}
-      </View>
 
       <View style={[styles.rewardCard, { backgroundColor: theme.colors.cardBackground }]}>
         <Text style={[styles.rewardTitle, { color: theme.colors.textPrimary }]}>
@@ -1048,58 +964,5 @@ const styles = StyleSheet.create({
   songDuration: {
     fontSize: 11,
     fontWeight: '500',
-  },
-  adCard: {
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  adHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  adEmoji: {
-    fontSize: 36,
-    marginRight: 12,
-  },
-  adInfo: {
-    flex: 1,
-  },
-  adTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  adDesc: {
-    fontSize: 13,
-  },
-  adButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: 12,
-    gap: 8,
-  },
-  adButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  adReward: {
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  adRewardText: {
-    color: '#92400E',
-    fontSize: 14,
-    fontWeight: 'bold',
   },
 });
