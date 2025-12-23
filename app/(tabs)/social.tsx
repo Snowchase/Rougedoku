@@ -284,8 +284,13 @@ export default function SocialScreen() {
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity onPress={() => setIsEditingUsername(true)}>
-              <Text style={{ color: theme.colors.primaryButton }}>Edit</Text>
+            <TouchableOpacity
+              style={[styles.editButton, { backgroundColor: theme.colors.primaryButton }]}
+              onPress={() => setIsEditingUsername(true)}
+            >
+              <Text style={[styles.editButtonText, { color: theme.colors.primaryButtonText }]}>
+                Edit Username
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -757,6 +762,18 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     fontSize: 14,
+    fontWeight: '600',
+  },
+  editButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 120,
+  },
+  editButtonText: {
+    fontSize: 15,
     fontWeight: '600',
   },
   avatarGrid: {

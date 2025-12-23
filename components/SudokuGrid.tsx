@@ -7,6 +7,7 @@ import {
   Dimensions,
   Alert,
   ScrollView,
+  AppState,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -106,6 +107,34 @@ const SudokuGrid = () => {
 
     return () => clearInterval(interval);
   }, [startTime, isComplete, isPaused]);
+
+  // Reset board position when locked
+  useEffect(() => {
+    if (settings.boardLocked) {
+      scale.value = withSpring(1);
+      savedScale.value = 1;
+      translateX.value = withSpring(0);
+      translateY.value = withSpring(0);
+      savedTranslateX.value = 0;
+      savedTranslateY.value = 0;
+    }
+  }, [settings.boardLocked]);
+
+  // Auto-pause when app goes to background
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'background' || nextAppState === 'inactive') {
+        // Auto-pause when app goes to background
+        if (!isComplete && !isPaused) {
+          setIsPaused(true);
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [isComplete, isPaused]);
 
   // Save game state periodically
   useEffect(() => {
