@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAudio } from '../../contexts/AudioContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -60,23 +60,28 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.content}>
-        {/* App Title */}
-        <View style={styles.titleContainer}>
-          <Text style={[styles.title, { color: theme.colors.textPrimary }]}>SUDOKLE</Text>
-          <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>New puzzle every day at midnight!</Text>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.content}>
+          {/* App Title */}
+          <View style={styles.titleContainer}>
+            <Text style={[styles.title, { color: theme.colors.textPrimary }]}>SUDOKLE</Text>
+            <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>New puzzle every day at midnight!</Text>
 
-          {/* Streak Badge */}
-          {currentStreak > 0 && (
-            <View style={[styles.streakBadge, { backgroundColor: theme.isDark ? '#422006' : '#FEF3C7', borderColor: theme.isDark ? '#F59E0B' : '#F59E0B' }]}>
-              <Text style={styles.streakEmoji}>🔥</Text>
-              <Text style={[styles.streakText, { color: theme.isDark ? '#FCD34D' : '#92400E' }]}>{currentStreak} Day Streak!</Text>
-            </View>
-          )}
-        </View>
+            {/* Streak Badge */}
+            {currentStreak > 0 && (
+              <View style={[styles.streakBadge, { backgroundColor: theme.isDark ? '#422006' : '#FEF3C7', borderColor: theme.isDark ? '#F59E0B' : '#F59E0B' }]}>
+                <Text style={styles.streakEmoji}>🔥</Text>
+                <Text style={[styles.streakText, { color: theme.isDark ? '#FCD34D' : '#92400E' }]}>{currentStreak} Day Streak!</Text>
+              </View>
+            )}
+          </View>
 
-        {/* Menu Buttons */}
-        <View style={styles.menuContainer}>
+          {/* Menu Buttons */}
+          <View style={styles.menuContainer}>
           <TouchableOpacity
             style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.primaryButton }]}
             onPress={() => router.push('/(tabs)/play')}
@@ -122,7 +127,8 @@ export default function HomeScreen() {
             <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]}>Compare your times</Text>
           </TouchableOpacity>
         </View>
-      </View>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -170,11 +176,17 @@ const styles = StyleSheet.create({
   settingsIcon: {
     fontSize: 24,
   },
-  content: {
+  scrollView: {
     flex: 1,
-    justifyContent: 'center',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingTop: 110,
+  },
+  content: {
     alignItems: 'center',
     padding: 16,
+    paddingBottom: 40,
   },
   titleContainer: {
     alignItems: 'center',
