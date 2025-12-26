@@ -9,6 +9,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { AudioProvider } from '@/contexts/AudioContext';
 import { SettingsProvider } from '@/contexts/SettingsContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -19,21 +20,23 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider>
-        <AudioProvider>
-          <SettingsProvider>
-            <CurrencyProvider>
-              <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-                <Stack>
-                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                  <Stack.Screen name="shop" options={{ presentation: 'modal', title: 'Shop' }} />
-                </Stack>
-                <StatusBar style="auto" />
-              </NavigationThemeProvider>
-            </CurrencyProvider>
-          </SettingsProvider>
-        </AudioProvider>
-      </ThemeProvider>
+      <ErrorBoundary>
+        <ThemeProvider>
+          <AudioProvider>
+            <SettingsProvider>
+              <CurrencyProvider>
+                <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                  <Stack>
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen name="shop" options={{ presentation: 'modal', title: 'Shop' }} />
+                  </Stack>
+                  <StatusBar style="auto" />
+                </NavigationThemeProvider>
+              </CurrencyProvider>
+            </SettingsProvider>
+          </AudioProvider>
+        </ThemeProvider>
+      </ErrorBoundary>
     </GestureHandlerRootView>
   );
 }
