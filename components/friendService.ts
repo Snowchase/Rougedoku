@@ -103,14 +103,23 @@ function getRandomProfileColor(): string {
 // Initialize auth and create/load user profile
 export async function initializeUser(username?: string): Promise<UserProfile | null> {
   try {
-    // Sign in anonymously
-    const userCredential = await signInAnonymously(auth);
-    const userId = userCredential.user.uid;
+    // Check if user is already authenticated
+    let userId: string;
+    if (auth.currentUser) {
+      // User already signed in, use existing user
+      userId = auth.currentUser.uid;
+    } else {
+      // Sign in anonymously
+      const userCredential = await signInAnonymously(auth);
+      userId = userCredential.user.uid;
+    }
 
     // Check if profile already exists
     const userDoc = await getDoc(doc(db, 'users', userId));
-    
+
     if (userDoc.exists()) {
+      // Save to local storage for backup
+      await AsyncStorage.setItem('userProfile', JSON.stringify(userDoc.data()));
       // Return existing profile
       return userDoc.data() as UserProfile;
     }
