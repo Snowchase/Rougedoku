@@ -34,6 +34,7 @@ import {
 } from '../../components/friendService';
 import { NavigationHeader } from '../../components/navigation-header';
 import { SwipeableScreen } from '../../components/SwipeableScreen';
+import { ScreenErrorBoundary } from '../../components/ScreenErrorBoundary';
 
 type TabType = 'profile' | 'friends';
 type FriendsSubTab = 'friends' | 'requests';
@@ -604,9 +605,10 @@ export default function SocialScreen() {
   }
 
   return (
-    <SwipeableScreen>
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <NavigationHeader title="Social" />
+    <ScreenErrorBoundary screenName="Social">
+      <SwipeableScreen>
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+          <NavigationHeader title="Social" />
 
         {/* Main Tabs */}
         <View style={[styles.mainTabs, { backgroundColor: theme.colors.cardBackground }]}>
@@ -647,6 +649,7 @@ export default function SocialScreen() {
         {activeTab === 'profile' ? renderProfileTab() : renderFriendsTab()}
       </View>
     </SwipeableScreen>
+    </ScreenErrorBoundary>
   );
 }
 

@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAudio } from '../../contexts/AudioContext';
 import { NavigationHeader } from '../../components/navigation-header';
+import { ScreenErrorBoundary } from '../../components/ScreenErrorBoundary';
 
 const { width } = Dimensions.get('window');
 const GRID_SIZE = 9;
@@ -211,8 +212,9 @@ export default function TutorialScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
-      <NavigationHeader title="Tutorial" showBackButton onBackPress={() => router.push('/')} />
+    <ScreenErrorBoundary screenName="Tutorial">
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
+        <NavigationHeader title="Tutorial" showBackButton onBackPress={() => router.push('/')} />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Progress Indicator */}
@@ -359,6 +361,7 @@ export default function TutorialScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
+    </ScreenErrorBoundary>
   );
 }
 
