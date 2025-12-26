@@ -60,12 +60,12 @@ export interface DailyScore {
   completedAt: any;
 }
 
-// Available avatar emojis
+// Available avatar emojis (free - excludes shop items)
 export const AVATAR_OPTIONS = [
   '😀', '😎', '🤓', '🥳', '🤩', '🤗', '🙂', '😊',
-  '🐶', '🐱', '🐼', '🦊', '🐯', '🦁', '🐸', '🐙',
-  '🌟', '⚡', '🔥', '💎', '🎮', '🎯', '🎨', '🎭',
-  '🍕', '🍔', '🌮', '🍦', '🍪', '☕', '🥑', '🌈',
+  '🐶', '🐱', '🐸', '🐙', '🐵', '🐔', '🦆', '🐢',
+  '🌟', '🎮', '🎯', '🎨', '🎭', '🎪', '🎬', '🎸',
+  '🍪', '🥑', '🍉', '🍓', '🥨', '🧁', '🥤', '🍇',
 ];
 
 // Available profile colors

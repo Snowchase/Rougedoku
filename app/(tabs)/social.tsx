@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { themes, themeKeys, ThemeKey } from '../../constants/themes';
+import { premiumAvatars } from '../../constants/customizations';
 import {
   initializeUser,
   getUserProfile,
@@ -283,8 +284,13 @@ export default function SocialScreen() {
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity onPress={() => setIsEditingUsername(true)}>
-              <Text style={{ color: theme.colors.primaryButton }}>Edit</Text>
+            <TouchableOpacity
+              style={[styles.editButton, { backgroundColor: theme.colors.primaryButton }]}
+              onPress={() => setIsEditingUsername(true)}
+            >
+              <Text style={[styles.editButtonText, { color: theme.colors.primaryButtonText }]}>
+                Edit Username
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -295,6 +301,7 @@ export default function SocialScreen() {
           Avatar
         </Text>
         <View style={styles.avatarGrid}>
+          {/* Free avatars */}
           {AVATAR_OPTIONS.map((avatar) => (
             <TouchableOpacity
               key={avatar}
@@ -311,6 +318,25 @@ export default function SocialScreen() {
               <Text style={styles.avatarOptionText}>{avatar}</Text>
             </TouchableOpacity>
           ))}
+          {/* Purchased premium avatars */}
+          {premiumAvatars
+            .filter((premiumAvatar) => isAvatarOwned(premiumAvatar.id))
+            .map((premiumAvatar) => (
+              <TouchableOpacity
+                key={premiumAvatar.id}
+                style={[
+                  styles.avatarOption,
+                  { backgroundColor: theme.colors.cellBackground },
+                  selectedAvatar === premiumAvatar.emoji && {
+                    borderColor: theme.colors.primaryButton,
+                    borderWidth: 3,
+                  },
+                ]}
+                onPress={() => handleAvatarSelect(premiumAvatar.emoji)}
+              >
+                <Text style={styles.avatarOptionText}>{premiumAvatar.emoji}</Text>
+              </TouchableOpacity>
+            ))}
         </View>
 
         {/* Color Selector */}
@@ -736,6 +762,18 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     fontSize: 14,
+    fontWeight: '600',
+  },
+  editButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 120,
+  },
+  editButtonText: {
+    fontSize: 15,
     fontWeight: '600',
   },
   avatarGrid: {
