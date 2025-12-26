@@ -6,6 +6,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { getCurrentUser } from '../../components/friendService';
 import { getUserStats } from '../../services/statsService';
+import { ScreenErrorBoundary } from '../../components/ScreenErrorBoundary';
 
 const { width } = Dimensions.get('window');
 
@@ -43,9 +44,10 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Top Bar */}
-      <View style={styles.topBar}>
+    <ScreenErrorBoundary screenName="Home">
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        {/* Top Bar */}
+        <View style={styles.topBar}>
         <TouchableOpacity
           style={[styles.coinButton, { backgroundColor: theme.isDark ? '#422006' : '#FEF3C7' }]}
           onPress={() => router.push('/shop')}
@@ -130,6 +132,7 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
     </View>
+    </ScreenErrorBoundary>
   );
 }
 

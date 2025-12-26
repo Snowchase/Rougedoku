@@ -12,6 +12,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { themes, themeKeys, ThemeKey } from '../constants/themes';
 import { numberFonts, premiumAvatars, avatarCategories, AvatarCategory, premiumSongs, songCategories, SongCategory } from '../constants/customizations';
+import { ScreenErrorBoundary } from '../components/ScreenErrorBoundary';
 
 type ShopTab = 'themes' | 'fonts' | 'avatars' | 'songs' | 'rewards';
 
@@ -518,20 +519,21 @@ export default function ShopScreen() {
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Stack.Screen
-        options={{
-          title: 'Shop',
-          headerStyle: { backgroundColor: theme.colors.cardBackground },
-          headerTintColor: theme.colors.primaryButton,
-          headerTitleStyle: { color: theme.colors.textPrimary },
-          headerRight: () => (
-            <View style={styles.coinBalance}>
-              <Text style={styles.coinText}>{coins}</Text>
-            </View>
-          ),
-        }}
-      />
+    <ScreenErrorBoundary screenName="Shop">
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <Stack.Screen
+          options={{
+            title: 'Shop',
+            headerStyle: { backgroundColor: theme.colors.cardBackground },
+            headerTintColor: theme.colors.primaryButton,
+            headerTitleStyle: { color: theme.colors.textPrimary },
+            headerRight: () => (
+              <View style={styles.coinBalance}>
+                <Text style={styles.coinText}>{coins}</Text>
+              </View>
+            ),
+          }}
+        />
 
       <View style={[styles.tabs, { backgroundColor: theme.colors.cardBackground }]}>
         {tabs.map((tab) => (
@@ -612,6 +614,7 @@ export default function ShopScreen() {
         {activeTab === 'rewards' && renderRewardsInfo()}
       </ScrollView>
     </View>
+    </ScreenErrorBoundary>
   );
 }
 

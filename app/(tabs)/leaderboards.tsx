@@ -22,6 +22,7 @@ import StatsDisplay from '../../components/StatsDisplay';
 import { useTheme } from '../../contexts/ThemeContext';
 import { NavigationHeader } from '../../components/navigation-header';
 import { SwipeableScreen } from '../../components/SwipeableScreen';
+import { ScreenErrorBoundary } from '../../components/ScreenErrorBoundary';
 
 type TabType = 'stats' | 'allTime' | 'daily';
 type ViewType = 'global' | 'friends';
@@ -224,9 +225,10 @@ export default function LeaderboardsScreen() {
   };
 
   return (
-    <SwipeableScreen>
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <NavigationHeader title="Leaderboards" />
+    <ScreenErrorBoundary screenName="Leaderboards">
+      <SwipeableScreen>
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+          <NavigationHeader title="Leaderboards" />
 
         {/* Tab Selector - Stats, All-Time, Daily */}
       <View style={styles.tabContainer}>
@@ -380,6 +382,7 @@ export default function LeaderboardsScreen() {
       </ScrollView>
       </View>
     </SwipeableScreen>
+    </ScreenErrorBoundary>
   );
 }
 

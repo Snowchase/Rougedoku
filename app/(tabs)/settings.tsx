@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { NavigationHeader } from '../../components/navigation-header';
 import { SwipeableScreen } from '../../components/SwipeableScreen';
+import { ScreenErrorBoundary } from '../../components/ScreenErrorBoundary';
 import { useAudio } from '../../contexts/AudioContext';
 import { useSettings } from '../../contexts/SettingsContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -34,9 +35,10 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SwipeableScreen>
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <NavigationHeader title="Settings" />
+    <ScreenErrorBoundary screenName="Settings">
+      <SwipeableScreen>
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+          <NavigationHeader title="Settings" />
 
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
           {/* Game Settings Section */}
@@ -237,6 +239,7 @@ export default function SettingsScreen() {
         </ScrollView>
       </View>
     </SwipeableScreen>
+    </ScreenErrorBoundary>
   );
 }
 

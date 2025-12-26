@@ -7,6 +7,7 @@ import { useCurrency } from '../../contexts/CurrencyContext';
 import SudokuGrid from '../../components/SudokuGrid';
 import { NavigationHeader } from '../../components/navigation-header';
 import { SwipeableScreen } from '../../components/SwipeableScreen';
+import { ScreenErrorBoundary } from '../../components/ScreenErrorBoundary';
 
 export default function PlayScreen() {
   const { playSelectedSong, stopMusic } = useAudio();
@@ -27,12 +28,14 @@ export default function PlayScreen() {
   );
 
   return (
-    <SwipeableScreen>
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <NavigationHeader title="Daily Puzzle" />
-        <SudokuGrid difficulty="medium" />
-      </View>
-    </SwipeableScreen>
+    <ScreenErrorBoundary screenName="Play">
+      <SwipeableScreen>
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+          <NavigationHeader title="Daily Puzzle" />
+          <SudokuGrid difficulty="medium" />
+        </View>
+      </SwipeableScreen>
+    </ScreenErrorBoundary>
   );
 }
 
