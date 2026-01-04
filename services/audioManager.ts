@@ -186,13 +186,17 @@ class AudioManager {
     if (this.currentTrack === track && this.currentMusic) {
       const status = await this.currentMusic.getStatusAsync();
       if (status.isLoaded && status.isPlaying) {
+        console.log(`Track ${track} already playing, skipping restart`);
         return;
       }
     }
 
-    // Stop current music if playing (with fade out)
+    // Stop current music if playing (with fade out) - MUST AWAIT to prevent overlap
     if (this.currentMusic) {
+      console.log(`Stopping current track before playing ${track}`);
       await this.stopMusic(500);
+      // Add small delay to ensure complete cleanup
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
     try {

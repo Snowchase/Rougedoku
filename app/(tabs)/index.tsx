@@ -20,17 +20,26 @@ export default function HomeScreen() {
   // Play selected song (or default home music) when screen is focused, stop when unfocused
   useFocusEffect(
     React.useCallback(() => {
+      let isMounted = true;
+
+      const startMusic = async () => {
+        if (isMounted) {
+          await playSelectedSong(selectedSong, 'homeMusic', 1500);
+        }
+      };
+
       // Start playing selected song (or fall back to home music) with fade in
-      playSelectedSong(selectedSong, 'homeMusic', 1500);
+      startMusic();
 
       // Load streak
       loadStreak();
 
       return () => {
+        isMounted = false;
         // Fade out music when leaving screen
         stopMusic(800);
       };
-    }, [selectedSong])
+    }, [selectedSong, playSelectedSong, stopMusic])
   );
 
   const loadStreak = async () => {

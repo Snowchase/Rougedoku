@@ -17,14 +17,23 @@ export default function PlayScreen() {
   // Play selected song (or default gameplay music) when screen is focused, stop when unfocused
   useFocusEffect(
     React.useCallback(() => {
+      let isMounted = true;
+
+      const startMusic = async () => {
+        if (isMounted) {
+          await playSelectedSong(selectedSong, 'gameplayMusic', 1500);
+        }
+      };
+
       // Start playing selected song (or fall back to gameplay music) with fade in
-      playSelectedSong(selectedSong, 'gameplayMusic', 1500);
+      startMusic();
 
       return () => {
+        isMounted = false;
         // Fade out music when leaving screen
         stopMusic(800);
       };
-    }, [selectedSong])
+    }, [selectedSong, playSelectedSong, stopMusic])
   );
 
   return (
