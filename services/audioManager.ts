@@ -75,6 +75,8 @@ class AudioManager {
   private isInitialized = false;
   private fadeInterval: NodeJS.Timeout | null = null;
   private isFading = false;
+  private musicOperationLock: Promise<void> = Promise.resolve();
+  private cancelCurrentFade = false;
 
   async initialize() {
     if (this.isInitialized) return;
@@ -166,58 +168,94 @@ class AudioManager {
 
   // Music Playback with Fade
   async playMusic(track: PlayableMusic, fadeInDuration: number = 1000) {
-    if (!this.isInitialized) {
-      await this.initialize();
-    }
-
-    if (!this.settings.musicEnabled) {
-      return;
-    }
-
-    const audioSource = this.getAudioSource(track);
-
-    // Check if audio file exists
-    if (!audioSource) {
-      console.log(`Audio file for ${track} not found. Add your MP3 files to enable music.`);
-      return;
-    }
-
-    // If same track is already playing, don't restart
-    if (this.currentTrack === track && this.currentMusic) {
-      const status = await this.currentMusic.getStatusAsync();
-      if (status.isLoaded && status.isPlaying) {
-        console.log(`Track ${track} already playing, skipping restart`);
-        return;
-      }
-    }
-
-    // Stop current music if playing (with fade out) - MUST AWAIT to prevent overlap
-    if (this.currentMusic) {
-      console.log(`Stopping current track before playing ${track}`);
-      await this.stopMusic(500);
-      // Add small delay to ensure complete cleanup
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
+    // Queue this operation to prevent race conditions
+    const previousLock = this.musicOperationLock;
+    let releaseLock: () => void;
+    this.musicOperationLock = new Promise(resolve => {
+      releaseLock = resolve;
+    });
 
     try {
-      const { sound } = await Audio.Sound.createAsync(
-        audioSource,
-        {
-          shouldPlay: true,
-          isLooping: true,
-          volume: 0, // Start at 0 for fade in
+      // Wait for any previous music operation to complete
+      await previousLock;
+
+      if (!this.isInitialized) {
+        await this.initialize();
+      }
+
+      if (!this.settings.musicEnabled) {
+        return;
+      }
+
+      const audioSource = this.getAudioSource(track);
+
+      // Check if audio file exists
+      if (!audioSource) {
+        console.log(`Audio file for ${track} not found. Add your MP3 files to enable music.`);
+        return;
+      }
+
+      // If same track is already playing, don't restart
+      if (this.currentTrack === track && this.currentMusic) {
+        try {
+          const status = await this.currentMusic.getStatusAsync();
+          if (status.isLoaded && status.isPlaying) {
+            console.log(`Track ${track} already playing, skipping restart`);
+            return;
+          }
+        } catch {
+          // If status check fails, continue to restart
         }
-      );
+      }
 
-      this.currentMusic = sound;
-      this.currentTrack = track;
+      // Cancel any ongoing fade operations
+      this.cancelCurrentFade = true;
+      await new Promise(resolve => setTimeout(resolve, 50)); // Brief pause to allow fade cancellation
 
-      // Fade in
-      await this.fadeIn(fadeInDuration);
+      // Stop current music if playing - MUST AWAIT to prevent overlap
+      if (this.currentMusic) {
+        console.log(`Stopping current track before playing ${track}`);
+        const musicToStop = this.currentMusic;
+        this.currentMusic = null;
+        this.currentTrack = null;
 
-      console.log(`Playing music: ${track}`);
-    } catch (error) {
-      console.error(`Error playing music ${track}:`, error);
+        try {
+          await musicToStop.stopAsync();
+          await musicToStop.unloadAsync();
+        } catch (error) {
+          // Ignore errors from already stopped/unloaded music
+        }
+      }
+
+      // Brief delay to ensure complete cleanup
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      try {
+        const { sound } = await Audio.Sound.createAsync(
+          audioSource,
+          {
+            shouldPlay: true,
+            isLooping: true,
+            volume: 0, // Start at 0 for fade in
+          }
+        );
+
+        this.currentMusic = sound;
+        this.currentTrack = track;
+
+        // Reset fade cancellation flag
+        this.cancelCurrentFade = false;
+
+        // Fade in
+        await this.fadeIn(fadeInDuration);
+
+        console.log(`Playing music: ${track}`);
+      } catch (error) {
+        console.error(`Error playing music ${track}:`, error);
+      }
+    } finally {
+      // Release the lock
+      releaseLock!();
     }
   }
 
@@ -240,47 +278,65 @@ class AudioManager {
   }
 
   async stopMusic(fadeOutDuration: number = 500) {
-    if (!this.currentMusic) return;
-
-    // Store reference to avoid race conditions
-    const musicToStop = this.currentMusic;
-
-    // Clear current references immediately to prevent double-stopping
-    this.currentMusic = null;
-    this.currentTrack = null;
+    // Queue this operation to prevent race conditions
+    const previousLock = this.musicOperationLock;
+    let releaseLock: () => void;
+    this.musicOperationLock = new Promise(resolve => {
+      releaseLock = resolve;
+    });
 
     try {
-      // Fade out if requested
-      if (fadeOutDuration > 0 && !this.isFading) {
-        const steps = 20;
-        const stepDuration = fadeOutDuration / steps;
-        const status = await musicToStop.getStatusAsync();
+      // Wait for any previous music operation to complete
+      await previousLock;
 
-        if (status.isLoaded) {
-          const currentVolume = status.volume || 0;
-          const volumeDecrement = currentVolume / steps;
+      if (!this.currentMusic) return;
 
-          for (let i = steps; i >= 0; i--) {
-            try {
-              const newVolume = volumeDecrement * i;
-              await musicToStop.setVolumeAsync(newVolume);
-              await new Promise(resolve => setTimeout(resolve, stepDuration));
-            } catch {
-              break; // Stop fading if sound was released
+      // Store reference to avoid race conditions
+      const musicToStop = this.currentMusic;
+
+      // Clear current references immediately to prevent double-stopping
+      this.currentMusic = null;
+      this.currentTrack = null;
+
+      // Cancel any ongoing fades
+      this.cancelCurrentFade = true;
+
+      try {
+        // Fade out if requested (simplified to avoid complex state)
+        if (fadeOutDuration > 0) {
+          const status = await musicToStop.getStatusAsync();
+          if (status.isLoaded) {
+            // Quick fade out
+            const steps = 10;
+            const stepDuration = fadeOutDuration / steps;
+            const currentVolume = status.volume || 0;
+            const volumeDecrement = currentVolume / steps;
+
+            for (let i = steps; i >= 0; i--) {
+              try {
+                const newVolume = volumeDecrement * i;
+                await musicToStop.setVolumeAsync(newVolume);
+                await new Promise(resolve => setTimeout(resolve, stepDuration));
+              } catch {
+                break; // Stop fading if sound was released
+              }
             }
           }
         }
-      }
 
-      await musicToStop.stopAsync();
-      await musicToStop.unloadAsync();
+        await musicToStop.stopAsync();
+        await musicToStop.unloadAsync();
 
-      console.log('Music stopped');
-    } catch (error) {
-      // Silently handle errors if music was already stopped/released
-      if (error && !error.toString().includes('released') && !error.toString().includes('unloaded')) {
-        console.error('Error stopping music:', error);
+        console.log('Music stopped');
+      } catch (error) {
+        // Silently handle errors if music was already stopped/released
+        if (error && !error.toString().includes('released') && !error.toString().includes('unloaded')) {
+          console.error('Error stopping music:', error);
+        }
       }
+    } finally {
+      // Release the lock
+      releaseLock!();
     }
   }
 
@@ -322,7 +378,11 @@ class AudioManager {
     const volumeIncrement = targetVolume / steps;
 
     for (let i = 0; i <= steps; i++) {
-      if (!this.currentMusic || !this.isFading) break;
+      // Check for cancellation
+      if (!this.currentMusic || !this.isFading || this.cancelCurrentFade) {
+        this.isFading = false;
+        return;
+      }
 
       const newVolume = volumeIncrement * i;
       try {
@@ -353,7 +413,11 @@ class AudioManager {
     const volumeDecrement = currentVolume / steps;
 
     for (let i = steps; i >= 0; i--) {
-      if (!this.currentMusic || !this.isFading) break;
+      // Check for cancellation
+      if (!this.currentMusic || !this.isFading || this.cancelCurrentFade) {
+        this.isFading = false;
+        return;
+      }
 
       const newVolume = volumeDecrement * i;
       try {

@@ -19,19 +19,18 @@ export default function PlayScreen() {
     React.useCallback(() => {
       let isMounted = true;
 
-      const startMusic = async () => {
-        if (isMounted) {
-          await playSelectedSong(selectedSong, 'gameplayMusic', 1500);
-        }
-      };
-
       // Start playing selected song (or fall back to gameplay music) with fade in
-      startMusic();
+      // The audio manager now handles race conditions internally
+      playSelectedSong(selectedSong, 'gameplayMusic', 1500).catch(err => {
+        console.error('Error starting gameplay music:', err);
+      });
 
       return () => {
         isMounted = false;
-        // Fade out music when leaving screen
-        stopMusic(800);
+        // Stop music when leaving screen (audio manager queues this properly)
+        stopMusic(800).catch(err => {
+          console.error('Error stopping music:', err);
+        });
       };
     }, [selectedSong, playSelectedSong, stopMusic])
   );

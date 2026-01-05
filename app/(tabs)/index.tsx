@@ -22,22 +22,21 @@ export default function HomeScreen() {
     React.useCallback(() => {
       let isMounted = true;
 
-      const startMusic = async () => {
-        if (isMounted) {
-          await playSelectedSong(selectedSong, 'homeMusic', 1500);
-        }
-      };
-
       // Start playing selected song (or fall back to home music) with fade in
-      startMusic();
+      // The audio manager now handles race conditions internally
+      playSelectedSong(selectedSong, 'homeMusic', 1500).catch(err => {
+        console.error('Error starting home music:', err);
+      });
 
       // Load streak
       loadStreak();
 
       return () => {
         isMounted = false;
-        // Fade out music when leaving screen
-        stopMusic(800);
+        // Stop music when leaving screen (audio manager queues this properly)
+        stopMusic(800).catch(err => {
+          console.error('Error stopping music:', err);
+        });
       };
     }, [selectedSong, playSelectedSong, stopMusic])
   );
