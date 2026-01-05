@@ -19,7 +19,7 @@ export function NavigationHeader({ title }: NavigationHeaderProps) {
   return (
     <View style={[styles.header, { backgroundColor: colors.background, paddingTop: insets.top + 12 }]}>
       <TouchableOpacity
-        onPress={() => router.push('/')}
+        onPress={() => router.back()}
         style={styles.backButton}
         accessibilityLabel="Back to home"
         accessibilityRole="button"

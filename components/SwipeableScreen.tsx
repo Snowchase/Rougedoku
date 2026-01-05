@@ -22,7 +22,7 @@ export function SwipeableScreen({ children, enabled = true }: SwipeableScreenPro
   const translateX = useSharedValue(0);
 
   const goBack = () => {
-    router.push('/');
+    router.back();
   };
 
   const panGesture = Gesture.Pan()
