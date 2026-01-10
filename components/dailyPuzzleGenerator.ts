@@ -64,8 +64,8 @@ function getDailySeed(date: Date, difficulty: Difficulty): number {
   return Math.abs(hash);
 }
 
-// Check if number placement is valid
-function isValid(board: number[][], row: number, col: number, num: number): boolean {
+// Check if number placement is valid (exported for use in game validation)
+export function isValid(board: number[][], row: number, col: number, num: number): boolean {
   // Check row
   for (let c = 0; c < 9; c++) {
     if (board[row][c] === num) return false;
@@ -185,14 +185,89 @@ export function isNewDay(lastPlayedDate: string, currentDate: Date = new Date())
   return lastPlayedDate !== today;
 }
 
+// Count the number of solutions for a given puzzle
+export function countSolutions(board: number[][], maxCount: number = 2): number {
+  const workBoard = board.map(row => [...row]);
+  let count = 0;
+
+  function solve(): void {
+    if (count >= maxCount) return; // Early exit if we found enough solutions
+
+    for (let row = 0; row < 9; row++) {
+      for (let col = 0; col < 9; col++) {
+        if (workBoard[row][col] === 0) {
+          for (let num = 1; num <= 9; num++) {
+            if (isValid(workBoard, row, col, num)) {
+              workBoard[row][col] = num;
+              solve();
+              workBoard[row][col] = 0;
+            }
+          }
+          return; // Backtrack
+        }
+      }
+    }
+    // Found a complete solution
+    count++;
+  }
+
+  solve();
+  return count;
+}
+
+// Check if a completed board is a valid Sudoku solution
+export function isCompleteBoardValid(board: number[][]): boolean {
+  // Check all rows
+  for (let row = 0; row < 9; row++) {
+    const seen = new Set<number>();
+    for (let col = 0; col < 9; col++) {
+      const num = board[row][col];
+      if (num === 0 || num < 1 || num > 9 || seen.has(num)) {
+        return false;
+      }
+      seen.add(num);
+    }
+  }
+
+  // Check all columns
+  for (let col = 0; col < 9; col++) {
+    const seen = new Set<number>();
+    for (let row = 0; row < 9; row++) {
+      const num = board[row][col];
+      if (num === 0 || num < 1 || num > 9 || seen.has(num)) {
+        return false;
+      }
+      seen.add(num);
+    }
+  }
+
+  // Check all 3x3 boxes
+  for (let boxRow = 0; boxRow < 9; boxRow += 3) {
+    for (let boxCol = 0; boxCol < 9; boxCol += 3) {
+      const seen = new Set<number>();
+      for (let r = boxRow; r < boxRow + 3; r++) {
+        for (let c = boxCol; c < boxCol + 3; c++) {
+          const num = board[r][c];
+          if (num === 0 || num < 1 || num > 9 || seen.has(num)) {
+            return false;
+          }
+          seen.add(num);
+        }
+      }
+    }
+  }
+
+  return true;
+}
+
 // Test function to verify consistency
 export function testConsistency() {
   const testDate = new Date('2024-01-15');
   const puzzle1 = getDailyPuzzle('medium', testDate);
   const puzzle2 = getDailyPuzzle('medium', testDate);
-  
+
   const same = JSON.stringify(puzzle1.puzzle) === JSON.stringify(puzzle2.puzzle);
   console.log('Same puzzle generated twice:', same);
-  
+
   return same;
 }
