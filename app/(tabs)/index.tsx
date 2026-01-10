@@ -21,11 +21,12 @@ export default function HomeScreen() {
   useFocusEffect(
     React.useCallback(() => {
       let isMounted = true;
+      console.log('[HOME] useFocusEffect MOUNT - selectedSong:', selectedSong);
 
       // Start playing selected song (or fall back to home music) with fade in
       // The audio manager now handles race conditions internally
       playSelectedSong(selectedSong, 'homeMusic', 1500).catch(err => {
-        console.error('Error starting home music:', err);
+        console.error('[HOME] Error starting home music:', err);
       });
 
       // Load streak
@@ -33,9 +34,10 @@ export default function HomeScreen() {
 
       return () => {
         isMounted = false;
+        console.log('[HOME] useFocusEffect CLEANUP - calling stopMusic');
         // Stop music when leaving screen (audio manager queues this properly)
         stopMusic(800).catch(err => {
-          console.error('Error stopping music:', err);
+          console.error('[HOME] Error stopping music:', err);
         });
       };
     }, [selectedSong, playSelectedSong, stopMusic])
