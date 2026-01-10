@@ -77,6 +77,10 @@ class AudioManager {
   private isFading = false;
   private musicOperationLock: Promise<void> = Promise.resolve();
   private cancelCurrentFade = false;
+  private lastTrackStartTime: number = 0;
+  private lastStoppedTrack: PlayableMusic | null = null;
+  private lastTrackStopTime: number = 0;
+  private readonly RESTART_COOLDOWN_MS = 500; // Minimum time between track restarts
 
   async initialize() {
     if (this.isInitialized) return;
@@ -208,6 +212,19 @@ class AudioManager {
         }
       }
 
+      // Prevent rapid restarts of the same track (debounce for Expo Go focus event issues)
+      const now = Date.now();
+      if (this.currentTrack === track && (now - this.lastTrackStartTime) < this.RESTART_COOLDOWN_MS) {
+        console.log(`Track ${track} recently started (${now - this.lastTrackStartTime}ms ago), ignoring rapid restart attempt`);
+        return;
+      }
+
+      // Also prevent restarting a track that was just stopped (common in Expo Go with rapid focus changes)
+      if (this.lastStoppedTrack === track && (now - this.lastTrackStopTime) < this.RESTART_COOLDOWN_MS) {
+        console.log(`Track ${track} was just stopped (${now - this.lastTrackStopTime}ms ago), ignoring rapid restart from focus event`);
+        return;
+      }
+
       // Cancel any ongoing fade operations
       this.cancelCurrentFade = true;
       await new Promise(resolve => setTimeout(resolve, 50)); // Brief pause to allow fade cancellation
@@ -251,6 +268,7 @@ class AudioManager {
 
         this.currentMusic = sound;
         this.currentTrack = track;
+        this.lastTrackStartTime = Date.now();
 
         // Set up playback status monitoring to ensure proper looping
         sound.setOnPlaybackStatusUpdate((status: AVPlaybackStatus) => {
@@ -322,10 +340,14 @@ class AudioManager {
 
       // Store reference to avoid race conditions
       const musicToStop = this.currentMusic;
+      const stoppedTrack = this.currentTrack;
 
       // Clear current references immediately to prevent double-stopping
       this.currentMusic = null;
       this.currentTrack = null;
+      this.lastTrackStartTime = 0; // Reset to allow new track to start
+      this.lastStoppedTrack = stoppedTrack;
+      this.lastTrackStopTime = Date.now();
 
       // Cancel any ongoing fades
       this.cancelCurrentFade = true;
