@@ -80,6 +80,7 @@ class AudioManager {
   private lastTrackStartTime: number = 0;
   private lastStoppedTrack: PlayableMusic | null = null;
   private lastTrackStopTime: number = 0;
+  private pendingTrack: PlayableMusic | null = null; // Track what's queued to play
   private readonly RESTART_COOLDOWN_MS = 500; // Minimum time between track restarts
 
   async initialize() {
@@ -174,6 +175,27 @@ class AudioManager {
   async playMusic(track: PlayableMusic, fadeInDuration: number = 1000) {
     const callTimestamp = Date.now();
     console.log(`[AUDIO] playMusic() CALLED for track: ${track} at ${callTimestamp}`);
+
+    // EARLY EXIT: If this exact track is already playing OR already queued, skip entirely
+    if (this.currentTrack === track || this.pendingTrack === track) {
+      if (this.currentMusic) {
+        try {
+          const status = await this.currentMusic.getStatusAsync();
+          if (status.isLoaded && status.isPlaying) {
+            console.log(`[AUDIO] ⏭️ SKIP: Track ${track} already ${this.currentTrack === track ? 'playing' : 'queued'}, ignoring redundant request`);
+            return;
+          }
+        } catch {
+          // If status check fails, continue to queue
+        }
+      } else if (this.pendingTrack === track) {
+        console.log(`[AUDIO] ⏭️ SKIP: Track ${track} already queued, ignoring redundant request`);
+        return;
+      }
+    }
+
+    // Mark this track as pending before entering the queue
+    this.pendingTrack = track;
 
     // Queue this operation to prevent race conditions
     const previousLock = this.musicOperationLock;
@@ -315,7 +337,10 @@ class AudioManager {
         console.error(`[AUDIO] ✗ ERROR playing music ${track}:`, error);
       }
     } finally {
-      // Release the lock
+      // Clear pending track and release the lock
+      if (this.pendingTrack === track) {
+        this.pendingTrack = null;
+      }
       console.log(`[AUDIO] playMusic() releasing lock for track: ${track}`);
       releaseLock!();
     }
@@ -374,6 +399,7 @@ class AudioManager {
       // Clear current references immediately to prevent double-stopping
       this.currentMusic = null;
       this.currentTrack = null;
+      this.pendingTrack = null; // Clear any pending track
       this.lastTrackStartTime = 0; // Reset to allow new track to start
       this.lastStoppedTrack = stoppedTrack;
       this.lastTrackStopTime = Date.now();
