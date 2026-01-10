@@ -220,10 +220,19 @@ class AudioManager {
         this.currentTrack = null;
 
         try {
-          await musicToStop.stopAsync();
+          // Remove any status update listeners before stopping
+          musicToStop.setOnPlaybackStatusUpdate(null);
+
+          // Get current status to ensure clean stop
+          const currentStatus = await musicToStop.getStatusAsync();
+          if (currentStatus.isLoaded && currentStatus.isPlaying) {
+            await musicToStop.stopAsync();
+          }
           await musicToStop.unloadAsync();
+          console.log('Previous track stopped and unloaded successfully');
         } catch (error) {
           // Ignore errors from already stopped/unloaded music
+          console.log('Previous track already stopped/unloaded');
         }
       }
 
@@ -243,13 +252,33 @@ class AudioManager {
         this.currentMusic = sound;
         this.currentTrack = track;
 
+        // Set up playback status monitoring to ensure proper looping
+        sound.setOnPlaybackStatusUpdate((status: AVPlaybackStatus) => {
+          if (status.isLoaded) {
+            // Log any playback issues for debugging
+            if (status.didJustFinish && !status.isLooping) {
+              console.warn('Music finished but isLooping was false - this should not happen');
+            }
+            // Verify looping is enabled
+            if (!status.isLooping && this.currentMusic === sound) {
+              console.warn('Music isLooping flag is false, re-enabling');
+              sound.setIsLoopingAsync(true).catch(err => {
+                console.error('Failed to enable looping:', err);
+              });
+            }
+          }
+        });
+
+        // Ensure looping is definitely enabled
+        await sound.setIsLoopingAsync(true);
+
         // Reset fade cancellation flag
         this.cancelCurrentFade = false;
 
         // Fade in
         await this.fadeIn(fadeInDuration);
 
-        console.log(`Playing music: ${track}`);
+        console.log(`Playing music: ${track} (looping enabled)`);
       } catch (error) {
         console.error(`Error playing music ${track}:`, error);
       }
@@ -302,6 +331,9 @@ class AudioManager {
       this.cancelCurrentFade = true;
 
       try {
+        // Remove status update listeners
+        musicToStop.setOnPlaybackStatusUpdate(null);
+
         // Fade out if requested (simplified to avoid complex state)
         if (fadeOutDuration > 0) {
           const status = await musicToStop.getStatusAsync();
