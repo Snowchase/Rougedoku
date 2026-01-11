@@ -8,7 +8,10 @@ A modern, feature-rich Sudoku puzzle game built with React Native and Expo. Solv
 - **Daily Puzzles** - Fresh puzzles every day with consistent seeding
 - **Four Difficulty Levels** - Easy, Medium, Hard, and Expert
 - **Smart Input** - Tap cells and number pad for intuitive gameplay
+- **Visual Highlighting** - Row, column, and 3x3 box highlighting for selected cells
+- **Multiple Solution Support** - Accepts all valid Sudoku solutions (handles forced forks)
 - **Hints System** - Get help when stuck (costs coins)
+- **Notes Mode** - Add candidate numbers to cells
 - **Timer & Statistics** - Track your solving time and performance
 
 ### Customization
@@ -82,7 +85,7 @@ Sudokle/
 
 ## Version
 
-**Current Version**: 1.0.2
+**Current Version**: 1.1.0
 
 ## License
 
