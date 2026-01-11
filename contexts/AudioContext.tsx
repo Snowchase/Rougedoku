@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { audioManager, MusicTrack, SoundEffect, PlayableMusic } from '../services/audioManager';
 import { AppState, AppStateStatus } from 'react-native';
 
@@ -71,63 +71,63 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const playMusic = async (track: PlayableMusic, fadeInDuration: number = 1000) => {
+  const playMusic = useCallback(async (track: PlayableMusic, fadeInDuration: number = 1000) => {
     await audioManager.playMusic(track, fadeInDuration);
     setCurrentTrack(audioManager.getCurrentTrack());
-  };
+  }, []);
 
-  const playSelectedSong = async (selectedSongId: string | null, fallbackTrack: MusicTrack = 'homeMusic', fadeInDuration: number = 1000) => {
+  const playSelectedSong = useCallback(async (selectedSongId: string | null, fallbackTrack: MusicTrack = 'homeMusic', fadeInDuration: number = 1000) => {
     await audioManager.playSelectedSong(selectedSongId, fallbackTrack, fadeInDuration);
     setCurrentTrack(audioManager.getCurrentTrack());
-  };
+  }, []);
 
-  const isSongAvailable = (songId: string): boolean => {
+  const isSongAvailable = useCallback((songId: string): boolean => {
     return audioManager.isSongAvailable(songId);
-  };
+  }, []);
 
-  const stopMusic = async (fadeOutDuration: number = 500) => {
+  const stopMusic = useCallback(async (fadeOutDuration: number = 500) => {
     await audioManager.stopMusic(fadeOutDuration);
     setCurrentTrack(null);
-  };
+  }, []);
 
-  const pauseMusic = async (fadeOutDuration: number = 500) => {
+  const pauseMusic = useCallback(async (fadeOutDuration: number = 500) => {
     await audioManager.pauseMusic(fadeOutDuration);
-  };
+  }, []);
 
-  const resumeMusic = async (fadeInDuration: number = 500) => {
+  const resumeMusic = useCallback(async (fadeInDuration: number = 500) => {
     await audioManager.resumeMusic(fadeInDuration);
-  };
+  }, []);
 
-  const playSoundEffect = async (effect: SoundEffect) => {
+  const playSoundEffect = useCallback(async (effect: SoundEffect) => {
     await audioManager.playSoundEffect(effect);
-  };
+  }, []);
 
-  const setMusicEnabled = async (enabled: boolean) => {
+  const setMusicEnabled = useCallback(async (enabled: boolean) => {
     await audioManager.setMusicEnabled(enabled);
     const updatedSettings = audioManager.getSettings();
     setSettings(updatedSettings);
     if (!enabled) {
       setCurrentTrack(null);
     }
-  };
+  }, []);
 
-  const setSoundEffectsEnabled = async (enabled: boolean) => {
+  const setSoundEffectsEnabled = useCallback(async (enabled: boolean) => {
     await audioManager.setSoundEffectsEnabled(enabled);
     const updatedSettings = audioManager.getSettings();
     setSettings(updatedSettings);
-  };
+  }, []);
 
-  const setMusicVolume = async (volume: number) => {
+  const setMusicVolume = useCallback(async (volume: number) => {
     await audioManager.setMusicVolume(volume);
     const updatedSettings = audioManager.getSettings();
     setSettings(updatedSettings);
-  };
+  }, []);
 
-  const setSfxVolume = async (volume: number) => {
+  const setSfxVolume = useCallback(async (volume: number) => {
     await audioManager.setSfxVolume(volume);
     const updatedSettings = audioManager.getSettings();
     setSettings(updatedSettings);
-  };
+  }, []);
 
   const value: AudioContextType = {
     settings,
