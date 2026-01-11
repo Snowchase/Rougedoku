@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GestureHandlerRootView, GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { getDailyPuzzle, getDateString, isNewDay, type Difficulty } from './dailyPuzzleGenerator';
+import { getDailyPuzzle, getDateString, isNewDay, isValid, isCompleteBoardValid, type Difficulty } from './dailyPuzzleGenerator';
 import { submitDailyScore, initializeUser } from './friendService';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAudio } from '../contexts/AudioContext';
@@ -243,18 +243,29 @@ const SudokuGrid = () => {
       const key = `${row}-${col}`;
       const cellNotes = notes[key] || [];
       const newNotes = { ...notes };
-      
+
       if (cellNotes.includes(num)) {
         newNotes[key] = cellNotes.filter(n => n !== num);
       } else {
         newNotes[key] = [...cellNotes, num].sort();
       }
-      
+
       setNotes(newNotes);
       return;
     }
 
     const newGrid = grid.map(r => [...r]);
+
+    // Check if the placement violates Sudoku rules
+    let isRuleViolation = false;
+    if (num !== 0) {
+      // Temporarily clear the cell to check if the number can be placed
+      const originalValue = newGrid[row][col];
+      newGrid[row][col] = 0;
+      isRuleViolation = !isValid(newGrid, row, col, num);
+      newGrid[row][col] = originalValue;
+    }
+
     newGrid[row][col] = num;
     setGrid(newGrid);
 
@@ -272,14 +283,14 @@ const SudokuGrid = () => {
       setHighlightedNumber(null);
     }
 
-    // Play sound effects
-    if (num !== 0 && num !== solution[row][col]) {
-      // Incorrect number
+    // Play sound effects based on Sudoku rule validation
+    if (num !== 0 && isRuleViolation) {
+      // Number violates Sudoku rules (duplicate in row/column/box)
       playSoundEffect('errorSound');
       setMistakesCount(mistakesCount + 1);
-      Alert.alert('❌ Incorrect', "That number doesn't belong there!");
+      Alert.alert('❌ Rule Violation', "This number conflicts with another in the same row, column, or box!");
     } else if (num !== 0) {
-      // Correct number placed
+      // Valid placement according to Sudoku rules
       playSoundEffect('numberPlace');
     }
 
@@ -287,9 +298,13 @@ const SudokuGrid = () => {
   };
 
   const checkCompletion = async (currentGrid: number[][]) => {
-    const complete = currentGrid.every((row, r) =>
-      row.every((cell, c) => cell === solution[r][c])
+    // Check if all cells are filled
+    const allFilled = currentGrid.every(row =>
+      row.every(cell => cell !== 0)
     );
+
+    // Check if the board is a valid Sudoku solution
+    const complete = allFilled && isCompleteBoardValid(currentGrid);
 
     if (complete) {
       setIsComplete(true);
@@ -491,17 +506,37 @@ const SudokuGrid = () => {
     const isHighlighted = highlightedNumber !== null && grid[row][col] === highlightedNumber;
     const isAlt = isAlternatingBlock(row, col);
 
+    // Check if cell is in same row, column, or box as selected cell
+    const isInSelectedRow = selectedCell && selectedCell.row === row && !isSelected;
+    const isInSelectedCol = selectedCell && selectedCell.col === col && !isSelected;
+    const isInSelectedBox = selectedCell &&
+      Math.floor(selectedCell.row / 3) === Math.floor(row / 3) &&
+      Math.floor(selectedCell.col / 3) === Math.floor(col / 3) &&
+      !isSelected;
+
     // Get the appropriate background color based on state
     let backgroundColor = isAlt ? theme.colors.cellBackgroundAlt : theme.colors.cellBackground;
     if (isOriginal) {
       backgroundColor = isAlt ? theme.colors.cellOriginalAlt : theme.colors.cellOriginal;
     }
+
+    // Apply row/column/box highlighting (lighter than selected cell)
+    if (isInSelectedRow || isInSelectedCol || isInSelectedBox) {
+      // Theme-aware highlight colors for row/column/box
+      backgroundColor = theme.isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.08)';
+    }
+
+    // Number highlighting (when same number is in different cells)
     if (isHighlighted && !isSelected) {
       backgroundColor = theme.colors.cellHighlighted;
     }
+
+    // Selected cell gets priority
     if (isSelected) {
       backgroundColor = theme.colors.cellSelected;
     }
+
+    // Wrong cells get highest priority
     if (isWrong) {
       backgroundColor = theme.colors.cellWrong;
     }
