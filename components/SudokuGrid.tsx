@@ -506,17 +506,37 @@ const SudokuGrid = () => {
     const isHighlighted = highlightedNumber !== null && grid[row][col] === highlightedNumber;
     const isAlt = isAlternatingBlock(row, col);
 
+    // Check if cell is in same row, column, or box as selected cell
+    const isInSelectedRow = selectedCell && selectedCell.row === row && !isSelected;
+    const isInSelectedCol = selectedCell && selectedCell.col === col && !isSelected;
+    const isInSelectedBox = selectedCell &&
+      Math.floor(selectedCell.row / 3) === Math.floor(row / 3) &&
+      Math.floor(selectedCell.col / 3) === Math.floor(col / 3) &&
+      !isSelected;
+
     // Get the appropriate background color based on state
     let backgroundColor = isAlt ? theme.colors.cellBackgroundAlt : theme.colors.cellBackground;
     if (isOriginal) {
       backgroundColor = isAlt ? theme.colors.cellOriginalAlt : theme.colors.cellOriginal;
     }
+
+    // Apply row/column/box highlighting (lighter than selected cell)
+    if (isInSelectedRow || isInSelectedCol || isInSelectedBox) {
+      // Theme-aware highlight colors for row/column/box
+      backgroundColor = theme.isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.08)';
+    }
+
+    // Number highlighting (when same number is in different cells)
     if (isHighlighted && !isSelected) {
       backgroundColor = theme.colors.cellHighlighted;
     }
+
+    // Selected cell gets priority
     if (isSelected) {
       backgroundColor = theme.colors.cellSelected;
     }
+
+    // Wrong cells get highest priority
     if (isWrong) {
       backgroundColor = theme.colors.cellWrong;
     }
