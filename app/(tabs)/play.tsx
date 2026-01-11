@@ -18,18 +18,20 @@ export default function PlayScreen() {
   useFocusEffect(
     React.useCallback(() => {
       let isMounted = true;
+      console.log('[PLAY] useFocusEffect MOUNT - selectedSong:', selectedSong);
 
       // Start playing selected song (or fall back to gameplay music) with fade in
       // The audio manager now handles race conditions internally
       playSelectedSong(selectedSong, 'gameplayMusic', 1500).catch(err => {
-        console.error('Error starting gameplay music:', err);
+        console.error('[PLAY] Error starting gameplay music:', err);
       });
 
       return () => {
         isMounted = false;
+        console.log('[PLAY] useFocusEffect CLEANUP - calling stopMusic');
         // Stop music when leaving screen (audio manager queues this properly)
         stopMusic(800).catch(err => {
-          console.error('Error stopping music:', err);
+          console.error('[PLAY] Error stopping music:', err);
         });
       };
     }, [selectedSong, playSelectedSong, stopMusic])

@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import {
   getGlobalScores,
   getFriendsScores,
@@ -20,6 +21,8 @@ import { getDateString } from '../../components/dailyPuzzleGenerator';
 import { getUserStats, formatStatsForDisplay, type FormattedStats } from '../../services/statsService';
 import StatsDisplay from '../../components/StatsDisplay';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAudio } from '../../contexts/AudioContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { NavigationHeader } from '../../components/navigation-header';
 import { SwipeableScreen } from '../../components/SwipeableScreen';
 import { ScreenErrorBoundary } from '../../components/ScreenErrorBoundary';
@@ -37,6 +40,8 @@ const DIFFICULTY_COLORS = {
 
 export default function LeaderboardsScreen() {
   const { theme } = useTheme();
+  const { playSelectedSong, stopMusic } = useAudio();
+  const { selectedSong } = useCurrency();
   const [activeTab, setActiveTab] = useState<TabType>('stats');
   const [viewType, setViewType] = useState<ViewType>('global');
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
@@ -46,6 +51,28 @@ export default function LeaderboardsScreen() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [userStats, setUserStats] = useState<FormattedStats | null>(null);
+
+  // Play selected song (or default home music) when screen is focused, stop when unfocused
+  useFocusEffect(
+    React.useCallback(() => {
+      let isMounted = true;
+      console.log('[LEADERBOARDS] useFocusEffect MOUNT - selectedSong:', selectedSong);
+
+      // Start playing selected song (or fall back to home music) with fade in
+      playSelectedSong(selectedSong, 'homeMusic', 1500).catch(err => {
+        console.error('[LEADERBOARDS] Error starting music:', err);
+      });
+
+      return () => {
+        isMounted = false;
+        console.log('[LEADERBOARDS] useFocusEffect CLEANUP - calling stopMusic');
+        // Stop music when leaving screen
+        stopMusic(800).catch(err => {
+          console.error('[LEADERBOARDS] Error stopping music:', err);
+        });
+      };
+    }, [selectedSong, playSelectedSong, stopMusic])
+  );
 
   useEffect(() => {
     initAuth();

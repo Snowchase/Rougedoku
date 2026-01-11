@@ -9,9 +9,10 @@ import {
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAudio } from '../../contexts/AudioContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { NavigationHeader } from '../../components/navigation-header';
 import { ScreenErrorBoundary } from '../../components/ScreenErrorBoundary';
 
@@ -105,7 +106,8 @@ const TUTORIAL_STEPS: TutorialStep[] = [
 export default function TutorialScreen() {
   const router = useRouter();
   const { theme } = useTheme();
-  const { playSoundEffect } = useAudio();
+  const { playSoundEffect, playSelectedSong, stopMusic } = useAudio();
+  const { selectedSong } = useCurrency();
   const [currentStep, setCurrentStep] = useState(0);
   const [grid, setGrid] = useState<number[][]>(
     TUTORIAL_PUZZLE.map((row) => [...row])
@@ -117,6 +119,28 @@ export default function TutorialScreen() {
   const [showInstructions, setShowInstructions] = useState(true);
 
   const step = TUTORIAL_STEPS[currentStep];
+
+  // Play selected song (or default home music) when screen is focused, stop when unfocused
+  useFocusEffect(
+    React.useCallback(() => {
+      let isMounted = true;
+      console.log('[TUTORIAL] useFocusEffect MOUNT - selectedSong:', selectedSong);
+
+      // Start playing selected song (or fall back to home music) with fade in
+      playSelectedSong(selectedSong, 'homeMusic', 1500).catch(err => {
+        console.error('[TUTORIAL] Error starting music:', err);
+      });
+
+      return () => {
+        isMounted = false;
+        console.log('[TUTORIAL] useFocusEffect CLEANUP - calling stopMusic');
+        // Stop music when leaving screen
+        stopMusic(800).catch(err => {
+          console.error('[TUTORIAL] Error stopping music:', err);
+        });
+      };
+    }, [selectedSong, playSelectedSong, stopMusic])
+  );
 
   const handleCellPress = (row: number, col: number) => {
     // Only allow selecting empty cells or target cells
