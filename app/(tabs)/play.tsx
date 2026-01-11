@@ -20,6 +20,8 @@ export default function PlayScreen() {
       let isMounted = true;
 
       const startMusic = async () => {
+        // Add small delay to ensure any previous stopMusic has completed
+        await new Promise(resolve => setTimeout(resolve, 100));
         if (isMounted) {
           await playSelectedSong(selectedSong, 'gameplayMusic', 1500);
         }
