@@ -12,13 +12,19 @@ import { ScreenErrorBoundary } from '../../components/ScreenErrorBoundary';
 export default function PlayScreen() {
   const { playSelectedSong, stopMusic } = useAudio();
   const { theme } = useTheme();
-  const { selectedSong } = useCurrency();
+  const { selectedSong, loading } = useCurrency();
 
   // Play selected song (or default gameplay music) when screen is focused, stop when unfocused
   useFocusEffect(
     React.useCallback(() => {
       let isMounted = true;
-      console.log('[PLAY] useFocusEffect MOUNT - selectedSong:', selectedSong);
+      console.log('[PLAY] useFocusEffect MOUNT - selectedSong:', selectedSong, 'loading:', loading);
+
+      // Wait for selectedSong to load from storage before playing music
+      if (loading) {
+        console.log('[PLAY] Still loading selectedSong, skipping music start');
+        return;
+      }
 
       // Start playing selected song (or fall back to gameplay music) with fade in
       // The audio manager now handles race conditions internally
@@ -34,7 +40,7 @@ export default function PlayScreen() {
           console.error('[PLAY] Error stopping music:', err);
         });
       };
-    }, [selectedSong, playSelectedSong, stopMusic])
+    }, [selectedSong, loading, playSelectedSong, stopMusic])
   );
 
   return (

@@ -77,9 +77,6 @@ class AudioManager {
   private isFading = false;
   private musicOperationLock: Promise<void> = Promise.resolve();
   private cancelCurrentFade = false;
-  private lastTrackStartTime: number = 0;
-  private pendingTrack: PlayableMusic | null = null; // Track what's queued to play
-  private readonly RESTART_COOLDOWN_MS = 500; // Minimum time between track restarts
 
   async initialize() {
     if (this.isInitialized) return;
@@ -171,29 +168,7 @@ class AudioManager {
 
   // Music Playback with Fade
   async playMusic(track: PlayableMusic, fadeInDuration: number = 1000) {
-    const callTimestamp = Date.now();
-    console.log(`[AUDIO] playMusic() CALLED for track: ${track} at ${callTimestamp}`);
-
-    // EARLY EXIT: If this exact track is already playing OR already queued, skip entirely
-    if (this.currentTrack === track || this.pendingTrack === track) {
-      if (this.currentMusic) {
-        try {
-          const status = await this.currentMusic.getStatusAsync();
-          if (status.isLoaded && status.isPlaying) {
-            console.log(`[AUDIO] ⏭️ SKIP: Track ${track} already ${this.currentTrack === track ? 'playing' : 'queued'}, ignoring redundant request`);
-            return;
-          }
-        } catch {
-          // If status check fails, continue to queue
-        }
-      } else if (this.pendingTrack === track) {
-        console.log(`[AUDIO] ⏭️ SKIP: Track ${track} already queued, ignoring redundant request`);
-        return;
-      }
-    }
-
-    // Mark this track as pending before entering the queue
-    this.pendingTrack = track;
+    console.log(`[AUDIO] playMusic() CALLED for track: ${track}`);
 
     // Queue this operation to prevent race conditions
     const previousLock = this.musicOperationLock;
@@ -202,139 +177,85 @@ class AudioManager {
       releaseLock = resolve;
     });
 
-    console.log(`[AUDIO] playMusic() waiting for lock... (track: ${track})`);
     try {
       // Wait for any previous music operation to complete
       await previousLock;
-      console.log(`[AUDIO] playMusic() lock acquired for track: ${track}`);
+      console.log(`[AUDIO] Lock acquired for track: ${track}`);
 
       if (!this.isInitialized) {
         await this.initialize();
       }
 
       if (!this.settings.musicEnabled) {
-        console.log(`[AUDIO] playMusic() aborted - music disabled (track: ${track})`);
+        console.log(`[AUDIO] Music disabled, skipping`);
         return;
       }
 
       const audioSource = this.getAudioSource(track);
-
-      // Check if audio file exists
       if (!audioSource) {
-        console.log(`[AUDIO] Audio file for ${track} not found. Add your MP3 files to enable music.`);
+        console.log(`[AUDIO] No audio file for ${track}`);
         return;
       }
 
-      // If same track is already playing, don't restart
+      // Simple check: if same track is already playing, skip
       if (this.currentTrack === track && this.currentMusic) {
         try {
           const status = await this.currentMusic.getStatusAsync();
           if (status.isLoaded && status.isPlaying) {
-            console.log(`[AUDIO] Track ${track} already playing, skipping restart`);
+            console.log(`[AUDIO] ${track} already playing, skipping`);
             return;
           }
         } catch {
-          console.log(`[AUDIO] Status check failed for ${track}, will restart`);
-          // If status check fails, continue to restart
+          // Continue if status check fails
         }
       }
 
-      // Prevent rapid restarts of the same track (debounce for Expo Go focus event issues)
-      // Only check if track is CURRENTLY PLAYING and restart is within cooldown
-      const now = Date.now();
-      if (this.currentTrack === track && (now - this.lastTrackStartTime) < this.RESTART_COOLDOWN_MS) {
-        console.log(`[AUDIO] DEBOUNCE: Track ${track} recently started (${now - this.lastTrackStartTime}ms ago), ignoring rapid restart attempt`);
-        return;
-      }
-
-      console.log(`[AUDIO] All checks passed, proceeding to play ${track}`);
-
-      // Cancel any ongoing fade operations
-      this.cancelCurrentFade = true;
-      await new Promise(resolve => setTimeout(resolve, 50)); // Brief pause to allow fade cancellation
-
-      // Stop current music if playing - MUST AWAIT to prevent overlap
+      // Stop current music if any
       if (this.currentMusic) {
-        console.log(`[AUDIO] Stopping current track (${this.currentTrack}) before playing ${track}`);
+        console.log(`[AUDIO] Stopping previous track: ${this.currentTrack}`);
         const musicToStop = this.currentMusic;
-        const previousTrack = this.currentTrack;
         this.currentMusic = null;
         this.currentTrack = null;
 
         try {
-          // Remove any status update listeners before stopping
           musicToStop.setOnPlaybackStatusUpdate(null);
-
-          // Get current status to ensure clean stop
-          const currentStatus = await musicToStop.getStatusAsync();
-          if (currentStatus.isLoaded && currentStatus.isPlaying) {
-            await musicToStop.stopAsync();
-          }
+          await musicToStop.stopAsync();
           await musicToStop.unloadAsync();
-          console.log(`[AUDIO] Previous track (${previousTrack}) stopped and unloaded successfully`);
-        } catch (error) {
-          // Ignore errors from already stopped/unloaded music
-          console.log(`[AUDIO] Previous track (${previousTrack}) already stopped/unloaded`);
+        } catch {
+          // Ignore stop errors
         }
       }
 
-      // Brief delay to ensure complete cleanup
-      console.log(`[AUDIO] Waiting 100ms for cleanup before starting ${track}`);
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Create and play new track
+      console.log(`[AUDIO] Creating sound for: ${track}`);
+      const { sound } = await Audio.Sound.createAsync(
+        audioSource,
+        {
+          shouldPlay: true,
+          isLooping: true,
+          volume: 0, // Start at 0 for fade in
+        }
+      );
 
-      console.log(`[AUDIO] Creating sound for track: ${track}`);
-      try {
-        const { sound } = await Audio.Sound.createAsync(
-          audioSource,
-          {
-            shouldPlay: true,
-            isLooping: true,
-            volume: 0, // Start at 0 for fade in
-          }
-        );
+      this.currentMusic = sound;
+      this.currentTrack = track;
 
-        console.log(`[AUDIO] Sound created for ${track}, setting up...`);
-        this.currentMusic = sound;
-        this.currentTrack = track;
-        this.lastTrackStartTime = Date.now();
+      // Set up looping monitoring
+      sound.setOnPlaybackStatusUpdate((status: AVPlaybackStatus) => {
+        if (status.isLoaded && !status.isLooping && this.currentMusic === sound) {
+          sound.setIsLoopingAsync(true).catch(() => {});
+        }
+      });
 
-        // Set up playback status monitoring to ensure proper looping
-        sound.setOnPlaybackStatusUpdate((status: AVPlaybackStatus) => {
-          if (status.isLoaded) {
-            // Log any playback issues for debugging
-            if (status.didJustFinish && !status.isLooping) {
-              console.warn('Music finished but isLooping was false - this should not happen');
-            }
-            // Verify looping is enabled
-            if (!status.isLooping && this.currentMusic === sound) {
-              console.warn('Music isLooping flag is false, re-enabling');
-              sound.setIsLoopingAsync(true).catch(err => {
-                console.error('Failed to enable looping:', err);
-              });
-            }
-          }
-        });
+      await sound.setIsLoopingAsync(true);
 
-        // Ensure looping is definitely enabled
-        await sound.setIsLoopingAsync(true);
+      // Fade in
+      await this.fadeIn(fadeInDuration);
 
-        // Reset fade cancellation flag
-        this.cancelCurrentFade = false;
-
-        // Fade in
-        console.log(`[AUDIO] Starting fade in for ${track}`);
-        await this.fadeIn(fadeInDuration);
-
-        console.log(`[AUDIO] ✓ SUCCESS: ${track} now playing (looping enabled)`);
-      } catch (error) {
-        console.error(`[AUDIO] ✗ ERROR playing music ${track}:`, error);
-      }
+      console.log(`[AUDIO] ✓ ${track} now playing`);
+    } catch (error) {
+      console.error(`[AUDIO] ✗ Error playing ${track}:`, error);
     } finally {
-      // Clear pending track and release the lock
-      if (this.pendingTrack === track) {
-        this.pendingTrack = null;
-      }
-      console.log(`[AUDIO] playMusic() releasing lock for track: ${track}`);
       releaseLock!();
     }
   }
@@ -362,8 +283,7 @@ class AudioManager {
   }
 
   async stopMusic(fadeOutDuration: number = 500) {
-    const callTimestamp = Date.now();
-    console.log(`[AUDIO] stopMusic() CALLED (fadeOut: ${fadeOutDuration}ms) at ${callTimestamp}, currentTrack: ${this.currentTrack}`);
+    console.log(`[AUDIO] stopMusic() CALLED, currentTrack: ${this.currentTrack}`);
 
     // Queue this operation to prevent race conditions
     const previousLock = this.musicOperationLock;
@@ -372,73 +292,32 @@ class AudioManager {
       releaseLock = resolve;
     });
 
-    console.log(`[AUDIO] stopMusic() waiting for lock...`);
     try {
       // Wait for any previous music operation to complete
       await previousLock;
       console.log(`[AUDIO] stopMusic() lock acquired`);
 
       if (!this.currentMusic) {
-        console.log(`[AUDIO] stopMusic() - no music playing, nothing to stop`);
+        console.log(`[AUDIO] No music to stop`);
         return;
       }
 
-      // Store reference to avoid race conditions
       const musicToStop = this.currentMusic;
       const stoppedTrack = this.currentTrack;
 
-      console.log(`[AUDIO] stopMusic() stopping track: ${stoppedTrack}`);
-
-      // Clear current references immediately to prevent double-stopping
+      // Clear references
       this.currentMusic = null;
       this.currentTrack = null;
-      this.pendingTrack = null; // Clear any pending track
-      this.lastTrackStartTime = 0; // Reset to allow new track to start
-
-      // Cancel any ongoing fades
-      this.cancelCurrentFade = true;
 
       try {
-        // Remove status update listeners
         musicToStop.setOnPlaybackStatusUpdate(null);
-
-        // Fade out if requested (simplified to avoid complex state)
-        if (fadeOutDuration > 0) {
-          const status = await musicToStop.getStatusAsync();
-          if (status.isLoaded) {
-            // Quick fade out
-            const steps = 10;
-            const stepDuration = fadeOutDuration / steps;
-            const currentVolume = status.volume || 0;
-            const volumeDecrement = currentVolume / steps;
-
-            for (let i = steps; i >= 0; i--) {
-              try {
-                const newVolume = volumeDecrement * i;
-                await musicToStop.setVolumeAsync(newVolume);
-                await new Promise(resolve => setTimeout(resolve, stepDuration));
-              } catch {
-                break; // Stop fading if sound was released
-              }
-            }
-          }
-        }
-
         await musicToStop.stopAsync();
         await musicToStop.unloadAsync();
-
-        console.log(`[AUDIO] ✓ Music stopped successfully: ${stoppedTrack}`);
-      } catch (error) {
-        // Silently handle errors if music was already stopped/released
-        if (error && !error.toString().includes('released') && !error.toString().includes('unloaded')) {
-          console.error(`[AUDIO] ✗ Error stopping music (${stoppedTrack}):`, error);
-        } else {
-          console.log(`[AUDIO] Music already released: ${stoppedTrack}`);
-        }
+        console.log(`[AUDIO] ✓ Stopped: ${stoppedTrack}`);
+      } catch {
+        // Ignore stop errors
       }
     } finally {
-      // Release the lock
-      console.log(`[AUDIO] stopMusic() releasing lock`);
       releaseLock!();
     }
   }

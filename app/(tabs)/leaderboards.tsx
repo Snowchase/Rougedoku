@@ -41,7 +41,7 @@ const DIFFICULTY_COLORS = {
 export default function LeaderboardsScreen() {
   const { theme } = useTheme();
   const { playSelectedSong, stopMusic } = useAudio();
-  const { selectedSong } = useCurrency();
+  const { selectedSong, loading: currencyLoading } = useCurrency();
   const [activeTab, setActiveTab] = useState<TabType>('stats');
   const [viewType, setViewType] = useState<ViewType>('global');
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
@@ -56,7 +56,13 @@ export default function LeaderboardsScreen() {
   useFocusEffect(
     React.useCallback(() => {
       let isMounted = true;
-      console.log('[LEADERBOARDS] useFocusEffect MOUNT - selectedSong:', selectedSong);
+      console.log('[LEADERBOARDS] useFocusEffect MOUNT - selectedSong:', selectedSong, 'loading:', currencyLoading);
+
+      // Wait for selectedSong to load from storage before playing music
+      if (currencyLoading) {
+        console.log('[LEADERBOARDS] Still loading selectedSong, skipping music start');
+        return;
+      }
 
       // Start playing selected song (or fall back to home music) with fade in
       playSelectedSong(selectedSong, 'homeMusic', 1500).catch(err => {
@@ -71,7 +77,7 @@ export default function LeaderboardsScreen() {
           console.error('[LEADERBOARDS] Error stopping music:', err);
         });
       };
-    }, [selectedSong, playSelectedSong, stopMusic])
+    }, [selectedSong, currencyLoading, playSelectedSong, stopMusic])
   );
 
   useEffect(() => {

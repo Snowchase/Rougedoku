@@ -7,7 +7,7 @@ import Animated, {
   withSpring,
   runOnJS,
 } from 'react-native-reanimated';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
@@ -20,6 +20,13 @@ interface SwipeableScreenProps {
 export function SwipeableScreen({ children, enabled = true }: SwipeableScreenProps) {
   const router = useRouter();
   const translateX = useSharedValue(0);
+
+  // Reset translation when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      translateX.value = 0;
+    }, [translateX])
+  );
 
   const goBack = () => {
     router.back();

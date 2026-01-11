@@ -8,12 +8,12 @@ import {
   ScrollView,
   Modal,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAudio } from '../../contexts/AudioContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { NavigationHeader } from '../../components/navigation-header';
+import { SwipeableScreen } from '../../components/SwipeableScreen';
 import { ScreenErrorBoundary } from '../../components/ScreenErrorBoundary';
 
 const { width } = Dimensions.get('window');
@@ -107,7 +107,7 @@ export default function TutorialScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const { playSoundEffect, playSelectedSong, stopMusic } = useAudio();
-  const { selectedSong } = useCurrency();
+  const { selectedSong, loading } = useCurrency();
   const [currentStep, setCurrentStep] = useState(0);
   const [grid, setGrid] = useState<number[][]>(
     TUTORIAL_PUZZLE.map((row) => [...row])
@@ -124,7 +124,13 @@ export default function TutorialScreen() {
   useFocusEffect(
     React.useCallback(() => {
       let isMounted = true;
-      console.log('[TUTORIAL] useFocusEffect MOUNT - selectedSong:', selectedSong);
+      console.log('[TUTORIAL] useFocusEffect MOUNT - selectedSong:', selectedSong, 'loading:', loading);
+
+      // Wait for selectedSong to load from storage before playing music
+      if (loading) {
+        console.log('[TUTORIAL] Still loading selectedSong, skipping music start');
+        return;
+      }
 
       // Start playing selected song (or fall back to home music) with fade in
       playSelectedSong(selectedSong, 'homeMusic', 1500).catch(err => {
@@ -139,7 +145,7 @@ export default function TutorialScreen() {
           console.error('[TUTORIAL] Error stopping music:', err);
         });
       };
-    }, [selectedSong, playSelectedSong, stopMusic])
+    }, [selectedSong, loading, playSelectedSong, stopMusic])
   );
 
   const handleCellPress = (row: number, col: number) => {
@@ -237,10 +243,11 @@ export default function TutorialScreen() {
 
   return (
     <ScreenErrorBoundary screenName="Tutorial">
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
-        <NavigationHeader title="Tutorial" showBackButton onBackPress={() => router.push('/')} />
+      <SwipeableScreen>
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+          <NavigationHeader title="Tutorial" showBackButton onBackPress={() => router.push('/')} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Progress Indicator */}
         <View style={styles.progressContainer}>
           <Text style={[styles.progressText, { color: theme.colors.textPrimary }]}>
@@ -383,8 +390,9 @@ export default function TutorialScreen() {
             </Text>
           </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+          </ScrollView>
+        </View>
+      </SwipeableScreen>
     </ScreenErrorBoundary>
   );
 }
