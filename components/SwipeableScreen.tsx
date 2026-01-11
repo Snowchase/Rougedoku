@@ -29,7 +29,7 @@ export function SwipeableScreen({ children, enabled = true }: SwipeableScreenPro
   );
 
   const goBack = () => {
-    router.push('/');
+    router.back();
   };
 
   const panGesture = Gesture.Pan()
