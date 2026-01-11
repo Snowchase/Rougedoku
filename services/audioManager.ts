@@ -78,8 +78,6 @@ class AudioManager {
   private musicOperationLock: Promise<void> = Promise.resolve();
   private cancelCurrentFade = false;
   private lastTrackStartTime: number = 0;
-  private lastStoppedTrack: PlayableMusic | null = null;
-  private lastTrackStopTime: number = 0;
   private pendingTrack: PlayableMusic | null = null; // Track what's queued to play
   private readonly RESTART_COOLDOWN_MS = 500; // Minimum time between track restarts
 
@@ -242,15 +240,10 @@ class AudioManager {
       }
 
       // Prevent rapid restarts of the same track (debounce for Expo Go focus event issues)
+      // Only check if track is CURRENTLY PLAYING and restart is within cooldown
       const now = Date.now();
       if (this.currentTrack === track && (now - this.lastTrackStartTime) < this.RESTART_COOLDOWN_MS) {
         console.log(`[AUDIO] DEBOUNCE: Track ${track} recently started (${now - this.lastTrackStartTime}ms ago), ignoring rapid restart attempt`);
-        return;
-      }
-
-      // Also prevent restarting a track that was just stopped (common in Expo Go with rapid focus changes)
-      if (this.lastStoppedTrack === track && (now - this.lastTrackStopTime) < this.RESTART_COOLDOWN_MS) {
-        console.log(`[AUDIO] DEBOUNCE: Track ${track} was just stopped (${now - this.lastTrackStopTime}ms ago), ignoring rapid restart from focus event`);
         return;
       }
 
@@ -401,8 +394,6 @@ class AudioManager {
       this.currentTrack = null;
       this.pendingTrack = null; // Clear any pending track
       this.lastTrackStartTime = 0; // Reset to allow new track to start
-      this.lastStoppedTrack = stoppedTrack;
-      this.lastTrackStopTime = Date.now();
 
       // Cancel any ongoing fades
       this.cancelCurrentFade = true;
