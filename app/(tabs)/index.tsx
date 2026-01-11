@@ -14,14 +14,20 @@ export default function HomeScreen() {
   const router = useRouter();
   const { playSelectedSong, stopMusic } = useAudio();
   const { theme } = useTheme();
-  const { coins, selectedSong } = useCurrency();
+  const { coins, selectedSong, loading } = useCurrency();
   const [currentStreak, setCurrentStreak] = useState<number>(0);
 
   // Play selected song (or default home music) when screen is focused, stop when unfocused
   useFocusEffect(
     React.useCallback(() => {
       let isMounted = true;
-      console.log('[HOME] useFocusEffect MOUNT - selectedSong:', selectedSong);
+      console.log('[HOME] useFocusEffect MOUNT - selectedSong:', selectedSong, 'loading:', loading);
+
+      // Wait for selectedSong to load from storage before playing music
+      if (loading) {
+        console.log('[HOME] Still loading selectedSong, skipping music start');
+        return;
+      }
 
       // Start playing selected song (or fall back to home music) with fade in
       // The audio manager now handles race conditions internally
@@ -40,7 +46,7 @@ export default function HomeScreen() {
           console.error('[HOME] Error stopping music:', err);
         });
       };
-    }, [selectedSong, playSelectedSong, stopMusic])
+    }, [selectedSong, loading, playSelectedSong, stopMusic])
   );
 
   const loadStreak = async () => {

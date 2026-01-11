@@ -107,7 +107,7 @@ export default function TutorialScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const { playSoundEffect, playSelectedSong, stopMusic } = useAudio();
-  const { selectedSong } = useCurrency();
+  const { selectedSong, loading } = useCurrency();
   const [currentStep, setCurrentStep] = useState(0);
   const [grid, setGrid] = useState<number[][]>(
     TUTORIAL_PUZZLE.map((row) => [...row])
@@ -124,7 +124,13 @@ export default function TutorialScreen() {
   useFocusEffect(
     React.useCallback(() => {
       let isMounted = true;
-      console.log('[TUTORIAL] useFocusEffect MOUNT - selectedSong:', selectedSong);
+      console.log('[TUTORIAL] useFocusEffect MOUNT - selectedSong:', selectedSong, 'loading:', loading);
+
+      // Wait for selectedSong to load from storage before playing music
+      if (loading) {
+        console.log('[TUTORIAL] Still loading selectedSong, skipping music start');
+        return;
+      }
 
       // Start playing selected song (or fall back to home music) with fade in
       playSelectedSong(selectedSong, 'homeMusic', 1500).catch(err => {
@@ -139,7 +145,7 @@ export default function TutorialScreen() {
           console.error('[TUTORIAL] Error stopping music:', err);
         });
       };
-    }, [selectedSong, playSelectedSong, stopMusic])
+    }, [selectedSong, loading, playSelectedSong, stopMusic])
   );
 
   const handleCellPress = (row: number, col: number) => {
