@@ -3,31 +3,43 @@ import { TouchableOpacity, StyleSheet, View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface NavigationHeaderProps {
   title: string;
+  showBackButton?: boolean;
+  onBackPress?: () => void;
 }
 
-export function NavigationHeader({ title }: NavigationHeaderProps) {
+export function NavigationHeader({ title, showBackButton = true, onBackPress }: NavigationHeaderProps) {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const { theme } = useTheme();
   const insets = useSafeAreaInsets();
 
+  const handleBackPress = () => {
+    if (onBackPress) {
+      onBackPress();
+    } else {
+      router.push('/');
+    }
+  };
+
   return (
-    <View style={[styles.header, { backgroundColor: colors.background, paddingTop: insets.top + 12 }]}>
-      <TouchableOpacity
-        onPress={() => router.push('/')}
-        style={styles.backButton}
-        accessibilityLabel="Back to home"
-        accessibilityRole="button"
-      >
-        <IconSymbol size={24} name="chevron.left" color={colors.tint} />
-        <Text style={[styles.backText, { color: colors.tint }]}>Home</Text>
-      </TouchableOpacity>
-      <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+    <View style={[styles.header, { backgroundColor: theme.colors.background, paddingTop: insets.top + 8, borderBottomColor: theme.colors.gridLine }]}>
+      {showBackButton ? (
+        <TouchableOpacity
+          onPress={handleBackPress}
+          style={styles.backButton}
+          accessibilityLabel="Back to home"
+          accessibilityRole="button"
+        >
+          <IconSymbol size={24} name="chevron.left" color={theme.colors.primaryButton} />
+          <Text style={[styles.backText, { color: theme.colors.primaryButton }]}>Home</Text>
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.placeholder} />
+      )}
+      <Text style={[styles.title, { color: theme.colors.textPrimary }]}>{title}</Text>
       <View style={styles.placeholder} />
     </View>
   );
