@@ -174,22 +174,24 @@ class AudioManager {
     const callTimestamp = Date.now();
     console.log(`[AUDIO] playMusic() CALLED for track: ${track} at ${callTimestamp}`);
 
-    // EARLY EXIT: If this exact track is already playing OR already queued, skip entirely
-    if (this.currentTrack === track || this.pendingTrack === track) {
-      if (this.currentMusic) {
-        try {
-          const status = await this.currentMusic.getStatusAsync();
-          if (status.isLoaded && status.isPlaying) {
-            console.log(`[AUDIO] ⏭️ SKIP: Track ${track} already ${this.currentTrack === track ? 'playing' : 'queued'}, ignoring redundant request`);
-            return;
-          }
-        } catch {
-          // If status check fails, continue to queue
+    // EARLY EXIT: If this exact track is already playing AND music is active, skip
+    if (this.currentTrack === track && this.currentMusic) {
+      try {
+        const status = await this.currentMusic.getStatusAsync();
+        if (status.isLoaded && status.isPlaying) {
+          console.log(`[AUDIO] ⏭️ SKIP: Track ${track} already playing, ignoring redundant request`);
+          return;
         }
-      } else if (this.pendingTrack === track) {
-        console.log(`[AUDIO] ⏭️ SKIP: Track ${track} already queued, ignoring redundant request`);
-        return;
+      } catch {
+        // If status check fails, continue to queue (music might be in bad state)
       }
+    }
+
+    // EARLY EXIT: If track is queued AND different from what's currently playing, skip
+    // (This prevents duplicate requests for a NEW track, but allows same track to restart)
+    if (this.pendingTrack === track && this.currentTrack !== track) {
+      console.log(`[AUDIO] ⏭️ SKIP: Track ${track} already queued, ignoring redundant request`);
+      return;
     }
 
     // Mark this track as pending before entering the queue
