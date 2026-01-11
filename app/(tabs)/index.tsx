@@ -23,8 +23,8 @@ export default function HomeScreen() {
       let isMounted = true;
 
       const startMusic = async () => {
-        // Add small delay to ensure any previous stopMusic has completed
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Wait for previous stopMusic to complete (800ms fade + buffer)
+        await new Promise(resolve => setTimeout(resolve, 900));
         if (isMounted) {
           await playSelectedSong(selectedSong, 'homeMusic', 1500);
         }
