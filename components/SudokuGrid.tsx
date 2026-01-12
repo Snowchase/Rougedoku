@@ -289,13 +289,9 @@ const SudokuGrid = () => {
       playSoundEffect('errorSound');
       setMistakesCount(mistakesCount + 1);
       Alert.alert('❌ Rule Violation', "This number conflicts with another in the same row, column, or box!");
-    } else if (num !== 0 && num !== solution[row][col]) {
-      // Valid placement according to rules, but doesn't match the solution
-      // This is a mistake, but we accept it (multiple solution support)
-      playSoundEffect('numberPlace');
-      setMistakesCount(mistakesCount + 1);
     } else if (num !== 0) {
-      // Correct number placed (matches solution)
+      // Valid placement according to Sudoku rules
+      // This includes forced forks (alternative valid solutions) - NOT counted as mistakes
       playSoundEffect('numberPlace');
     }
 
