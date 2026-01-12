@@ -17,6 +17,7 @@ import {
   PurchaseData,
 } from '../services/currencyService';
 import { Difficulty } from '../components/dailyPuzzleGenerator';
+import { adService } from '../services/adService';
 
 interface CurrencyContextType {
   coins: number;
@@ -51,6 +52,8 @@ interface CurrencyContextType {
   isCellStyleOwned: (style: string) => boolean;
   isFontOwned: (fontId: string) => boolean;
   isSongOwned: (songId: string) => boolean;
+  watchRewardedAd: () => Promise<{ success: boolean; coinsEarned: number; message: string }>;
+  isAdReady: () => boolean;
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
@@ -196,6 +199,30 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     return purchaseData.unlockedSongs.includes(songId);
   }, [purchaseData.unlockedSongs]);
 
+  const watchRewardedAd = useCallback(async () => {
+    try {
+      const coinsEarned = await adService.showRewardedAd();
+      const newData = await addCoins(coinsEarned);
+      setCurrencyData(newData);
+      return {
+        success: true,
+        coinsEarned,
+        message: `You earned ${coinsEarned} coins!`,
+      };
+    } catch (error) {
+      console.error('Error showing rewarded ad:', error);
+      return {
+        success: false,
+        coinsEarned: 0,
+        message: error instanceof Error ? error.message : 'Failed to show ad. Please try again.',
+      };
+    }
+  }, []);
+
+  const isAdReady = useCallback(() => {
+    return adService.isRewardedAdReady();
+  }, []);
+
   return (
     <CurrencyContext.Provider
       value={{
@@ -225,6 +252,8 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
         isCellStyleOwned,
         isFontOwned,
         isSongOwned,
+        watchRewardedAd,
+        isAdReady,
       }}
     >
       {children}

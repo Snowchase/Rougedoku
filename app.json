@@ -20,6 +20,7 @@
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow Sudokle to access your photos to share your scores.",
         "NSCameraUsageDescription": "Allow Sudokle to use your camera to share your scores.",
+        "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you and to measure ad performance. You can change this in Settings at any time.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -51,6 +52,13 @@
           "dark": {
             "backgroundColor": "#000000"
           }
+        }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
         }
       ]
     ],

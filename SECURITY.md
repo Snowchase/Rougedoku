@@ -162,6 +162,31 @@ If you detect abuse:
 - Blocked users don't know they're blocked (privacy-preserving)
 - Leaderboards only show public profile info (username, avatar)
 
+### Ad Privacy & Tracking Transparency
+
+Sudokle implements rewarded ads with full compliance to Apple's App Tracking Transparency (ATT) requirements:
+
+- **User Consent**: Users are prompted before any ad tracking begins
+- **ATT Prompt**: iOS users receive Apple's standard tracking permission dialog
+- **Opt-Out Support**: Users can decline tracking and still use all app features
+- **Limited Data**: Only advertising identifier is shared with ad networks
+- **Transparency**: Privacy policy clearly explains ad network data practices
+
+**Ad Networks Used**: Google AdMob
+
+**Data Collected by Ads**:
+- Device advertising identifier (IDFA on iOS)
+- Device type and OS version
+- Ad interaction data (impressions, clicks)
+- General location (country/region, not precise location)
+
+**User Rights**:
+- Users can opt out of personalized ads via ATT prompt
+- Users can change tracking preferences in iOS Settings
+- All rewarded ads are optional - users choose when to watch
+
+**Implementation**: `services/adService.ts`
+
 ---
 
 **Questions or Concerns?**

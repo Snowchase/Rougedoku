@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useTheme } from '../contexts/ThemeContext';
@@ -13,6 +14,7 @@ import { useCurrency } from '../contexts/CurrencyContext';
 import { themes, themeKeys, ThemeKey } from '../constants/themes';
 import { numberFonts, premiumAvatars, avatarCategories, AvatarCategory, premiumSongs, songCategories, SongCategory } from '../constants/customizations';
 import { ScreenErrorBoundary } from '../components/ScreenErrorBoundary';
+import { COINS_PER_AD } from '../services/adService';
 
 type ShopTab = 'themes' | 'fonts' | 'avatars' | 'songs' | 'rewards';
 
@@ -33,10 +35,13 @@ export default function ShopScreen() {
     buySong,
     selectedSong,
     setSelectedSong,
+    watchRewardedAd,
+    isAdReady,
   } = useCurrency();
   const [activeTab, setActiveTab] = useState<ShopTab>('themes');
   const [avatarCategory, setAvatarCategory] = useState<AvatarCategory>('animals');
   const [songCategory, setSongCategory] = useState<SongCategory>('ambient');
+  const [isLoadingAd, setIsLoadingAd] = useState(false);
 
   const handlePurchaseTheme = async (key: ThemeKey) => {
     const themeData = themes[key];
@@ -163,6 +168,24 @@ export default function ShopScreen() {
         },
       ]
     );
+  };
+
+  const handleWatchAd = async () => {
+    if (isLoadingAd) return;
+
+    setIsLoadingAd(true);
+    try {
+      const result = await watchRewardedAd();
+      if (result.success) {
+        Alert.alert('Coins Earned!', result.message);
+      } else {
+        Alert.alert('Ad Not Available', result.message);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    } finally {
+      setIsLoadingAd(false);
+    }
   };
 
   const renderThemeCard = (key: ThemeKey) => {
@@ -438,6 +461,34 @@ export default function ShopScreen() {
   const renderRewardsInfo = () => {
     return (
       <View style={styles.rewardsContainer}>
+
+      {/* Watch Ad for Coins Card */}
+      <TouchableOpacity
+        style={[
+          styles.adCard,
+          { backgroundColor: theme.colors.primaryButton },
+          isLoadingAd && { opacity: 0.7 },
+        ]}
+        onPress={handleWatchAd}
+        disabled={isLoadingAd}
+      >
+        <View style={styles.adCardContent}>
+          <View style={styles.adIconContainer}>
+            <Text style={styles.adIcon}>📺</Text>
+          </View>
+          <View style={styles.adTextContainer}>
+            <Text style={styles.adTitle}>Watch Ad for Coins</Text>
+            <Text style={styles.adSubtitle}>Earn {COINS_PER_AD} coins per ad</Text>
+          </View>
+          {isLoadingAd ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <View style={styles.adButton}>
+              <Text style={styles.adButtonText}>Watch</Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
 
       <View style={[styles.rewardCard, { backgroundColor: theme.colors.cardBackground }]}>
         <Text style={[styles.rewardTitle, { color: theme.colors.textPrimary }]}>
@@ -967,5 +1018,55 @@ const styles = StyleSheet.create({
   songDuration: {
     fontSize: 11,
     fontWeight: '500',
+  },
+  adCard: {
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
+    marginBottom: 16,
+  },
+  adCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  adIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  adIcon: {
+    fontSize: 28,
+  },
+  adTextContainer: {
+    flex: 1,
+  },
+  adTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 2,
+  },
+  adSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  adButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  adButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
   },
 });
