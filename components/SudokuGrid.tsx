@@ -503,7 +503,43 @@ const SudokuGrid = () => {
   const getCellStyle = (row: number, col: number) => {
     const isOriginal = original[row][col] !== 0;
     const isSelected = selectedCell?.row === row && selectedCell?.col === col;
-    const isWrong = grid[row][col] !== 0 && grid[row][col] !== solution[row][col];
+
+    // Check if this cell violates Sudoku rules (creates duplicates)
+    const cellValue = grid[row][col];
+    let isWrong = false;
+    if (cellValue !== 0) {
+      // Check for duplicates in the same row
+      for (let c = 0; c < 9; c++) {
+        if (c !== col && grid[row][c] === cellValue) {
+          isWrong = true;
+          break;
+        }
+      }
+      // Check for duplicates in the same column
+      if (!isWrong) {
+        for (let r = 0; r < 9; r++) {
+          if (r !== row && grid[r][col] === cellValue) {
+            isWrong = true;
+            break;
+          }
+        }
+      }
+      // Check for duplicates in the same 3x3 box
+      if (!isWrong) {
+        const boxRow = Math.floor(row / 3) * 3;
+        const boxCol = Math.floor(col / 3) * 3;
+        for (let r = boxRow; r < boxRow + 3; r++) {
+          for (let c = boxCol; c < boxCol + 3; c++) {
+            if ((r !== row || c !== col) && grid[r][c] === cellValue) {
+              isWrong = true;
+              break;
+            }
+          }
+          if (isWrong) break;
+        }
+      }
+    }
+
     const isHighlighted = highlightedNumber !== null && grid[row][col] === highlightedNumber;
     const isAlt = isAlternatingBlock(row, col);
 
