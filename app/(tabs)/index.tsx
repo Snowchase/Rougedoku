@@ -138,7 +138,7 @@ export default function HomeScreen() {
               onPress={() => router.push('/(tabs)/tutorial')}
             >
               <Text style={styles.secondaryButtonIcon}>📚</Text>
-              <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]}>Tutorial</Text>
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]} numberOfLines={1}>Tutorial</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -146,7 +146,7 @@ export default function HomeScreen() {
               onPress={() => router.push('/shop')}
             >
               <Text style={styles.secondaryButtonIcon}>🛒</Text>
-              <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]}>Shop</Text>
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]} numberOfLines={1}>Shop</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -154,7 +154,7 @@ export default function HomeScreen() {
               onPress={() => router.push('/(tabs)/leaderboards')}
             >
               <Text style={styles.secondaryButtonIcon}>🏆</Text>
-              <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]}>Leaderboards</Text>
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]} numberOfLines={1}>Leaders</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   secondaryButtonText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
   },
 });
