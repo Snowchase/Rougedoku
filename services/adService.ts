@@ -16,13 +16,11 @@ import MobileAds, {
   AdsConsent,
   AdsConsentStatus,
 } from 'react-native-google-mobile-ads';
-
-// Ad Unit IDs - using test IDs for development
-// TODO: Replace with real ad unit IDs for production
+//Rewarded Ad units
 const REWARDED_AD_UNIT_ID = __DEV__
   ? TestIds.REWARDED
   : Platform.select({
-      ios: 'ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY', // Replace with real iOS ad unit ID
+      ios: 'ca-app-pub-4722969639622172/2984440613',
       android: 'ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY', // Replace with real Android ad unit ID
     }) || TestIds.REWARDED;
 
