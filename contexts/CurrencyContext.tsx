@@ -17,7 +17,9 @@ import {
   PurchaseData,
 } from '../services/currencyService';
 import { Difficulty } from '../components/dailyPuzzleGenerator';
-import { adService } from '../services/adService';
+// Use mock ad service for Expo Go testing (no native modules required)
+// Change to '../services/adService' when testing with native builds
+import { adService } from '../services/adService.mock';
 
 interface CurrencyContextType {
   coins: number;
