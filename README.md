@@ -29,6 +29,9 @@ A modern, feature-rich Sudoku puzzle game built with React Native and Expo. Solv
 - **Coins** - Earn coins by completing puzzles
 - **Shop** - Spend coins on themes, fonts, avatars, and music
 - **Rewarded Ads** - Watch ads to earn bonus coins (25 coins per ad)
+  - **Privacy-First**: Full Apple ATT compliance
+  - **User Control**: Optional ads, users choose when to watch
+  - **Transparent**: Clear privacy prompt before tracking
 - **Time Bonuses** - Earn extra coins for fast completion
 - **First Clear Bonus** - Extra reward for first-time puzzle completion
 
@@ -82,6 +85,51 @@ Sudokle/
 │   └── customizations.ts  # Fonts, avatars, songs
 └── assets/                # Images, sounds, fonts
 ```
+
+## Rewarded Ads & Privacy Compliance
+
+Sudokle implements rewarded video ads with full compliance to Apple's App Tracking Transparency (ATT) and privacy requirements.
+
+### Privacy Features
+
+1. **App Tracking Transparency (ATT)**
+   - Users receive Apple's standard tracking permission dialog on iOS
+   - Request is made before any ad tracking begins
+   - Users can opt out and still access all app features
+
+2. **User Control**
+   - All ads are optional and user-initiated
+   - Users choose when to watch ads for coin rewards
+   - No forced or interstitial ads
+
+3. **Transparency**
+   - Clear privacy description in ATT prompt
+   - Privacy policy explains ad network data practices
+   - Users informed about data collection
+
+### Configuration
+
+**Test Ads**: The app is configured with Google AdMob test IDs for development.
+
+**Production Setup**: Before release, update the following in `app.json`:
+```json
+{
+  "plugins": [
+    ["react-native-google-mobile-ads", {
+      "androidAppId": "ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY",
+      "iosAppId": "ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY"
+    }]
+  ]
+}
+```
+
+And in `services/adService.ts`, update the rewarded ad unit IDs.
+
+### Implementation Details
+
+- **AdService** (`services/adService.ts`): Handles ad initialization, ATT requests, and rewarded ad display
+- **CurrencyContext**: Integrates ad rewards with the coin system
+- **Shop Screen**: Provides UI for watching ads to earn coins
 
 ## Version
 
