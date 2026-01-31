@@ -11,9 +11,9 @@ import { AudioProvider } from '@/contexts/AudioContext';
 import { SettingsProvider } from '@/contexts/SettingsContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-// Use mock ad service for Expo Go testing (no native modules required)
-// Change to '@/services/adService' when testing with native builds
-import { adService } from '@/services/adService.mock';
+// Using real ad service for native builds (Android/iOS)
+// Change to '@/services/adService.mock' for Expo Go testing
+import { adService } from '@/services/adService';
 
 export const unstable_settings = {
   anchor: '(tabs)',
