@@ -12,6 +12,7 @@ import { Platform } from 'react-native';
 import MobileAds, {
   RewardedAd,
   RewardedAdEventType,
+  AdEventType,
   TestIds,
   AdsConsent,
   AdsConsentStatus,
@@ -21,7 +22,7 @@ const REWARDED_AD_UNIT_ID = __DEV__
   ? TestIds.REWARDED
   : Platform.select({
       ios: 'ca-app-pub-4722969639622172/2984440613',
-      android: 'ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY', // Replace with real Android ad unit ID
+      android: 'ca-app-pub-4722969639622172/2984440613', // Replace with real Android ad unit ID
     }) || TestIds.REWARDED;
 
 const COINS_PER_AD = 25; // Reward amount per ad
@@ -164,7 +165,7 @@ class AdService {
       );
 
       const dismissedListener = this.rewardedAd!.addAdEventListener(
-        RewardedAdEventType.DISMISSED,
+        AdEventType.CLOSED,
         () => {
           console.log('Rewarded ad dismissed');
 
