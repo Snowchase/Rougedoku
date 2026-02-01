@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,14 @@ import { ScreenErrorBoundary } from '../components/ScreenErrorBoundary';
 // Using real ad service for native builds (Android/iOS)
 // Change to '../services/adService.mock' for Expo Go testing
 import { COINS_PER_AD } from '../services/adService';
+import {
+  getDailyFeaturedItem,
+  getTimeRemaining,
+  getFeaturedTypeIcon,
+  getFeaturedTypeLabel,
+  FeaturedItem,
+  FeaturedItemType
+} from '../services/featuredItemService';
 
 type ShopTab = 'themes' | 'fonts' | 'avatars' | 'songs' | 'rewards';
 
@@ -42,8 +50,33 @@ export default function ShopScreen() {
   } = useCurrency();
   const [activeTab, setActiveTab] = useState<ShopTab>('themes');
   const [avatarCategory, setAvatarCategory] = useState<AvatarCategory>('animals');
-  const [songCategory, setSongCategory] = useState<SongCategory>('ambient');
+  const [songCategory, setSongCategory] = useState<SongCategory>('lofi');
   const [isLoadingAd, setIsLoadingAd] = useState(false);
+  const [featuredItem, setFeaturedItem] = useState<FeaturedItem | null>(null);
+  const [countdown, setCountdown] = useState({ hours: 0, minutes: 0, seconds: 0 });
+
+  // Load featured item on mount
+  useEffect(() => {
+    const loadFeaturedItem = async () => {
+      try {
+        const item = await getDailyFeaturedItem();
+        setFeaturedItem(item);
+      } catch (error) {
+        console.error('Error loading featured item:', error);
+      }
+    };
+    loadFeaturedItem();
+  }, []);
+
+  // Update countdown timer every second
+  useEffect(() => {
+    const updateCountdown = () => {
+      setCountdown(getTimeRemaining());
+    };
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handlePurchaseTheme = async (key: ThemeKey) => {
     const themeData = themes[key];
@@ -188,6 +221,75 @@ export default function ShopScreen() {
     } finally {
       setIsLoadingAd(false);
     }
+  };
+
+  const handlePurchaseFeaturedItem = async () => {
+    if (!featuredItem) return;
+
+    const { id, type, name, discountedPrice, originalPrice, discountPercent, emoji } = featuredItem;
+
+    // Check if already owned
+    let alreadyOwned = false;
+    switch (type) {
+      case 'theme':
+        alreadyOwned = isThemeOwned(id as ThemeKey);
+        break;
+      case 'font':
+        alreadyOwned = isFontOwned(id);
+        break;
+      case 'avatar':
+        alreadyOwned = isAvatarOwned(id);
+        break;
+      case 'song':
+        alreadyOwned = isSongOwned(id);
+        break;
+    }
+
+    if (alreadyOwned) {
+      Alert.alert('Already Owned', `You already own ${name}!`);
+      return;
+    }
+
+    if (coins < discountedPrice) {
+      Alert.alert('Not Enough Coins', `You need ${discountedPrice - coins} more coins.`);
+      return;
+    }
+
+    const displayName = emoji ? `${emoji} ${name}` : name;
+
+    Alert.alert(
+      'Daily Deal!',
+      `Unlock ${displayName} for ${discountedPrice} coins?\n(${discountPercent}% off, normally ${originalPrice})`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Unlock',
+          onPress: async () => {
+            let result = { success: false };
+            switch (type) {
+              case 'theme':
+                result = await buyTheme(id as ThemeKey, discountedPrice);
+                if (result.success) await setTheme(id as ThemeKey);
+                break;
+              case 'font':
+                result = await buyFont(id, discountedPrice);
+                if (result.success) await setSelectedFont(id);
+                break;
+              case 'avatar':
+                result = await buyAvatar(id, discountedPrice);
+                break;
+              case 'song':
+                result = await buySong(id, discountedPrice);
+                if (result.success) await setSelectedSong(id);
+                break;
+            }
+            if (result.success) {
+              Alert.alert('Unlocked!', `${displayName} is now yours!`);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const renderThemeCard = (key: ThemeKey) => {
@@ -460,6 +562,96 @@ export default function ShopScreen() {
     );
   };
 
+  const renderFeaturedItem = () => {
+    if (!featuredItem) return null;
+
+    const { id, type, name, originalPrice, discountedPrice, discountPercent, emoji, description } = featuredItem;
+
+    // Check if already owned
+    let alreadyOwned = false;
+    switch (type) {
+      case 'theme':
+        alreadyOwned = isThemeOwned(id as ThemeKey);
+        break;
+      case 'font':
+        alreadyOwned = isFontOwned(id);
+        break;
+      case 'avatar':
+        alreadyOwned = isAvatarOwned(id);
+        break;
+      case 'song':
+        alreadyOwned = isSongOwned(id);
+        break;
+    }
+
+    const canAfford = coins >= discountedPrice;
+    const countdownStr = `${countdown.hours}h ${countdown.minutes}m`;
+
+    return (
+      <View style={[styles.featuredContainer, { backgroundColor: theme.colors.primaryButton }]}>
+        <View style={styles.featuredHeader}>
+          <View style={styles.featuredTitleRow}>
+            <Text style={styles.featuredFireIcon}>🔥</Text>
+            <Text style={styles.featuredTitle}>TODAY'S DEAL</Text>
+          </View>
+          <View style={styles.featuredCountdown}>
+            <Text style={styles.featuredCountdownText}>{countdownStr}</Text>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.featuredCard, { backgroundColor: theme.colors.cardBackground }]}
+          onPress={handlePurchaseFeaturedItem}
+          disabled={alreadyOwned}
+        >
+          <View style={styles.featuredIconContainer}>
+            <Text style={styles.featuredIcon}>
+              {emoji || getFeaturedTypeIcon(type)}
+            </Text>
+          </View>
+
+          <View style={styles.featuredInfo}>
+            <View style={styles.featuredTypeTag}>
+              <Text style={[styles.featuredTypeText, { color: theme.colors.primaryButton }]}>
+                {getFeaturedTypeLabel(type)}
+              </Text>
+            </View>
+            <Text style={[styles.featuredName, { color: theme.colors.textPrimary }]} numberOfLines={1}>
+              {name}
+            </Text>
+            {description && (
+              <Text style={[styles.featuredDesc, { color: theme.colors.textSecondary }]} numberOfLines={1}>
+                {description}
+              </Text>
+            )}
+          </View>
+
+          <View style={styles.featuredPricing}>
+            {alreadyOwned ? (
+              <View style={[styles.featuredOwnedBadge, { backgroundColor: theme.colors.success }]}>
+                <Text style={styles.featuredOwnedText}>Owned</Text>
+              </View>
+            ) : (
+              <>
+                <View style={styles.featuredDiscountBadge}>
+                  <Text style={styles.featuredDiscountText}>-{discountPercent}%</Text>
+                </View>
+                <Text style={[styles.featuredOriginalPrice, { color: theme.colors.textSecondary }]}>
+                  {originalPrice}
+                </Text>
+                <View style={[styles.featuredPriceTag, { backgroundColor: canAfford ? '#DCFCE7' : '#FEE2E2' }]}>
+                  <Text style={[styles.featuredPriceText, { color: canAfford ? '#166534' : '#991B1B' }]}>
+                    {discountedPrice}
+                  </Text>
+                </View>
+              </>
+            )}
+          </View>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   const renderRewardsInfo = () => {
     return (
       <View style={styles.rewardsContainer}>
@@ -612,6 +804,8 @@ export default function ShopScreen() {
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+        {renderFeaturedItem()}
+
         {activeTab === 'themes' && (
           <>
             <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
@@ -1068,6 +1262,122 @@ const styles = StyleSheet.create({
   },
   adButtonText: {
     fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  // Featured Item Styles
+  featuredContainer: {
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 20,
+  },
+  featuredHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  featuredTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  featuredFireIcon: {
+    fontSize: 18,
+  },
+  featuredTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#fff',
+    letterSpacing: 1,
+  },
+  featuredCountdown: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  featuredCountdownText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  featuredCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+  },
+  featuredIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  featuredIcon: {
+    fontSize: 28,
+  },
+  featuredInfo: {
+    flex: 1,
+  },
+  featuredTypeTag: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#EBF5FF',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+  featuredTypeText: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  featuredName: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  featuredDesc: {
+    fontSize: 11,
+  },
+  featuredPricing: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  featuredDiscountBadge: {
+    backgroundColor: '#EF4444',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  featuredDiscountText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  featuredOriginalPrice: {
+    fontSize: 12,
+    textDecorationLine: 'line-through',
+  },
+  featuredPriceTag: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  featuredPriceText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  featuredOwnedBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  featuredOwnedText: {
+    fontSize: 12,
     fontWeight: '600',
     color: '#fff',
   },

@@ -142,7 +142,7 @@ export const themes: { [key: string]: AppTheme } = {
 
   ocean: {
     name: 'Ocean Blue',
-    price: 150,
+    price: 300,
     description: 'Dive into calm ocean waters',
     isDark: false,
     colors: {
@@ -186,7 +186,7 @@ export const themes: { [key: string]: AppTheme } = {
 
   forest: {
     name: 'Forest Green',
-    price: 150,
+    price: 300,
     description: 'Peaceful woodland vibes',
     isDark: false,
     colors: {
@@ -230,7 +230,7 @@ export const themes: { [key: string]: AppTheme } = {
 
   sunset: {
     name: 'Sunset Orange',
-    price: 200,
+    price: 400,
     description: 'Warm golden hour colors',
     isDark: false,
     colors: {
@@ -274,7 +274,7 @@ export const themes: { [key: string]: AppTheme } = {
 
   purple: {
     name: 'Royal Purple',
-    price: 250,
+    price: 450,
     description: 'Majestic and elegant styling',
     isDark: false,
     colors: {
@@ -318,7 +318,7 @@ export const themes: { [key: string]: AppTheme } = {
 
   cherry: {
     name: 'Cherry Blossom',
-    price: 300,
+    price: 550,
     description: 'Delicate pink spring vibes',
     isDark: false,
     colors: {
@@ -362,7 +362,7 @@ export const themes: { [key: string]: AppTheme } = {
 
   midnight: {
     name: 'Midnight Blue',
-    price: 350,
+    price: 600,
     description: 'Deep starry night aesthetic',
     isDark: true,
     colors: {
@@ -406,7 +406,7 @@ export const themes: { [key: string]: AppTheme } = {
 
   retro: {
     name: 'Retro Vintage',
-    price: 400,
+    price: 700,
     description: 'Classic 80s nostalgia',
     isDark: false,
     colors: {
@@ -450,7 +450,7 @@ export const themes: { [key: string]: AppTheme } = {
 
   neon: {
     name: 'Neon Nights',
-    price: 500,
+    price: 800,
     description: 'Vibrant cyberpunk glow',
     isDark: true,
     colors: {

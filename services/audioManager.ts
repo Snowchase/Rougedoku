@@ -32,12 +32,26 @@ const PREMIUM_SONG_FILES: Record<string, any> = {
    'jazz-saxophone': require('../assets/audio/music/premium/jazz-saxophone.mp3'),
    'jazz-swing': require('../assets/audio/music/premium/jazz-swing.mp3'),
    'jazz-bossa': require('../assets/audio/music/premium/jazz-bossa.mp3'),
+   'jazz-midnight': require('../assets/audio/music/premium/jazz-midnight.mp3'),
+   'jazz-smooth': require('../assets/audio/music/premium/jazz-smooth.mp3'),
 
   // Electronic tracks
    'electronic-synth': require('../assets/audio/music/premium/electronic-synth.mp3'),
    'electronic-space': require('../assets/audio/music/premium/electronic-space.mp3'),
    'electronic-neon': require('../assets/audio/music/premium/electronic-neon.mp3'),
    'electronic-zen': require('../assets/audio/music/premium/electronic-zen.mp3'),
+
+  // Rock tracks
+   'rock-classic': require('../assets/audio/music/premium/rock-classic.mp3'),
+   'rock-acoustic': require('../assets/audio/music/premium/rock-acoustic.mp3'),
+   'rock-indie': require('../assets/audio/music/premium/rock-indie.mp3'),
+   'rock-power': require('../assets/audio/music/premium/rock-power.mp3'),
+
+  // Reggae tracks
+   'reggae-chill': require('../assets/audio/music/premium/reggae-chill.mp3'),
+   'reggae-dub': require('../assets/audio/music/premium/reggae-dub.mp3'),
+   'reggae-roots': require('../assets/audio/music/premium/reggae-roots.mp3'),
+   'reggae-sunset': require('../assets/audio/music/premium/reggae-sunset.mp3'),
 };
 
 // Combined audio files for lookup
@@ -49,8 +63,10 @@ const AUDIO_FILES: Record<string, any> = {
 export type MusicTrack = 'homeMusic' | 'gameplayMusic';
 export type PremiumSongId =
   | 'lofi-chill' | 'lofi-study' | 'lofi-cafe' | 'lofi-sunset'
-  | 'jazz-piano' | 'jazz-saxophone' | 'jazz-swing' | 'jazz-bossa'
-  | 'electronic-synth' | 'electronic-space' | 'electronic-neon' | 'electronic-zen';
+  | 'jazz-piano' | 'jazz-saxophone' | 'jazz-swing' | 'jazz-bossa' | 'jazz-midnight' | 'jazz-smooth'
+  | 'electronic-synth' | 'electronic-space' | 'electronic-neon' | 'electronic-zen'
+  | 'rock-classic' | 'rock-acoustic' | 'rock-indie' | 'rock-power'
+  | 'reggae-chill' | 'reggae-dub' | 'reggae-roots' | 'reggae-sunset';
 export type SoundEffect = 'numberPlace' | 'puzzleComplete' | 'buttonClick' | 'errorSound';
 
 interface AudioSettings {
