@@ -13,7 +13,6 @@ import MobileAds, {
   AdEventType,
   RewardedAd,
   RewardedAdEventType,
-  AdEventType,
   TestIds,
   AdsConsent,
   AdsConsentStatus,
@@ -22,7 +21,7 @@ import MobileAds, {
 const REWARDED_AD_UNIT_ID = __DEV__
   ? TestIds.REWARDED
   : Platform.select({
-      ios: 'ca-app-pub-4722969639622172/2984440613',
+      ios: 'ca-app-pub-4722969639622172/2984440613', // Real Ios ad unit ID for rewarded Ad in Shop Info tab
       android: 'ca-app-pub-4722969639622172/2984440613', // Replace with real Android ad unit ID
     }) || TestIds.REWARDED;
 
