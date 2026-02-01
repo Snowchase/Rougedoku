@@ -6,8 +6,16 @@
   <component name="ChangeListManager">
     <list default="true" id="aae5e531-07de-470b-a08c-a4e1c39db631" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/app.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/adService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/services/adService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/audio/music/premium/jazz-midnight.mp3" beforeDir="false" afterPath="$PROJECT_DIR$/assets/audio/music/premium/jazz-midnight.mp3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/audio/music/premium/jazz-smooth.mp3" beforeDir="false" afterPath="$PROJECT_DIR$/assets/audio/music/premium/jazz-smooth.mp3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/audio/music/premium/reggae-chill.mp3" beforeDir="false" afterPath="$PROJECT_DIR$/assets/audio/music/premium/reggae-chill.mp3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/audio/music/premium/reggae-dub.mp3" beforeDir="false" afterPath="$PROJECT_DIR$/assets/audio/music/premium/reggae-dub.mp3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/audio/music/premium/reggae-roots.mp3" beforeDir="false" afterPath="$PROJECT_DIR$/assets/audio/music/premium/reggae-roots.mp3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/audio/music/premium/reggae-sunset.mp3" beforeDir="false" afterPath="$PROJECT_DIR$/assets/audio/music/premium/reggae-sunset.mp3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/audio/music/premium/rock-acoustic.mp3" beforeDir="false" afterPath="$PROJECT_DIR$/assets/audio/music/premium/rock-acoustic.mp3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/audio/music/premium/rock-classic.mp3" beforeDir="false" afterPath="$PROJECT_DIR$/assets/audio/music/premium/rock-classic.mp3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/audio/music/premium/rock-indie.mp3" beforeDir="false" afterPath="$PROJECT_DIR$/assets/audio/music/premium/rock-indie.mp3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/audio/music/premium/rock-power.mp3" beforeDir="false" afterPath="$PROJECT_DIR$/assets/audio/music/premium/rock-power.mp3" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,21 +48,21 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;claude/add-privacy-ads-coins-GHPQT&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Chase/Desktop/NewSudokle/Sudokle&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "claude/add-music-genres-pricing-zmAdY",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/Chase/Desktop/NewSudokle/Sudokle"
   }
-}</component>
+}]]></component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="aae5e531-07de-470b-a08c-a4e1c39db631" name="Changes" comment="" />
