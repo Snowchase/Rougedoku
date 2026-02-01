@@ -10,6 +10,7 @@
 
 import { Platform } from 'react-native';
 import MobileAds, {
+  AdEventType,
   RewardedAd,
   RewardedAdEventType,
   AdEventType,

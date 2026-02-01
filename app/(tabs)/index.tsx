@@ -100,6 +100,7 @@ export default function HomeScreen() {
 
           {/* Menu Buttons */}
           <View style={styles.menuContainer}>
+          {/* Primary Buttons Group */}
           <TouchableOpacity
             style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.primaryButton }]}
             onPress={() => router.push('/(tabs)/play')}
@@ -107,15 +108,6 @@ export default function HomeScreen() {
             <Text style={styles.menuButtonIcon}>🎮</Text>
             <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]}>Play</Text>
             <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]}>Solve today's puzzle</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: '#8B5CF6' }]}
-            onPress={() => router.push('/(tabs)/tutorial')}
-          >
-            <Text style={styles.menuButtonIcon}>📚</Text>
-            <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]}>Tutorial</Text>
-            <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]}>Learn how to play</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -128,22 +120,43 @@ export default function HomeScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.isDark ? '#F59E0B' : '#D97706' }]}
-            onPress={() => router.push('/shop')}
+            style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: '#EF4444' }]}
+            onPress={() => {
+              // TODO: Navigate to versus mode when implemented
+              console.log('Versus mode coming soon!');
+            }}
           >
-            <Text style={styles.menuButtonIcon}>🛒</Text>
-            <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]}>Shop</Text>
-            <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]}>Unlock themes & more</Text>
+            <Text style={styles.menuButtonIcon}>⚔️</Text>
+            <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]}>Versus</Text>
+            <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]}>Challenge other players</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.warning }]}
-            onPress={() => router.push('/(tabs)/leaderboards')}
-          >
-            <Text style={styles.menuButtonIcon}>🏆</Text>
-            <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]}>Leaderboards</Text>
-            <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]}>Compare your times</Text>
-          </TouchableOpacity>
+          {/* Secondary Buttons Group */}
+          <View style={styles.secondaryButtonsRow}>
+            <TouchableOpacity
+              style={[styles.secondaryButton, { backgroundColor: theme.colors.cardBackground, borderColor: '#8B5CF6' }]}
+              onPress={() => router.push('/(tabs)/tutorial')}
+            >
+              <Text style={styles.secondaryButtonIcon}>📚</Text>
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]} numberOfLines={1}>Tutorial</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.secondaryButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.isDark ? '#F59E0B' : '#D97706' }]}
+              onPress={() => router.push('/shop')}
+            >
+              <Text style={styles.secondaryButtonIcon}>🛒</Text>
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]} numberOfLines={1}>Shop</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.secondaryButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.warning }]}
+              onPress={() => router.push('/(tabs)/leaderboards')}
+            >
+              <Text style={styles.secondaryButtonIcon}>🏆</Text>
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]} numberOfLines={1}>Leaders</Text>
+            </TouchableOpacity>
+          </View>
         </View>
         </View>
       </ScrollView>
@@ -270,5 +283,31 @@ const styles = StyleSheet.create({
   },
   menuButtonSubtext: {
     fontSize: 13,
+  },
+  secondaryButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginTop: 8,
+  },
+  secondaryButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 2,
+  },
+  secondaryButtonIcon: {
+    fontSize: 24,
+    marginBottom: 4,
+  },
+  secondaryButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
