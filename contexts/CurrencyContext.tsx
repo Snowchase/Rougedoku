@@ -17,6 +17,8 @@ import {
   PurchaseData,
 } from '../services/currencyService';
 import { Difficulty } from '../components/dailyPuzzleGenerator';
+// Using real ad service for native builds (Android/iOS)
+// Change to '../services/adService.mock' for Expo Go testing
 import { adService } from '../services/adService';
 
 interface CurrencyContextType {

@@ -14,6 +14,8 @@ import { useCurrency } from '../contexts/CurrencyContext';
 import { themes, themeKeys, ThemeKey } from '../constants/themes';
 import { numberFonts, premiumAvatars, avatarCategories, AvatarCategory, premiumSongs, songCategories, SongCategory } from '../constants/customizations';
 import { ScreenErrorBoundary } from '../components/ScreenErrorBoundary';
+// Using real ad service for native builds (Android/iOS)
+// Change to '../services/adService.mock' for Expo Go testing
 import { COINS_PER_AD } from '../services/adService';
 
 type ShopTab = 'themes' | 'fonts' | 'avatars' | 'songs' | 'rewards';
