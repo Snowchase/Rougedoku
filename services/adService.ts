@@ -10,6 +10,7 @@
 
 import { Platform } from 'react-native';
 import MobileAds, {
+  AdEventType,
   RewardedAd,
   RewardedAdEventType,
   TestIds,
@@ -164,7 +165,7 @@ class AdService {
       );
 
       const dismissedListener = this.rewardedAd!.addAdEventListener(
-        RewardedAdEventType.DISMISSED,
+        AdEventType.CLOSED,
         () => {
           console.log('Rewarded ad dismissed');
 
