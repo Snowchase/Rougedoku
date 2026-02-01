@@ -80,6 +80,9 @@ export default function ShopScreen() {
 
   const handlePurchaseTheme = async (key: ThemeKey) => {
     const themeData = themes[key];
+    // Check if this theme is today's featured item
+    const isFeaturedTheme = featuredItem?.id === key && featuredItem?.type === 'theme';
+    const price = isFeaturedTheme ? featuredItem!.discountedPrice : themeData.price;
 
     if (isThemeOwned(key)) {
       await setTheme(key);
@@ -87,23 +90,27 @@ export default function ShopScreen() {
       return;
     }
 
-    if (coins < themeData.price) {
+    if (coins < price) {
       Alert.alert(
         'Not Enough Coins',
-        `You need ${themeData.price - coins} more coins to unlock ${themeData.name}.`
+        `You need ${price - coins} more coins to unlock ${themeData.name}.`
       );
       return;
     }
 
+    const priceText = isFeaturedTheme
+      ? `${price} coins (${featuredItem!.discountPercent}% off!)`
+      : `${price} coins`;
+
     Alert.alert(
-      'Unlock Theme',
-      `Spend ${themeData.price} coins to unlock ${themeData.name}?`,
+      isFeaturedTheme ? 'Daily Deal!' : 'Unlock Theme',
+      `Spend ${priceText} to unlock ${themeData.name}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Unlock',
           onPress: async () => {
-            const result = await buyTheme(key, themeData.price);
+            const result = await buyTheme(key, price);
             if (result.success) {
               await setTheme(key);
               Alert.alert('Theme Unlocked!', `${themeData.name} is now yours!`);
@@ -292,10 +299,24 @@ export default function ShopScreen() {
     );
   };
 
+  // Helper to check if item is featured and get its price
+  const isFeatured = (itemId: string, itemType: FeaturedItemType): boolean => {
+    return featuredItem?.id === itemId && featuredItem?.type === itemType;
+  };
+
+  const getDisplayPrice = (itemId: string, itemType: FeaturedItemType, originalPrice: number): number => {
+    if (isFeatured(itemId, itemType) && featuredItem) {
+      return featuredItem.discountedPrice;
+    }
+    return originalPrice;
+  };
+
   const renderThemeCard = (key: ThemeKey) => {
     const themeData = themes[key];
     const owned = isThemeOwned(key);
-    const canAfford = coins >= themeData.price;
+    const isFeaturedItem = isFeatured(key, 'theme');
+    const displayPrice = getDisplayPrice(key, 'theme', themeData.price);
+    const canAfford = coins >= displayPrice;
 
     return (
       <TouchableOpacity
@@ -329,6 +350,14 @@ export default function ShopScreen() {
             <View style={[styles.ownedBadge, { backgroundColor: theme.colors.success }]}>
               <Text style={styles.ownedText}>Owned</Text>
             </View>
+          ) : isFeaturedItem ? (
+            <View style={styles.featuredPriceBadge}>
+              <Text style={styles.featuredBadgeLabel}>DEAL</Text>
+              <Text style={[styles.originalPriceStrike, { color: themeData.colors.textSecondary }]}>{themeData.price}</Text>
+              <View style={[styles.priceTag, { backgroundColor: '#DCFCE7' }]}>
+                <Text style={[styles.priceText, { color: '#166534' }]}>{displayPrice}</Text>
+              </View>
+            </View>
           ) : (
             <View style={[styles.priceTag, { backgroundColor: canAfford ? '#FEF3C7' : '#FEE2E2' }]}>
               <Text style={[styles.priceText, { color: canAfford ? '#92400E' : '#991B1B' }]}>
@@ -344,7 +373,9 @@ export default function ShopScreen() {
   const renderFontCard = (font: typeof numberFonts[0]) => {
     const owned = isFontOwned(font.id);
     const isSelected = selectedFont === font.id;
-    const canAfford = coins >= font.price;
+    const isFeaturedFont = isFeatured(font.id, 'font');
+    const displayPrice = getDisplayPrice(font.id, 'font', font.price);
+    const canAfford = coins >= displayPrice;
 
     return (
       <TouchableOpacity
@@ -354,7 +385,7 @@ export default function ShopScreen() {
           { backgroundColor: theme.colors.cardBackground },
           isSelected && { borderColor: theme.colors.primaryButton, borderWidth: 2 },
         ]}
-        onPress={() => handlePurchaseFont(font.id, font.name, font.price)}
+        onPress={() => handlePurchaseFont(font.id, font.name, displayPrice)}
       >
         <View style={styles.fontPreview}>
           <Text
@@ -383,6 +414,14 @@ export default function ShopScreen() {
           ) : font.price === 0 ? (
             <View style={[styles.ownedBadge, { backgroundColor: theme.colors.success }]}>
               <Text style={styles.ownedText}>Free</Text>
+            </View>
+          ) : isFeaturedFont ? (
+            <View style={styles.featuredPriceBadge}>
+              <Text style={styles.featuredBadgeLabel}>DEAL</Text>
+              <Text style={[styles.originalPriceStrike, { color: theme.colors.textSecondary }]}>{font.price}</Text>
+              <View style={[styles.priceTag, { backgroundColor: '#DCFCE7' }]}>
+                <Text style={[styles.priceText, { color: '#166534' }]}>{displayPrice}</Text>
+              </View>
             </View>
           ) : (
             <View style={[styles.priceTag, { backgroundColor: canAfford ? '#FEF3C7' : '#FEE2E2' }]}>
@@ -427,7 +466,9 @@ export default function ShopScreen() {
         <View style={styles.avatarGrid}>
           {categoryAvatars.map((avatar) => {
             const owned = isAvatarOwned(avatar.id);
-            const canAfford = coins >= avatar.price;
+            const isFeaturedAvatar = isFeatured(avatar.id, 'avatar');
+            const displayPrice = getDisplayPrice(avatar.id, 'avatar', avatar.price);
+            const canAfford = coins >= displayPrice;
 
             return (
               <TouchableOpacity
@@ -437,7 +478,7 @@ export default function ShopScreen() {
                   { backgroundColor: theme.colors.cardBackground },
                   owned && { borderColor: theme.colors.success, borderWidth: 2 },
                 ]}
-                onPress={() => handlePurchaseAvatar(avatar.id, avatar.emoji, avatar.name, avatar.price)}
+                onPress={() => handlePurchaseAvatar(avatar.id, avatar.emoji, avatar.name, displayPrice)}
               >
                 <Text style={styles.avatarEmoji}>{avatar.emoji}</Text>
                 <Text style={[styles.avatarName, { color: theme.colors.textPrimary }]} numberOfLines={1}>
@@ -445,6 +486,12 @@ export default function ShopScreen() {
                 </Text>
                 {owned ? (
                   <Text style={[styles.avatarOwned, { color: theme.colors.success }]}>Owned</Text>
+                ) : isFeaturedAvatar ? (
+                  <View style={styles.avatarFeaturedPrice}>
+                    <Text style={styles.avatarDealLabel}>DEAL</Text>
+                    <Text style={[styles.avatarOriginalPrice, { color: theme.colors.textSecondary }]}>{avatar.price}</Text>
+                    <Text style={[styles.avatarPrice, { color: '#166534' }]}>{displayPrice}</Text>
+                  </View>
                 ) : (
                   <Text style={[styles.avatarPrice, { color: canAfford ? '#92400E' : '#991B1B' }]}>
                     {avatar.price}
@@ -518,7 +565,9 @@ export default function ShopScreen() {
           {categorySongs.map((song) => {
             const owned = isSongOwned(song.id);
             const isSelected = selectedSong === song.id;
-            const canAfford = coins >= song.price;
+            const isFeaturedSong = isFeatured(song.id, 'song');
+            const displayPrice = getDisplayPrice(song.id, 'song', song.price);
+            const canAfford = coins >= displayPrice;
 
             return (
               <TouchableOpacity
@@ -528,7 +577,7 @@ export default function ShopScreen() {
                   { backgroundColor: theme.colors.cardBackground },
                   isSelected && { borderColor: theme.colors.primaryButton, borderWidth: 2 },
                 ]}
-                onPress={() => handlePurchaseSong(song.id, song.name, song.price)}
+                onPress={() => handlePurchaseSong(song.id, song.name, displayPrice)}
               >
                 <View style={[styles.songIcon, { backgroundColor: theme.isDark ? '#27272A' : '#F3F4F6' }]}>
                   <Text style={styles.songIconText}>🎶</Text>
@@ -545,6 +594,14 @@ export default function ShopScreen() {
                   {owned ? (
                     <View style={[styles.ownedBadge, { backgroundColor: isSelected ? theme.colors.primaryButton : theme.colors.success }]}>
                       <Text style={styles.ownedText}>{isSelected ? 'Active' : 'Owned'}</Text>
+                    </View>
+                  ) : isFeaturedSong ? (
+                    <View style={styles.songFeaturedPrice}>
+                      <Text style={styles.songDealLabel}>DEAL</Text>
+                      <Text style={[styles.songOriginalPrice, { color: theme.colors.textSecondary }]}>{song.price}</Text>
+                      <View style={[styles.priceTag, { backgroundColor: '#DCFCE7' }]}>
+                        <Text style={[styles.priceText, { color: '#166534' }]}>{displayPrice}</Text>
+                      </View>
                     </View>
                   ) : (
                     <View style={[styles.priceTag, { backgroundColor: canAfford ? '#FEF3C7' : '#FEE2E2' }]}>
@@ -1380,5 +1437,48 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#fff',
+  },
+  // Featured price badge styles for regular listings
+  featuredPriceBadge: {
+    alignItems: 'flex-end',
+    gap: 2,
+  },
+  featuredBadgeLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#EF4444',
+    letterSpacing: 0.5,
+  },
+  originalPriceStrike: {
+    fontSize: 11,
+    textDecorationLine: 'line-through',
+  },
+  // Avatar featured price
+  avatarFeaturedPrice: {
+    alignItems: 'center',
+    gap: 1,
+  },
+  avatarDealLabel: {
+    fontSize: 8,
+    fontWeight: '700',
+    color: '#EF4444',
+  },
+  avatarOriginalPrice: {
+    fontSize: 10,
+    textDecorationLine: 'line-through',
+  },
+  // Song featured price
+  songFeaturedPrice: {
+    alignItems: 'flex-end',
+    gap: 2,
+  },
+  songDealLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#EF4444',
+  },
+  songOriginalPrice: {
+    fontSize: 10,
+    textDecorationLine: 'line-through',
   },
 });

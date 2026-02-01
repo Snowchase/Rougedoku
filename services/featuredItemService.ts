@@ -222,7 +222,9 @@ function buildFeaturedItem(itemId: string, itemType: FeaturedItemType, discountP
       break;
   }
 
-  const discountedPrice = Math.floor(originalPrice * (1 - discountPercent / 100));
+  // Calculate discounted price and round to nearest 5
+  const rawDiscountedPrice = originalPrice * (1 - discountPercent / 100);
+  const discountedPrice = Math.round(rawDiscountedPrice / 5) * 5;
 
   return {
     id: itemId,
