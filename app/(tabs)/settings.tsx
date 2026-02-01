@@ -232,7 +232,7 @@ export default function SettingsScreen() {
               Sudokle - Daily Sudoku Challenge
             </Text>
             <Text style={[styles.infoText, { color: theme.colors.textSecondary }]}>
-              Version 1.0.2
+              Version 1.1.3
             </Text>
           </View>
         </View>
