@@ -607,16 +607,19 @@ const SudokuGrid = () => {
         disabled={isComplete}
       >
         {value !== 0 ? (
-          <Text style={[
-            styles.cellText,
-            { color: isOriginalCell ? theme.colors.textOriginal : theme.colors.textUser }
-          ]}>
+          <Text
+            style={[
+              styles.cellText,
+              { color: isOriginalCell ? theme.colors.textOriginal : theme.colors.textUser }
+            ]}
+            allowFontScaling={false}
+          >
             {isPaused ? '' : value}
           </Text>
         ) : cellNotes.length > 0 && !isPaused ? (
           <View style={styles.notesContainer}>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
-              <Text key={num} style={[styles.noteText, { color: theme.colors.textSecondary }]}>
+              <Text key={num} style={[styles.noteText, { color: theme.colors.textSecondary }]} allowFontScaling={false}>
                 {cellNotes.includes(num) ? num : ' '}
               </Text>
             ))}
@@ -629,7 +632,7 @@ const SudokuGrid = () => {
   if (grid.length === 0) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
+        <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
           Loading today's puzzle...
         </Text>
       </SafeAreaView>
@@ -643,16 +646,16 @@ const SudokuGrid = () => {
       {/* Header with Date and Coins */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={[styles.title, { color: theme.colors.textPrimary }]}>SUDOKLE</Text>
-          <Text style={[styles.date, { color: theme.colors.textSecondary }]}>{todayDate}</Text>
+          <Text style={[styles.title, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>SUDOKLE</Text>
+          <Text style={[styles.date, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>{todayDate}</Text>
         </View>
         <View style={[styles.coinDisplay, { backgroundColor: theme.isDark ? '#422006' : '#FEF3C7' }]}>
-          <Text style={[styles.coinText, { color: theme.isDark ? '#FCD34D' : '#92400E' }]}>🪙 {coins}</Text>
+          <Text style={[styles.coinText, { color: theme.isDark ? '#FCD34D' : '#92400E' }]} maxFontSizeMultiplier={1.2}>🪙 {coins}</Text>
         </View>
       </View>
       {isComplete && (
         <View style={styles.completedBadgeContainer}>
-          <Text style={[styles.completedBadge, { color: theme.colors.success }]}>✅ Completed!</Text>
+          <Text style={[styles.completedBadge, { color: theme.colors.success }]} maxFontSizeMultiplier={1.2}>✅ Completed!</Text>
         </View>
       )}
 
@@ -675,11 +678,14 @@ const SudokuGrid = () => {
                 setDifficulty(diff);
               }}
             >
-              <Text style={[
-                styles.difficultyTabText,
-                { color: theme.colors.textSecondary },
-                difficulty === diff && styles.difficultyTabTextActive
-              ]}>
+              <Text
+                style={[
+                  styles.difficultyTabText,
+                  { color: theme.colors.textSecondary },
+                  difficulty === diff && styles.difficultyTabTextActive
+                ]}
+                allowFontScaling={false}
+              >
                 {diff.charAt(0).toUpperCase() + diff.slice(1)}
               </Text>
             </TouchableOpacity>
@@ -692,28 +698,28 @@ const SudokuGrid = () => {
         {/* Timer, Hints, and Mistakes Row */}
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Text style={styles.statIcon}>⏱️</Text>
+            <Text style={styles.statIcon} allowFontScaling={false}>⏱️</Text>
             <View style={styles.statInfo}>
-              <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>Time</Text>
-              <Text style={[styles.statValue, { color: theme.colors.textPrimary }]}>{formatTime(elapsedTime)}</Text>
+              <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]} allowFontScaling={false}>Time</Text>
+              <Text style={[styles.statValue, { color: theme.colors.textPrimary }]} allowFontScaling={false}>{formatTime(elapsedTime)}</Text>
             </View>
           </View>
 
           <View style={styles.statItem}>
-            <Text style={styles.statIcon}>💡</Text>
+            <Text style={styles.statIcon} allowFontScaling={false}>💡</Text>
             <View style={styles.statInfo}>
-              <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>Hints</Text>
-              <Text style={[styles.statValue, { color: theme.colors.textPrimary }]}>
+              <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]} allowFontScaling={false}>Hints</Text>
+              <Text style={[styles.statValue, { color: theme.colors.textPrimary }]} allowFontScaling={false}>
                 {hintsUsed}/{DIFFICULTY_CONFIG[difficulty].maxHints}
               </Text>
             </View>
           </View>
 
           <View style={styles.statItem}>
-            <Text style={styles.statIcon}>❌</Text>
+            <Text style={styles.statIcon} allowFontScaling={false}>❌</Text>
             <View style={styles.statInfo}>
-              <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>Mistakes</Text>
-              <Text style={[styles.statValue, { color: theme.colors.textPrimary }]}>
+              <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]} allowFontScaling={false}>Mistakes</Text>
+              <Text style={[styles.statValue, { color: theme.colors.textPrimary }]} allowFontScaling={false}>
                 {mistakesCount}
               </Text>
             </View>
@@ -724,7 +730,7 @@ const SudokuGrid = () => {
               style={[styles.pauseButton, { backgroundColor: theme.isDark ? '#27272A' : '#F3F4F6' }]}
               onPress={togglePause}
             >
-              <Text style={styles.pauseButtonText}>{isPaused ? '▶️' : '⏸️'}</Text>
+              <Text style={styles.pauseButtonText} allowFontScaling={false}>{isPaused ? '▶️' : '⏸️'}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -733,9 +739,9 @@ const SudokuGrid = () => {
       {/* Pause Overlay */}
       {isPaused && (
         <View style={styles.pauseOverlay}>
-          <Text style={styles.pauseText}>PAUSED</Text>
+          <Text style={styles.pauseText} maxFontSizeMultiplier={1.2}>PAUSED</Text>
           <TouchableOpacity style={styles.resumeButton} onPress={togglePause}>
-            <Text style={styles.resumeButtonText}>Resume</Text>
+            <Text style={styles.resumeButtonText} maxFontSizeMultiplier={1.2}>Resume</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -747,14 +753,14 @@ const SudokuGrid = () => {
           onPress={handleZoomOut}
           disabled={settings.boardLocked}
         >
-          <Text style={[styles.zoomButtonText, { color: theme.colors.secondaryButtonText }, settings.boardLocked && { color: theme.colors.textSecondary }]}>−</Text>
+          <Text style={[styles.zoomButtonText, { color: theme.colors.secondaryButtonText }, settings.boardLocked && { color: theme.colors.textSecondary }]} allowFontScaling={false}>−</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.zoomButton, { backgroundColor: theme.colors.secondaryButton }, settings.boardLocked && { backgroundColor: theme.isDark ? '#27272A' : '#D1D5DB' }]}
           onPress={handleZoomReset}
           disabled={settings.boardLocked}
         >
-          <Text style={[styles.zoomResetText, { color: theme.colors.secondaryButtonText }, settings.boardLocked && { color: theme.colors.textSecondary }]}>
+          <Text style={[styles.zoomResetText, { color: theme.colors.secondaryButtonText }, settings.boardLocked && { color: theme.colors.textSecondary }]} allowFontScaling={false}>
             {settings.boardLocked ? '🔒' : 'Reset'}
           </Text>
         </TouchableOpacity>
@@ -763,7 +769,7 @@ const SudokuGrid = () => {
           onPress={handleZoomIn}
           disabled={settings.boardLocked}
         >
-          <Text style={[styles.zoomButtonText, { color: theme.colors.secondaryButtonText }, settings.boardLocked && { color: theme.colors.textSecondary }]}>+</Text>
+          <Text style={[styles.zoomButtonText, { color: theme.colors.secondaryButtonText }, settings.boardLocked && { color: theme.colors.textSecondary }]} allowFontScaling={false}>+</Text>
         </TouchableOpacity>
       </View>
 
@@ -803,6 +809,7 @@ const SudokuGrid = () => {
                       { color: theme.colors.primaryButtonText },
                       isComplete && styles.numberButtonTextComplete,
                     ]}
+                    allowFontScaling={false}
                   >
                     {num}
                   </Text>
@@ -818,7 +825,7 @@ const SudokuGrid = () => {
               onPress={() => setNoteMode(!noteMode)}
               disabled={isPaused}
             >
-              <Text style={styles.actionButtonText}>
+              <Text style={styles.actionButtonText} allowFontScaling={false}>
                 {noteMode ? '📝 ON' : '📝 Notes'}
               </Text>
             </TouchableOpacity>
@@ -828,7 +835,7 @@ const SudokuGrid = () => {
               onPress={useHint}
               disabled={isPaused}
             >
-              <Text style={styles.actionButtonText}>💡 Hint</Text>
+              <Text style={styles.actionButtonText} allowFontScaling={false}>💡 Hint</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -836,7 +843,7 @@ const SudokuGrid = () => {
               onPress={() => handleNumberPress(0)}
               disabled={isPaused}
             >
-              <Text style={styles.actionButtonText}>Clear</Text>
+              <Text style={styles.actionButtonText} allowFontScaling={false}>Clear</Text>
             </TouchableOpacity>
           </View>
         </>
@@ -844,7 +851,7 @@ const SudokuGrid = () => {
 
       {isComplete && (
         <View style={[styles.completedContainer, { backgroundColor: theme.isDark ? '#052e16' : '#F0FDF4' }]}>
-          <Text style={[styles.completedText, { color: theme.colors.success }]}>
+          <Text style={[styles.completedText, { color: theme.colors.success }]} maxFontSizeMultiplier={1.2}>
             🎉 Come back tomorrow for a new puzzle!
           </Text>
         </View>
