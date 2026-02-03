@@ -68,13 +68,13 @@ export default function HomeScreen() {
           style={[styles.coinButton, { backgroundColor: theme.isDark ? '#422006' : '#FEF3C7' }]}
           onPress={() => router.push('/shop')}
         >
-          <Text style={[styles.coinText, { color: theme.isDark ? '#FCD34D' : '#92400E' }]}>🪙 {coins}</Text>
+          <Text style={[styles.coinText, { color: theme.isDark ? '#FCD34D' : '#92400E' }]} maxFontSizeMultiplier={1.2}>🪙 {coins}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.settingsButton, { backgroundColor: theme.colors.cardBackground }]}
           onPress={() => router.push('/(tabs)/settings')}
         >
-          <Text style={styles.settingsIcon}>⚙️</Text>
+          <Text style={styles.settingsIcon} allowFontScaling={false}>⚙️</Text>
         </TouchableOpacity>
       </View>
 
@@ -86,14 +86,14 @@ export default function HomeScreen() {
         <View style={styles.content}>
           {/* App Title */}
           <View style={styles.titleContainer}>
-            <Text style={[styles.title, { color: theme.colors.textPrimary }]}>SUDOKLE</Text>
-            <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>New puzzle every day at midnight!</Text>
+            <Text style={[styles.title, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.1}>SUDOKLE</Text>
+            <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>New puzzle every day at midnight!</Text>
 
             {/* Streak Badge */}
             {currentStreak > 0 && (
               <View style={[styles.streakBadge, { backgroundColor: theme.isDark ? '#422006' : '#FEF3C7', borderColor: theme.isDark ? '#F59E0B' : '#F59E0B' }]}>
-                <Text style={styles.streakEmoji}>🔥</Text>
-                <Text style={[styles.streakText, { color: theme.isDark ? '#FCD34D' : '#92400E' }]}>{currentStreak} Day Streak!</Text>
+                <Text style={styles.streakEmoji} allowFontScaling={false}>🔥</Text>
+                <Text style={[styles.streakText, { color: theme.isDark ? '#FCD34D' : '#92400E' }]} maxFontSizeMultiplier={1.2}>{currentStreak} Day Streak!</Text>
               </View>
             )}
           </View>
@@ -105,18 +105,18 @@ export default function HomeScreen() {
             style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.primaryButton }]}
             onPress={() => router.push('/(tabs)/play')}
           >
-            <Text style={styles.menuButtonIcon}>🎮</Text>
-            <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]}>Play</Text>
-            <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]}>Solve today's puzzle</Text>
+            <Text style={styles.menuButtonIcon} allowFontScaling={false}>🎮</Text>
+            <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>Play</Text>
+            <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>Solve today's puzzle</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.success }]}
             onPress={() => router.push('/(tabs)/social')}
           >
-            <Text style={styles.menuButtonIcon}>👥</Text>
-            <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]}>Social</Text>
-            <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]}>Profile & friends</Text>
+            <Text style={styles.menuButtonIcon} allowFontScaling={false}>👥</Text>
+            <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>Social</Text>
+            <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>Profile & friends</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -126,9 +126,9 @@ export default function HomeScreen() {
               console.log('Versus mode coming soon!');
             }}
           >
-            <Text style={styles.menuButtonIcon}>⚔️</Text>
-            <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]}>Versus</Text>
-            <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]}>Challenge other players</Text>
+            <Text style={styles.menuButtonIcon} allowFontScaling={false}>⚔️</Text>
+            <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>Versus</Text>
+            <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>Challenge other players</Text>
           </TouchableOpacity>
 
           {/* Secondary Buttons Group */}
@@ -137,24 +137,24 @@ export default function HomeScreen() {
               style={[styles.secondaryButton, { backgroundColor: theme.colors.cardBackground, borderColor: '#8B5CF6' }]}
               onPress={() => router.push('/(tabs)/tutorial')}
             >
-              <Text style={styles.secondaryButtonIcon}>📚</Text>
-              <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]} numberOfLines={1}>Tutorial</Text>
+              <Text style={styles.secondaryButtonIcon} allowFontScaling={false}>📚</Text>
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]} numberOfLines={1} allowFontScaling={false}>Tutorial</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.secondaryButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.isDark ? '#F59E0B' : '#D97706' }]}
               onPress={() => router.push('/shop')}
             >
-              <Text style={styles.secondaryButtonIcon}>🛒</Text>
-              <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]} numberOfLines={1}>Shop</Text>
+              <Text style={styles.secondaryButtonIcon} allowFontScaling={false}>🛒</Text>
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]} numberOfLines={1} allowFontScaling={false}>Shop</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.secondaryButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.warning }]}
               onPress={() => router.push('/(tabs)/leaderboards')}
             >
-              <Text style={styles.secondaryButtonIcon}>🏆</Text>
-              <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]} numberOfLines={1}>Leaders</Text>
+              <Text style={styles.secondaryButtonIcon} allowFontScaling={false}>🏆</Text>
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]} numberOfLines={1} allowFontScaling={false}>Leaders</Text>
             </TouchableOpacity>
           </View>
         </View>

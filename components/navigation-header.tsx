@@ -34,12 +34,12 @@ export function NavigationHeader({ title, showBackButton = true, onBackPress }: 
           accessibilityRole="button"
         >
           <IconSymbol size={24} name="chevron.left" color={theme.colors.primaryButton} />
-          <Text style={[styles.backText, { color: theme.colors.primaryButton }]}>Home</Text>
+          <Text style={[styles.backText, { color: theme.colors.primaryButton }]} maxFontSizeMultiplier={1.2}>Home</Text>
         </TouchableOpacity>
       ) : (
         <View style={styles.placeholder} />
       )}
-      <Text style={[styles.title, { color: theme.colors.textPrimary }]}>{title}</Text>
+      <Text style={[styles.title, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>{title}</Text>
       <View style={styles.placeholder} />
     </View>
   );

@@ -43,10 +43,10 @@ export default function SettingsScreen() {
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
           {/* Game Settings Section */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
             Game Settings
           </Text>
-          <Text style={[styles.sectionDescription, { color: theme.colors.textSecondary }]}>
+          <Text style={[styles.sectionDescription, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
             Customize your gameplay experience
           </Text>
         </View>
@@ -54,10 +54,10 @@ export default function SettingsScreen() {
         <View style={[styles.gameSettingsCard, { backgroundColor: theme.colors.cardBackground }]}>
           <View style={styles.settingRowWithSwitch}>
             <View style={styles.settingLabelContainer}>
-              <Text style={[styles.settingLabel, { color: theme.colors.textPrimary }]}>
+              <Text style={[styles.settingLabel, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
                 Lock Board Position
               </Text>
-              <Text style={[styles.settingSubLabel, { color: theme.colors.textSecondary }]}>
+              <Text style={[styles.settingSubLabel, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
                 Prevent accidental zoom and pan gestures
               </Text>
             </View>
@@ -72,10 +72,10 @@ export default function SettingsScreen() {
 
         {/* Audio Section */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
             Audio & Music
           </Text>
-          <Text style={[styles.sectionDescription, { color: theme.colors.textSecondary }]}>
+          <Text style={[styles.sectionDescription, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
             Control background music and sound effects
           </Text>
         </View>
@@ -84,10 +84,10 @@ export default function SettingsScreen() {
           {/* Music Toggle */}
           <View style={styles.audioRow}>
             <View style={styles.audioLabelContainer}>
-              <Text style={[styles.audioLabel, { color: theme.colors.textPrimary }]}>
+              <Text style={[styles.audioLabel, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
                 Background Music
               </Text>
-              <Text style={[styles.audioSubLabel, { color: theme.colors.textSecondary }]}>
+              <Text style={[styles.audioSubLabel, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
                 Play music on home screen and during gameplay
               </Text>
             </View>
@@ -102,7 +102,7 @@ export default function SettingsScreen() {
           {/* Music Volume */}
           {audioSettings.musicEnabled && (
             <View style={styles.volumeContainer}>
-              <Text style={[styles.volumeLabel, { color: theme.colors.textPrimary }]}>
+              <Text style={[styles.volumeLabel, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
                 Music Volume: {Math.round(audioSettings.musicVolume * 100)}%
               </Text>
               <View style={styles.volumeSlider}>
@@ -126,6 +126,7 @@ export default function SettingsScreen() {
                           color: theme.colors.primaryButtonText,
                         },
                       ]}
+                      allowFontScaling={false}
                     >
                       {Math.round(value * 100)}%
                     </Text>
@@ -138,10 +139,10 @@ export default function SettingsScreen() {
           {/* Sound Effects Toggle */}
           <View style={styles.audioRow}>
             <View style={styles.audioLabelContainer}>
-              <Text style={[styles.audioLabel, { color: theme.colors.textPrimary }]}>
+              <Text style={[styles.audioLabel, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
                 Sound Effects
               </Text>
-              <Text style={[styles.audioSubLabel, { color: theme.colors.textSecondary }]}>
+              <Text style={[styles.audioSubLabel, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
                 Play sounds for button clicks and game events
               </Text>
             </View>
@@ -156,7 +157,7 @@ export default function SettingsScreen() {
           {/* SFX Volume */}
           {audioSettings.soundEffectsEnabled && (
             <View style={styles.volumeContainer}>
-              <Text style={[styles.volumeLabel, { color: theme.colors.textPrimary }]}>
+              <Text style={[styles.volumeLabel, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
                 Effects Volume: {Math.round(audioSettings.sfxVolume * 100)}%
               </Text>
               <View style={styles.volumeSlider}>
@@ -180,6 +181,7 @@ export default function SettingsScreen() {
                           color: theme.colors.primaryButtonText,
                         },
                       ]}
+                      allowFontScaling={false}
                     >
                       {Math.round(value * 100)}%
                     </Text>
@@ -192,7 +194,7 @@ export default function SettingsScreen() {
 
         {/* Legal Section */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
             Legal
           </Text>
           <View style={[styles.legalCard, { backgroundColor: theme.colors.cardBackground }]}>
@@ -200,10 +202,10 @@ export default function SettingsScreen() {
               style={styles.legalLink}
               onPress={() => openLink(PRIVACY_POLICY_URL)}
             >
-              <Text style={[styles.legalLinkText, { color: theme.colors.textPrimary }]}>
+              <Text style={[styles.legalLinkText, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
                 Privacy Policy
               </Text>
-              <Text style={[styles.legalLinkArrow, { color: theme.colors.textSecondary }]}>
+              <Text style={[styles.legalLinkArrow, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
                 {'>'}
               </Text>
             </TouchableOpacity>
@@ -212,10 +214,10 @@ export default function SettingsScreen() {
               style={styles.legalLink}
               onPress={() => openLink(TERMS_OF_SERVICE_URL)}
             >
-              <Text style={[styles.legalLinkText, { color: theme.colors.textPrimary }]}>
+              <Text style={[styles.legalLinkText, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
                 Terms of Service
               </Text>
-              <Text style={[styles.legalLinkArrow, { color: theme.colors.textSecondary }]}>
+              <Text style={[styles.legalLinkArrow, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
                 {'>'}
               </Text>
             </TouchableOpacity>
@@ -224,14 +226,14 @@ export default function SettingsScreen() {
 
         {/* About Section */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
             About
           </Text>
           <View style={[styles.infoCard, { backgroundColor: theme.colors.cardBackground }]}>
-            <Text style={[styles.infoText, { color: theme.colors.textSecondary }]}>
+            <Text style={[styles.infoText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
               Sudokle - Daily Sudoku Challenge
             </Text>
-            <Text style={[styles.infoText, { color: theme.colors.textSecondary }]}>
+            <Text style={[styles.infoText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
               Version 1.1.3
             </Text>
           </View>
