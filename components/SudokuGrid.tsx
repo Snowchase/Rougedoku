@@ -46,7 +46,7 @@ const SudokuGrid = () => {
   const { theme } = useTheme();
   const { playSoundEffect } = useAudio();
   const { settings } = useSettings();
-  const { coins, awardPuzzleCompletion } = useCurrency();
+  const { coins, awardPuzzleCompletion, hasActiveCoinBoost } = useCurrency();
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [grid, setGrid] = useState<number[][]>([]);
   const [original, setOriginal] = useState<number[][]>([]);
@@ -326,7 +326,7 @@ const SudokuGrid = () => {
       await AsyncStorage.setItem(getStorageKey(), JSON.stringify(state));
 
       // Award coins for completion
-      let coinReward = { total: 0, breakdown: { baseReward: 0, timeBonus: 0, hintPenalty: 0, mistakePenalty: 0, firstBonus: 0 } };
+      let coinReward = { total: 0, breakdown: { baseReward: 0, timeBonus: 0, hintPenalty: 0, mistakePenalty: 0, firstBonus: 0, boostBonus: 0 } };
       try {
         coinReward = await awardPuzzleCompletion(todayDate, difficulty, elapsedTime, hintsUsed, mistakesCount);
         console.log('Coins awarded:', coinReward.total);
@@ -351,7 +351,7 @@ const SudokuGrid = () => {
     }
   };
 
-  const showCompletionScreen = (coinReward: { total: number; breakdown: { baseReward: number; timeBonus: number; hintPenalty: number; mistakePenalty: number; firstBonus: number } }) => {
+  const showCompletionScreen = (coinReward: { total: number; breakdown: { baseReward: number; timeBonus: number; hintPenalty: number; mistakePenalty: number; firstBonus: number; boostBonus: number } }) => {
     const minutes = Math.floor(elapsedTime / 60);
     const seconds = elapsedTime % 60;
 
@@ -368,6 +368,9 @@ const SudokuGrid = () => {
     }
     if (coinReward.breakdown.firstBonus > 0) {
       rewardText += `\n   ⭐ First clear: +${coinReward.breakdown.firstBonus}`;
+    }
+    if (coinReward.breakdown.boostBonus > 0) {
+      rewardText += `\n   🚀 Coin boost: +${coinReward.breakdown.boostBonus}`;
     }
     if (coinReward.breakdown.hintPenalty > 0) {
       rewardText += `\n   💡 Hints used: -${coinReward.breakdown.hintPenalty}`;
@@ -680,7 +683,7 @@ const SudokuGrid = () => {
                 { color: theme.colors.textSecondary },
                 difficulty === diff && styles.difficultyTabTextActive
               ]}>
-                {diff.charAt(0).toUpperCase() + diff.slice(1)}
+                {diff.charAt(0).toUpperCase() + diff.slice(1)}{hasActiveCoinBoost(diff) ? ' 🚀' : ''}
               </Text>
             </TouchableOpacity>
           ))}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAudio } from '../../contexts/AudioContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -14,8 +14,9 @@ export default function HomeScreen() {
   const router = useRouter();
   const { playSelectedSong, stopMusic } = useAudio();
   const { theme } = useTheme();
-  const { coins, selectedSong, loading } = useCurrency();
+  const { coins, selectedSong, loading, activeCoinBoost, watchCoinBoostAd } = useCurrency();
   const [currentStreak, setCurrentStreak] = useState<number>(0);
+  const [isLoadingBoostAd, setIsLoadingBoostAd] = useState(false);
 
   // Play selected song (or default home music) when screen is focused, stop when unfocused
   useFocusEffect(
@@ -59,6 +60,24 @@ export default function HomeScreen() {
     }
   };
 
+  const handleWatchBoostAd = async () => {
+    setIsLoadingBoostAd(true);
+    try {
+      const result = await watchCoinBoostAd();
+      if (result.success) {
+        Alert.alert(
+          '🚀 Boost Activated!',
+          `Your ${result.boostedDifficulty?.toUpperCase()} puzzle now has a 20% coin boost!\n\nComplete it today to earn extra coins.`
+        );
+      } else {
+        Alert.alert('Boost Not Applied', result.message);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Could not load ad. Please try again later.');
+    }
+    setIsLoadingBoostAd(false);
+  };
+
   return (
     <ScreenErrorBoundary screenName="Home">
       <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -94,6 +113,34 @@ export default function HomeScreen() {
               <View style={[styles.streakBadge, { backgroundColor: theme.isDark ? '#422006' : '#FEF3C7', borderColor: theme.isDark ? '#F59E0B' : '#F59E0B' }]}>
                 <Text style={styles.streakEmoji}>🔥</Text>
                 <Text style={[styles.streakText, { color: theme.isDark ? '#FCD34D' : '#92400E' }]}>{currentStreak} Day Streak!</Text>
+              </View>
+            )}
+
+            {/* Coin Boost Ad Card */}
+            {!activeCoinBoost ? (
+              <TouchableOpacity
+                style={[styles.boostAdCard, { backgroundColor: theme.isDark ? '#1E3A5F' : '#DBEAFE', borderColor: theme.isDark ? '#3B82F6' : '#3B82F6' }]}
+                onPress={handleWatchBoostAd}
+                disabled={isLoadingBoostAd}
+              >
+                {isLoadingBoostAd ? (
+                  <ActivityIndicator size="small" color={theme.isDark ? '#60A5FA' : '#2563EB'} />
+                ) : (
+                  <>
+                    <Text style={styles.boostAdIcon}>🎬</Text>
+                    <View style={styles.boostAdTextContainer}>
+                      <Text style={[styles.boostAdTitle, { color: theme.isDark ? '#93C5FD' : '#1E40AF' }]}>Watch Ad for Coin Boost</Text>
+                      <Text style={[styles.boostAdSubtitle, { color: theme.isDark ? '#60A5FA' : '#3B82F6' }]}>Get +20% coins on a random puzzle!</Text>
+                    </View>
+                  </>
+                )}
+              </TouchableOpacity>
+            ) : (
+              <View style={[styles.activeBoostCard, { backgroundColor: theme.isDark ? '#064E3B' : '#D1FAE5', borderColor: theme.isDark ? '#10B981' : '#10B981' }]}>
+                <Text style={styles.boostActiveIcon}>🚀</Text>
+                <Text style={[styles.boostActiveText, { color: theme.isDark ? '#6EE7B7' : '#047857' }]}>
+                  {activeCoinBoost.difficulty.toUpperCase()} puzzle boosted +20%!
+                </Text>
               </View>
             )}
           </View>
@@ -309,5 +356,54 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  boostAdCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 3,
+    minHeight: 56,
+    justifyContent: 'center',
+  },
+  boostAdIcon: {
+    fontSize: 24,
+    marginRight: 10,
+  },
+  boostAdTextContainer: {
+    flex: 1,
+  },
+  boostAdTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  boostAdSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  activeBoostCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 2,
+  },
+  boostActiveIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  boostActiveText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    flex: 1,
   },
 });

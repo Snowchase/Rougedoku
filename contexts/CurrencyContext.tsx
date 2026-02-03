@@ -16,6 +16,13 @@ import {
   CurrencyData,
   PurchaseData,
 } from '../services/currencyService';
+import {
+  getCoinBoost,
+  setCoinBoost,
+  clearCoinBoost,
+  selectRandomDifficulty,
+  CoinBoost,
+} from '../services/coinBoostService';
 import { Difficulty } from '../components/dailyPuzzleGenerator';
 // Using real ad service for native builds (Android/iOS)
 // Change to '../services/adService.mock' for Expo Go testing
@@ -41,7 +48,7 @@ interface CurrencyContextType {
     elapsedTime: number,
     hintsUsed: number,
     mistakesCount: number
-  ) => Promise<{ total: number; breakdown: { baseReward: number; timeBonus: number; hintPenalty: number; mistakePenalty: number; firstBonus: number } }>;
+  ) => Promise<{ total: number; breakdown: { baseReward: number; timeBonus: number; hintPenalty: number; mistakePenalty: number; firstBonus: number; boostBonus: number } }>;
   buyTheme: (themeKey: string, price: number) => Promise<{ success: boolean; message: string }>;
   buyAvatar: (avatar: string, price: number) => Promise<{ success: boolean; message: string }>;
   buyCellStyle: (style: string, price: number) => Promise<{ success: boolean; message: string }>;
@@ -56,6 +63,10 @@ interface CurrencyContextType {
   isSongOwned: (songId: string) => boolean;
   watchRewardedAd: () => Promise<{ success: boolean; coinsEarned: number; message: string }>;
   isAdReady: () => boolean;
+  // Coin boost related
+  activeCoinBoost: CoinBoost | null;
+  watchCoinBoostAd: () => Promise<{ success: boolean; boostedDifficulty: Difficulty | null; message: string }>;
+  hasActiveCoinBoost: (difficulty: Difficulty) => boolean;
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
@@ -76,10 +87,21 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     selectedSong: null,
   });
   const [loading, setLoading] = useState(true);
+  const [activeCoinBoost, setActiveCoinBoost] = useState<CoinBoost | null>(null);
 
   useEffect(() => {
     loadData();
+    loadCoinBoost();
   }, []);
+
+  const loadCoinBoost = async () => {
+    try {
+      const boost = await getCoinBoost();
+      setActiveCoinBoost(boost);
+    } catch (error) {
+      console.error('Error loading coin boost:', error);
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -116,20 +138,36 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     const isFirst = await checkFirstCompletion(date, difficulty);
     const reward = calculatePuzzleReward(difficulty, elapsedTime, hintsUsed, mistakesCount, isFirst);
 
-    const newData = await addCoins(reward.total);
+    // Check if this puzzle has an active boost
+    let boostMultiplier = 1.0;
+    let boostBonus = 0;
+    if (activeCoinBoost && activeCoinBoost.difficulty === difficulty) {
+      boostMultiplier = activeCoinBoost.boostMultiplier;
+      const boostedTotal = Math.round(reward.total * boostMultiplier);
+      boostBonus = boostedTotal - reward.total;
+
+      // Clear boost after use
+      await clearCoinBoost();
+      setActiveCoinBoost(null);
+      console.log(`Coin boost applied! Extra ${boostBonus} coins earned.`);
+    }
+
+    const totalWithBoost = reward.total + boostBonus;
+    const newData = await addCoins(totalWithBoost);
     setCurrencyData(newData);
 
     return {
-      total: reward.total,
+      total: totalWithBoost,
       breakdown: {
         baseReward: reward.baseReward,
         timeBonus: reward.timeBonus,
         hintPenalty: reward.hintPenalty,
         mistakePenalty: reward.mistakePenalty,
         firstBonus: reward.firstBonus,
+        boostBonus,
       },
     };
-  }, []);
+  }, [activeCoinBoost]);
 
   const buyTheme = useCallback(async (themeKey: string, price: number) => {
     const result = await purchaseTheme(themeKey, price);
@@ -225,6 +263,47 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     return adService.isRewardedAdReady();
   }, []);
 
+  const watchCoinBoostAd = useCallback(async () => {
+    // Check if there's already an active boost
+    if (activeCoinBoost) {
+      return {
+        success: false,
+        boostedDifficulty: null,
+        message: `You already have an active boost for ${activeCoinBoost.difficulty.toUpperCase()} puzzle!`,
+      };
+    }
+
+    try {
+      const rewardEarned = await adService.showRewardedInterstitialAd();
+      if (rewardEarned) {
+        const randomDifficulty = selectRandomDifficulty();
+        const boost = await setCoinBoost(randomDifficulty);
+        setActiveCoinBoost(boost);
+        return {
+          success: true,
+          boostedDifficulty: randomDifficulty,
+          message: `20% coin boost activated for ${randomDifficulty.toUpperCase()} puzzle!`,
+        };
+      }
+      return {
+        success: false,
+        boostedDifficulty: null,
+        message: 'Ad was dismissed without earning reward.',
+      };
+    } catch (error) {
+      console.error('Error showing coin boost ad:', error);
+      return {
+        success: false,
+        boostedDifficulty: null,
+        message: error instanceof Error ? error.message : 'Failed to show ad. Please try again.',
+      };
+    }
+  }, [activeCoinBoost]);
+
+  const hasActiveCoinBoost = useCallback((difficulty: Difficulty) => {
+    return activeCoinBoost !== null && activeCoinBoost.difficulty === difficulty;
+  }, [activeCoinBoost]);
+
   return (
     <CurrencyContext.Provider
       value={{
@@ -256,6 +335,9 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
         isSongOwned,
         watchRewardedAd,
         isAdReady,
+        activeCoinBoost,
+        watchCoinBoostAd,
+        hasActiveCoinBoost,
       }}
     >
       {children}
