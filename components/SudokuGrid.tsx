@@ -19,6 +19,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useAudio } from '../contexts/AudioContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { isBoostEligible, markBoostUsed, calculateBoostBonus } from '../services/coinBoostService';
 
 const GRID_SIZE = 9;
 const { width } = Dimensions.get('window');
@@ -46,7 +47,7 @@ const SudokuGrid = () => {
   const { theme } = useTheme();
   const { playSoundEffect } = useAudio();
   const { settings } = useSettings();
-  const { coins, awardPuzzleCompletion, hasActiveCoinBoost } = useCurrency();
+  const { coins, awardPuzzleCompletion, showBoostAd, awardBoostBonus } = useCurrency();
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [grid, setGrid] = useState<number[][]>([]);
   const [original, setOriginal] = useState<number[][]>([]);
@@ -326,7 +327,7 @@ const SudokuGrid = () => {
       await AsyncStorage.setItem(getStorageKey(), JSON.stringify(state));
 
       // Award coins for completion
-      let coinReward = { total: 0, breakdown: { baseReward: 0, timeBonus: 0, hintPenalty: 0, mistakePenalty: 0, firstBonus: 0, boostBonus: 0 } };
+      let coinReward = { total: 0, breakdown: { baseReward: 0, timeBonus: 0, hintPenalty: 0, mistakePenalty: 0, firstBonus: 0 } };
       try {
         coinReward = await awardPuzzleCompletion(todayDate, difficulty, elapsedTime, hintsUsed, mistakesCount);
         console.log('Coins awarded:', coinReward.total);
@@ -347,11 +348,22 @@ const SudokuGrid = () => {
         console.error('Error submitting score:', error);
       }
 
-      showCompletionScreen(coinReward);
+      // Check if this difficulty is eligible for a boost ad
+      let boostEligible = false;
+      try {
+        boostEligible = await isBoostEligible(difficulty);
+      } catch (error) {
+        console.error('Error checking boost eligibility:', error);
+      }
+
+      showCompletionScreen(coinReward, boostEligible);
     }
   };
 
-  const showCompletionScreen = (coinReward: { total: number; breakdown: { baseReward: number; timeBonus: number; hintPenalty: number; mistakePenalty: number; firstBonus: number; boostBonus: number } }) => {
+  const showCompletionScreen = (
+    coinReward: { total: number; breakdown: { baseReward: number; timeBonus: number; hintPenalty: number; mistakePenalty: number; firstBonus: number } },
+    boostEligible: boolean
+  ) => {
     const minutes = Math.floor(elapsedTime / 60);
     const seconds = elapsedTime % 60;
 
@@ -369,9 +381,6 @@ const SudokuGrid = () => {
     if (coinReward.breakdown.firstBonus > 0) {
       rewardText += `\n   ⭐ First clear: +${coinReward.breakdown.firstBonus}`;
     }
-    if (coinReward.breakdown.boostBonus > 0) {
-      rewardText += `\n   🚀 Coin boost: +${coinReward.breakdown.boostBonus}`;
-    }
     if (coinReward.breakdown.hintPenalty > 0) {
       rewardText += `\n   💡 Hints used: -${coinReward.breakdown.hintPenalty}`;
     }
@@ -384,7 +393,48 @@ const SudokuGrid = () => {
     Alert.alert(
       '🎉 Daily Puzzle Complete!',
       shareText + '\n\nCome back tomorrow for a new puzzle!',
-      [{ text: 'OK' }]
+      [
+        {
+          text: 'OK',
+          onPress: () => {
+            if (boostEligible) {
+              showBoostOfferPopup(coinReward.total);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const showBoostOfferPopup = (baseTotal: number) => {
+    const bonusAmount = calculateBoostBonus(baseTotal);
+
+    Alert.alert(
+      '🚀 Bonus Opportunity!',
+      `Watch a short ad to earn 20% more coins!\n\n+${bonusAmount} bonus coins`,
+      [
+        {
+          text: 'No Thanks',
+          style: 'cancel',
+          onPress: async () => {
+            await markBoostUsed();
+          },
+        },
+        {
+          text: 'Watch Ad',
+          onPress: async () => {
+            await markBoostUsed();
+            const rewarded = await showBoostAd();
+            if (rewarded) {
+              await awardBoostBonus(bonusAmount);
+              Alert.alert(
+                '🎉 Bonus Earned!',
+                `+${bonusAmount} bonus coins added!\n\n🪙 Total coins from this puzzle: ${baseTotal + bonusAmount}`
+              );
+            }
+          },
+        },
+      ]
     );
   };
 
@@ -683,7 +733,7 @@ const SudokuGrid = () => {
                 { color: theme.colors.textSecondary },
                 difficulty === diff && styles.difficultyTabTextActive
               ]}>
-                {diff.charAt(0).toUpperCase() + diff.slice(1)}{hasActiveCoinBoost(diff) ? ' 🚀' : ''}
+                {diff.charAt(0).toUpperCase() + diff.slice(1)}
               </Text>
             </TouchableOpacity>
           ))}

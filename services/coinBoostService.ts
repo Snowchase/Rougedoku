@@ -1,19 +1,20 @@
 /**
- * Coin Boost Service - Manages the 20% coin boost from rewarded interstitial ads
+ * Coin Boost Service - Manages a daily hidden difficulty selection for rewarded ad boost.
  *
- * The boost is randomly assigned to one of four difficulty puzzles and
- * applies when the user completes that specific puzzle on the same day.
+ * Each day, one of the four difficulty puzzles is randomly chosen (hidden from user).
+ * When the user completes that specific puzzle, they are offered a rewarded interstitial
+ * ad. Watching the ad grants a 20% coin bonus on that puzzle's reward.
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Difficulty } from '../components/dailyPuzzleGenerator';
 
-const COIN_BOOST_STORAGE_KEY = 'sudokle_coin_boost';
+const DAILY_BOOST_KEY = 'sudokle_daily_boost_selection';
 
-export interface CoinBoost {
+export interface DailyBoostSelection {
   difficulty: Difficulty;
   date: string; // YYYY-MM-DD format
-  boostMultiplier: number; // 1.20 for 20% boost
+  used: boolean; // Whether the boost has already been offered/used today
 }
 
 const BOOST_MULTIPLIER = 1.20; // 20% boost
@@ -32,96 +33,73 @@ function getDateString(): string {
 }
 
 /**
- * Randomly select one of the four difficulty levels
+ * Get or create today's daily boost selection.
+ * Automatically generates a new random selection each day.
  */
-export function selectRandomDifficulty(): Difficulty {
-  const randomIndex = Math.floor(Math.random() * DIFFICULTIES.length);
-  return DIFFICULTIES[randomIndex];
-}
+export async function getDailyBoostSelection(): Promise<DailyBoostSelection> {
+  const today = getDateString();
 
-/**
- * Get the current active coin boost (if any)
- * Returns null if no boost is active or if the boost has expired (different day)
- */
-export async function getCoinBoost(): Promise<CoinBoost | null> {
   try {
-    const data = await AsyncStorage.getItem(COIN_BOOST_STORAGE_KEY);
-    if (!data) {
-      return null;
+    const data = await AsyncStorage.getItem(DAILY_BOOST_KEY);
+    if (data) {
+      const selection: DailyBoostSelection = JSON.parse(data);
+      if (selection.date === today) {
+        return selection;
+      }
     }
-
-    const boost: CoinBoost = JSON.parse(data);
-
-    // Check if boost is for today (boost expires at midnight)
-    const today = getDateString();
-    if (boost.date !== today) {
-      // Boost has expired, clear it
-      await clearCoinBoost();
-      return null;
-    }
-
-    return boost;
   } catch (error) {
-    console.error('Error getting coin boost:', error);
-    return null;
+    console.error('Error reading daily boost selection:', error);
   }
-}
 
-/**
- * Set a new coin boost for the specified difficulty
- */
-export async function setCoinBoost(difficulty: Difficulty): Promise<CoinBoost> {
-  const boost: CoinBoost = {
-    difficulty,
-    date: getDateString(),
-    boostMultiplier: BOOST_MULTIPLIER,
+  // Create a new selection for today
+  const randomIndex = Math.floor(Math.random() * DIFFICULTIES.length);
+  const selection: DailyBoostSelection = {
+    difficulty: DIFFICULTIES[randomIndex],
+    date: today,
+    used: false,
   };
 
   try {
-    await AsyncStorage.setItem(COIN_BOOST_STORAGE_KEY, JSON.stringify(boost));
-    console.log(`Coin boost activated for ${difficulty} puzzle!`);
-    return boost;
+    await AsyncStorage.setItem(DAILY_BOOST_KEY, JSON.stringify(selection));
   } catch (error) {
-    console.error('Error setting coin boost:', error);
-    throw error;
+    console.error('Error saving daily boost selection:', error);
   }
+
+  return selection;
 }
 
 /**
- * Clear the current coin boost (called after the boost is used)
+ * Check if the completed difficulty is eligible for a boost ad.
+ * Returns true if this difficulty is today's chosen one and hasn't been used yet.
  */
-export async function clearCoinBoost(): Promise<void> {
+export async function isBoostEligible(difficulty: Difficulty): Promise<boolean> {
+  const selection = await getDailyBoostSelection();
+  return selection.difficulty === difficulty && !selection.used;
+}
+
+/**
+ * Mark today's boost as used (called after ad is shown, regardless of outcome).
+ */
+export async function markBoostUsed(): Promise<void> {
   try {
-    await AsyncStorage.removeItem(COIN_BOOST_STORAGE_KEY);
-    console.log('Coin boost cleared');
+    const selection = await getDailyBoostSelection();
+    selection.used = true;
+    await AsyncStorage.setItem(DAILY_BOOST_KEY, JSON.stringify(selection));
   } catch (error) {
-    console.error('Error clearing coin boost:', error);
+    console.error('Error marking boost as used:', error);
   }
 }
 
 /**
- * Check if a specific difficulty has an active coin boost
+ * Calculate the bonus coins from the boost (20% of base reward).
  */
-export async function hasBoostForDifficulty(difficulty: Difficulty): Promise<boolean> {
-  const boost = await getCoinBoost();
-  return boost !== null && boost.difficulty === difficulty;
+export function calculateBoostBonus(baseRewardTotal: number): number {
+  return Math.round(baseRewardTotal * (BOOST_MULTIPLIER - 1));
 }
 
 /**
- * Get the boost multiplier for a specific difficulty
- * Returns 1.0 if no boost is active, or the boost multiplier if active
- */
-export async function getBoostMultiplier(difficulty: Difficulty): Promise<number> {
-  const boost = await getCoinBoost();
-  if (boost && boost.difficulty === difficulty) {
-    return boost.boostMultiplier;
-  }
-  return 1.0;
-}
-
-/**
- * Get the boost multiplier constant (for display purposes)
+ * Get the boost percentage for display purposes.
  */
 export function getBoostPercentage(): number {
-  return (BOOST_MULTIPLIER - 1) * 100; // Returns 20 for 20%
+  return Math.round((BOOST_MULTIPLIER - 1) * 100); // Returns 20
 }
