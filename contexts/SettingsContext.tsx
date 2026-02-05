@@ -11,7 +11,7 @@ interface SettingsContextType {
 }
 
 const defaultSettings: GameSettings = {
-  boardLocked: false,
+  boardLocked: true,
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
