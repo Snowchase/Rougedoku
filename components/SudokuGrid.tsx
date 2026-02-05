@@ -417,13 +417,13 @@ const SudokuGrid = () => {
           text: 'No Thanks',
           style: 'cancel',
           onPress: async () => {
-            await markBoostUsed();
+            await markBoostUsed(difficulty);
           },
         },
         {
           text: 'Watch Ad',
           onPress: async () => {
-            await markBoostUsed();
+            await markBoostUsed(difficulty);
             const rewarded = await showBoostAd();
             if (rewarded) {
               await awardBoostBonus(bonusAmount);

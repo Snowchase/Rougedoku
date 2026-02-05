@@ -1,8 +1,8 @@
 /**
- * Coin Boost Service - Manages a daily hidden difficulty selection for rewarded ad boost.
+ * Coin Boost Service - Manages daily hidden difficulty selections for rewarded ad boost.
  *
- * Each day, one of the four difficulty puzzles is randomly chosen (hidden from user).
- * When the user completes that specific puzzle, they are offered a rewarded interstitial
+ * Each day, two of the four difficulty puzzles are randomly chosen (hidden from user).
+ * When the user completes one of those puzzles, they are offered a rewarded interstitial
  * ad. Watching the ad grants a 20% coin bonus on that puzzle's reward.
  */
 
@@ -12,9 +12,9 @@ import { Difficulty } from '../components/dailyPuzzleGenerator';
 const DAILY_BOOST_KEY = 'sudokle_daily_boost_selection';
 
 export interface DailyBoostSelection {
-  difficulty: Difficulty;
+  difficulties: Difficulty[]; // Two randomly chosen difficulties
   date: string; // YYYY-MM-DD format
-  used: boolean; // Whether the boost has already been offered/used today
+  usedDifficulties: Difficulty[]; // Which of the two have already been offered/used
 }
 
 const BOOST_MULTIPLIER = 1.20; // 20% boost
@@ -30,6 +30,14 @@ function getDateString(): string {
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+/**
+ * Randomly select two unique difficulties from the four available.
+ */
+function selectTwoRandomDifficulties(): Difficulty[] {
+  const shuffled = [...DIFFICULTIES].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 2);
 }
 
 /**
@@ -51,12 +59,11 @@ export async function getDailyBoostSelection(): Promise<DailyBoostSelection> {
     console.error('Error reading daily boost selection:', error);
   }
 
-  // Create a new selection for today
-  const randomIndex = Math.floor(Math.random() * DIFFICULTIES.length);
+  // Create a new selection for today with two random difficulties
   const selection: DailyBoostSelection = {
-    difficulty: DIFFICULTIES[randomIndex],
+    difficulties: selectTwoRandomDifficulties(),
     date: today,
-    used: false,
+    usedDifficulties: [],
   };
 
   try {
@@ -70,21 +77,23 @@ export async function getDailyBoostSelection(): Promise<DailyBoostSelection> {
 
 /**
  * Check if the completed difficulty is eligible for a boost ad.
- * Returns true if this difficulty is today's chosen one and hasn't been used yet.
+ * Returns true if this difficulty is one of today's chosen two and hasn't been used yet.
  */
 export async function isBoostEligible(difficulty: Difficulty): Promise<boolean> {
   const selection = await getDailyBoostSelection();
-  return selection.difficulty === difficulty && !selection.used;
+  return selection.difficulties.includes(difficulty) && !selection.usedDifficulties.includes(difficulty);
 }
 
 /**
- * Mark today's boost as used (called after ad is shown, regardless of outcome).
+ * Mark a specific difficulty's boost as used (called after ad is shown, regardless of outcome).
  */
-export async function markBoostUsed(): Promise<void> {
+export async function markBoostUsed(difficulty: Difficulty): Promise<void> {
   try {
     const selection = await getDailyBoostSelection();
-    selection.used = true;
-    await AsyncStorage.setItem(DAILY_BOOST_KEY, JSON.stringify(selection));
+    if (!selection.usedDifficulties.includes(difficulty)) {
+      selection.usedDifficulties.push(difficulty);
+      await AsyncStorage.setItem(DAILY_BOOST_KEY, JSON.stringify(selection));
+    }
   } catch (error) {
     console.error('Error marking boost as used:', error);
   }
