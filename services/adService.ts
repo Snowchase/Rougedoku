@@ -13,6 +13,7 @@ import MobileAds, {
   AdEventType,
   RewardedAd,
   RewardedAdEventType,
+  RewardedInterstitialAd,
   TestIds,
   AdsConsent,
   AdsConsentStatus,
@@ -25,12 +26,22 @@ const REWARDED_AD_UNIT_ID = __DEV__
       android: 'ca-app-pub-4722969639622172/2984440613', // Replace with real Android ad unit ID
     }) || TestIds.REWARDED;
 
+// Rewarded Interstitial Ad unit for coin boost feature
+const REWARDED_INTERSTITIAL_AD_UNIT_ID = __DEV__
+  ? TestIds.REWARDED_INTERSTITIAL
+  : Platform.select({
+      ios: 'ca-app-pub-4722969639622172/XXXXXXXXXX', // TODO: Replace with real iOS ad unit ID
+      android: 'ca-app-pub-4722969639622172/XXXXXXXXXX', // TODO: Replace with real Android ad unit ID
+    }) || TestIds.REWARDED_INTERSTITIAL;
+
 const COINS_PER_AD = 25; // Reward amount per ad
 
 class AdService {
   private rewardedAd: RewardedAd | null = null;
+  private rewardedInterstitialAd: RewardedInterstitialAd | null = null;
   private isInitialized = false;
   private isLoading = false;
+  private isLoadingInterstitial = false;
   private hasRequestedATT = false;
 
   /**
@@ -55,8 +66,11 @@ class AdService {
       console.log('AdService initialized successfully');
       this.isInitialized = true;
 
-      // Pre-load the first ad
-      await this.loadRewardedAd();
+      // Pre-load the first ads
+      await Promise.all([
+        this.loadRewardedAd(),
+        this.loadRewardedInterstitialAd(),
+      ]);
     } catch (error) {
       console.error('Failed to initialize AdService:', error);
       throw error;
@@ -206,6 +220,115 @@ class AdService {
    */
   getRewardAmount(): number {
     return COINS_PER_AD;
+  }
+
+  /**
+   * Load a rewarded interstitial ad (for coin boost feature)
+   */
+  private async loadRewardedInterstitialAd(): Promise<void> {
+    if (this.isLoadingInterstitial || (this.rewardedInterstitialAd && this.rewardedInterstitialAd.loaded)) {
+      return;
+    }
+
+    try {
+      this.isLoadingInterstitial = true;
+
+      // Create a new rewarded interstitial ad instance
+      this.rewardedInterstitialAd = RewardedInterstitialAd.createForAdRequest(
+        REWARDED_INTERSTITIAL_AD_UNIT_ID,
+        {
+          requestNonPersonalizedAdsOnly: false,
+        }
+      );
+
+      // Load the ad
+      this.rewardedInterstitialAd.load();
+
+      console.log('Rewarded interstitial ad loaded successfully');
+    } catch (error) {
+      console.error('Failed to load rewarded interstitial ad:', error);
+      this.rewardedInterstitialAd = null;
+    } finally {
+      this.isLoadingInterstitial = false;
+    }
+  }
+
+  /**
+   * Check if a rewarded interstitial ad is ready to show
+   */
+  isRewardedInterstitialAdReady(): boolean {
+    return this.rewardedInterstitialAd?.loaded ?? false;
+  }
+
+  /**
+   * Show a rewarded interstitial ad (for coin boost feature)
+   * Returns a promise that resolves with true if the user earned the reward,
+   * or rejects if the ad failed or was dismissed without earning
+   */
+  async showRewardedInterstitialAd(): Promise<boolean> {
+    if (!this.isInitialized) {
+      throw new Error('AdService not initialized. Call initialize() first.');
+    }
+
+    if (!this.rewardedInterstitialAd || !this.rewardedInterstitialAd.loaded) {
+      // Try to load an ad
+      await this.loadRewardedInterstitialAd();
+
+      // Wait a bit for the ad to load
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      if (!this.rewardedInterstitialAd || !this.rewardedInterstitialAd.loaded) {
+        throw new Error('No ad available. Please try again in a moment.');
+      }
+    }
+
+    return new Promise((resolve, reject) => {
+      let hasEarnedReward = false;
+
+      // Set up event listeners
+      const earnedRewardListener = this.rewardedInterstitialAd!.addAdEventListener(
+        RewardedAdEventType.EARNED_REWARD,
+        reward => {
+          console.log('User earned reward from interstitial:', reward);
+          hasEarnedReward = true;
+        }
+      );
+
+      const dismissedListener = this.rewardedInterstitialAd!.addAdEventListener(
+        AdEventType.CLOSED,
+        () => {
+          console.log('Rewarded interstitial ad dismissed');
+
+          // Clean up listeners
+          earnedRewardListener();
+          dismissedListener();
+
+          // Load next ad
+          this.loadRewardedInterstitialAd();
+
+          // Resolve or reject based on whether reward was earned
+          if (hasEarnedReward) {
+            resolve(true);
+          } else {
+            reject(new Error('Ad dismissed without earning reward'));
+          }
+        }
+      );
+
+      // Show the ad
+      this.rewardedInterstitialAd!.show().catch(error => {
+        console.error('Failed to show rewarded interstitial ad:', error);
+
+        // Clean up listeners
+        earnedRewardListener();
+        dismissedListener();
+
+        // Load next ad
+        this.loadRewardedInterstitialAd();
+
+        reject(error);
+      });
+    });
   }
 
   /**

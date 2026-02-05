@@ -56,6 +56,8 @@ interface CurrencyContextType {
   isSongOwned: (songId: string) => boolean;
   watchRewardedAd: () => Promise<{ success: boolean; coinsEarned: number; message: string }>;
   isAdReady: () => boolean;
+  showBoostAd: () => Promise<boolean>;
+  awardBoostBonus: (amount: number) => Promise<void>;
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
@@ -225,6 +227,27 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     return adService.isRewardedAdReady();
   }, []);
 
+  /**
+   * Show a rewarded interstitial ad for the coin boost feature.
+   * Returns true if the user watched the ad and earned the reward.
+   */
+  const showBoostAd = useCallback(async (): Promise<boolean> => {
+    try {
+      return await adService.showRewardedInterstitialAd();
+    } catch (error) {
+      console.error('Error showing boost ad:', error);
+      return false;
+    }
+  }, []);
+
+  /**
+   * Award bonus coins from the boost ad (called after user watches the ad).
+   */
+  const awardBoostBonus = useCallback(async (amount: number) => {
+    const newData = await addCoins(amount);
+    setCurrencyData(newData);
+  }, []);
+
   return (
     <CurrencyContext.Provider
       value={{
@@ -256,6 +279,8 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
         isSongOwned,
         watchRewardedAd,
         isAdReady,
+        showBoostAd,
+        awardBoostBonus,
       }}
     >
       {children}

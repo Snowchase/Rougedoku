@@ -19,6 +19,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useAudio } from '../contexts/AudioContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { isBoostEligible, markBoostUsed, calculateBoostBonus } from '../services/coinBoostService';
 
 const GRID_SIZE = 9;
 const { width } = Dimensions.get('window');
@@ -46,7 +47,7 @@ const SudokuGrid = () => {
   const { theme } = useTheme();
   const { playSoundEffect } = useAudio();
   const { settings } = useSettings();
-  const { coins, awardPuzzleCompletion } = useCurrency();
+  const { coins, awardPuzzleCompletion, showBoostAd, awardBoostBonus } = useCurrency();
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [grid, setGrid] = useState<number[][]>([]);
   const [original, setOriginal] = useState<number[][]>([]);
@@ -347,11 +348,22 @@ const SudokuGrid = () => {
         console.error('Error submitting score:', error);
       }
 
-      showCompletionScreen(coinReward);
+      // Check if this difficulty is eligible for a boost ad
+      let boostEligible = false;
+      try {
+        boostEligible = await isBoostEligible(difficulty);
+      } catch (error) {
+        console.error('Error checking boost eligibility:', error);
+      }
+
+      showCompletionScreen(coinReward, boostEligible);
     }
   };
 
-  const showCompletionScreen = (coinReward: { total: number; breakdown: { baseReward: number; timeBonus: number; hintPenalty: number; mistakePenalty: number; firstBonus: number } }) => {
+  const showCompletionScreen = (
+    coinReward: { total: number; breakdown: { baseReward: number; timeBonus: number; hintPenalty: number; mistakePenalty: number; firstBonus: number } },
+    boostEligible: boolean
+  ) => {
     const minutes = Math.floor(elapsedTime / 60);
     const seconds = elapsedTime % 60;
 
@@ -381,7 +393,48 @@ const SudokuGrid = () => {
     Alert.alert(
       '🎉 Daily Puzzle Complete!',
       shareText + '\n\nCome back tomorrow for a new puzzle!',
-      [{ text: 'OK' }]
+      [
+        {
+          text: 'OK',
+          onPress: () => {
+            if (boostEligible) {
+              showBoostOfferPopup(coinReward.total);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const showBoostOfferPopup = (baseTotal: number) => {
+    const bonusAmount = calculateBoostBonus(baseTotal);
+
+    Alert.alert(
+      '🚀 Bonus Opportunity!',
+      `Watch a short ad to earn 20% more coins!\n\n+${bonusAmount} bonus coins`,
+      [
+        {
+          text: 'No Thanks',
+          style: 'cancel',
+          onPress: async () => {
+            await markBoostUsed(difficulty);
+          },
+        },
+        {
+          text: 'Watch Ad',
+          onPress: async () => {
+            await markBoostUsed(difficulty);
+            const rewarded = await showBoostAd();
+            if (rewarded) {
+              await awardBoostBonus(bonusAmount);
+              Alert.alert(
+                '🎉 Bonus Earned!',
+                `+${bonusAmount} bonus coins added!\n\n🪙 Total coins from this puzzle: ${baseTotal + bonusAmount}`
+              );
+            }
+          },
+        },
+      ]
     );
   };
 
