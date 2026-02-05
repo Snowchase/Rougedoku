@@ -149,6 +149,18 @@ export async function initializeUser(username?: string): Promise<UserProfile | n
     return profile;
   } catch (error) {
     console.error('Error initializing user:', error);
+
+    // Fall back to cached profile from AsyncStorage when Firebase is unreachable
+    try {
+      const cachedProfileStr = await AsyncStorage.getItem('userProfile');
+      if (cachedProfileStr) {
+        console.log('Using cached profile from AsyncStorage');
+        return JSON.parse(cachedProfileStr) as UserProfile;
+      }
+    } catch (storageError) {
+      console.error('Error loading cached profile:', storageError);
+    }
+
     return null;
   }
 }
@@ -212,6 +224,19 @@ export async function updateProfile(updates: {
     }
 
     await updateDoc(doc(db, 'users', user.uid), updates);
+
+    // Update AsyncStorage backup with the new profile data
+    try {
+      const cachedProfileStr = await AsyncStorage.getItem('userProfile');
+      if (cachedProfileStr) {
+        const cachedProfile = JSON.parse(cachedProfileStr);
+        const updatedProfile = { ...cachedProfile, ...updates };
+        await AsyncStorage.setItem('userProfile', JSON.stringify(updatedProfile));
+      }
+    } catch (storageError) {
+      // Non-critical: just log the error, don't fail the update
+      console.warn('Failed to update AsyncStorage backup:', storageError);
+    }
 
     return { success: true };
   } catch (error) {
