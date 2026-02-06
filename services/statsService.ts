@@ -1,5 +1,8 @@
 import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db, auth } from '../components/firebaseConfig';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const STATS_STORAGE_KEY = 'sudokle_user_stats';
 
 export interface UserStats {
   userId: string;
@@ -53,15 +56,40 @@ export async function getUserStats(userId: string): Promise<UserStats | null> {
     const statsDoc = await getDoc(doc(db, 'userStats', userId));
 
     if (statsDoc.exists()) {
-      return statsDoc.data() as UserStats;
+      const stats = statsDoc.data() as UserStats;
+      // Backup stats to AsyncStorage
+      try {
+        await AsyncStorage.setItem(STATS_STORAGE_KEY, JSON.stringify(stats));
+      } catch (storageError) {
+        console.warn('Failed to backup stats to AsyncStorage:', storageError);
+      }
+      return stats;
     }
 
     // Create new stats if they don't exist
     const newStats = createEmptyStats(userId);
     await setDoc(doc(db, 'userStats', userId), newStats);
+    // Backup new stats to AsyncStorage
+    try {
+      await AsyncStorage.setItem(STATS_STORAGE_KEY, JSON.stringify(newStats));
+    } catch (storageError) {
+      console.warn('Failed to backup new stats to AsyncStorage:', storageError);
+    }
     return newStats;
   } catch (error) {
     console.error('Error getting user stats:', error);
+
+    // Fall back to cached stats from AsyncStorage when Firebase is unreachable
+    try {
+      const cachedStatsStr = await AsyncStorage.getItem(STATS_STORAGE_KEY);
+      if (cachedStatsStr) {
+        console.log('Using cached stats from AsyncStorage');
+        return JSON.parse(cachedStatsStr) as UserStats;
+      }
+    } catch (storageError) {
+      console.error('Error loading cached stats:', storageError);
+    }
+
     return null;
   }
 }
@@ -143,6 +171,15 @@ export async function updateStatsAfterCompletion(
     };
 
     await updateDoc(doc(db, 'userStats', userId), updatedStats);
+
+    // Sync updated stats to AsyncStorage backup
+    try {
+      const fullUpdatedStats = { ...stats, ...updatedStats };
+      await AsyncStorage.setItem(STATS_STORAGE_KEY, JSON.stringify(fullUpdatedStats));
+    } catch (storageError) {
+      // Non-critical: just log the error, don't fail the update
+      console.warn('Failed to sync stats to AsyncStorage:', storageError);
+    }
 
     return { success: true, newStreak: newCurrentStreak };
   } catch (error) {
