@@ -25,7 +25,7 @@
       }
     },
     "android": {
-      "package": "com.chase.sudokle",
+      "package": "com.snowchase.sudokle",
       "versionCode": 4,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
