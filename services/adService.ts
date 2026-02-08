@@ -11,27 +11,27 @@
 import { Platform } from 'react-native';
 import MobileAds, {
   AdEventType,
+  AdsConsent,
+  AdsConsentStatus,
   RewardedAd,
   RewardedAdEventType,
   RewardedInterstitialAd,
   TestIds,
-  AdsConsent,
-  AdsConsentStatus,
 } from 'react-native-google-mobile-ads';
 //Rewarded Ad units
 const REWARDED_AD_UNIT_ID = __DEV__
   ? TestIds.REWARDED
   : Platform.select({
       ios: 'ca-app-pub-4722969639622172/2984440613', // Real Ios ad unit ID for rewarded Ad in Shop Info tab
-      android: 'ca-app-pub-4722969639622172/2984440613', // Replace with real Android ad unit ID
+      android: 'ca-app-pub-4722969639622172/2984440613', // Real Android reward unit ID for rewarded Ad in Shop Info tab
     }) || TestIds.REWARDED;
 
 // Rewarded Interstitial Ad unit for coin boost feature
 const REWARDED_INTERSTITIAL_AD_UNIT_ID = __DEV__
   ? TestIds.REWARDED_INTERSTITIAL
   : Platform.select({
-      ios: 'ca-app-pub-4722969639622172/XXXXXXXXXX', // TODO: Replace with real iOS ad unit ID
-      android: 'ca-app-pub-4722969639622172/XXXXXXXXXX', // TODO: Replace with real Android ad unit ID
+      ios: 'ca-app-pub-4722969639622172/8234036903', // Real Ios ad unit ID for rewarded interstitial Ad in coin boost feature
+      android: 'ca-app-pub-4722969639622172/6948440627', // Real Android ad unit ID for rewarded interstitial Ad in coin boost feature
     }) || TestIds.REWARDED_INTERSTITIAL;
 
 const COINS_PER_AD = 25; // Reward amount per ad
@@ -359,3 +359,4 @@ class AdService {
 // Export singleton instance
 export const adService = new AdService();
 export { COINS_PER_AD };
+
