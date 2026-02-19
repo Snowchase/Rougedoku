@@ -9,6 +9,7 @@
  */
 
 import { Platform } from 'react-native';
+import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 import MobileAds, {
   AdEventType,
   AdsConsent,
@@ -87,10 +88,16 @@ class AdService {
     }
 
     try {
-      const consentInfo = await AdsConsent.requestInfoUpdate();
+      // Step 1: Show the native iOS ATT dialog (required by Apple before any tracking data is collected)
+      const { status: attStatus } = await requestTrackingPermissionsAsync();
+      console.log('Native iOS ATT status:', attStatus);
+
       this.hasRequestedATT = true;
 
-      console.log('ATT Consent Status:', consentInfo.status);
+      // Step 2: Proceed with Google's UMP consent flow (for GDPR/EU users)
+      const consentInfo = await AdsConsent.requestInfoUpdate();
+
+      console.log('UMP Consent Status:', consentInfo.status);
 
       // If consent is required, show the consent form
       if (

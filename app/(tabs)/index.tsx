@@ -119,17 +119,13 @@ export default function HomeScreen() {
             <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>Profile & friends</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: '#EF4444' }]}
-            onPress={() => {
-              // TODO: Navigate to versus mode when implemented
-              console.log('Versus mode coming soon!');
-            }}
+          <View
+            style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: '#EF4444', opacity: 0.6 }]}
           >
             <Text style={styles.menuButtonIcon} allowFontScaling={false}>⚔️</Text>
             <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>Versus</Text>
-            <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>Challenge other players</Text>
-          </TouchableOpacity>
+            <Text style={[styles.menuButtonSubtext, { color: '#EF4444' }]} maxFontSizeMultiplier={1.2}>Coming Soon</Text>
+          </View>
 
           {/* Secondary Buttons Group */}
           <View style={styles.secondaryButtonsRow}>
