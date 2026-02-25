@@ -7,6 +7,7 @@ import { useCurrency } from '../../contexts/CurrencyContext';
 import { getCurrentUser } from '../../components/friendService';
 import { getUserStats } from '../../services/statsService';
 import { ScreenErrorBoundary } from '../../components/ScreenErrorBoundary';
+import { getDailyQuote, DailyQuote } from '../../constants/dailyQuotes';
 
 const { width } = Dimensions.get('window');
 
@@ -16,6 +17,7 @@ export default function HomeScreen() {
   const { theme } = useTheme();
   const { coins, selectedSong, loading } = useCurrency();
   const [currentStreak, setCurrentStreak] = useState<number>(0);
+  const [dailyQuote] = useState<DailyQuote>(getDailyQuote());
 
   // Play selected song (or default home music) when screen is focused, stop when unfocused
   useFocusEffect(
@@ -95,6 +97,19 @@ export default function HomeScreen() {
                 <Text style={styles.streakEmoji} allowFontScaling={false}>🔥</Text>
                 <Text style={[styles.streakText, { color: theme.isDark ? '#FCD34D' : '#92400E' }]} maxFontSizeMultiplier={1.2}>{currentStreak} Day Streak!</Text>
               </View>
+            )}
+          </View>
+
+          {/* Daily Quote */}
+          <View style={[styles.quoteCard, { backgroundColor: theme.colors.cardBackground }]}>
+            <Text style={styles.quoteIcon} allowFontScaling={false}>💭</Text>
+            <Text style={[styles.quoteText, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
+              "{dailyQuote.text}"
+            </Text>
+            {dailyQuote.author && (
+              <Text style={[styles.quoteAuthor, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+                — {dailyQuote.author}
+              </Text>
             )}
           </View>
 
@@ -218,7 +233,7 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 16,
   },
   title: {
     fontSize: 48,
@@ -251,6 +266,34 @@ const styles = StyleSheet.create({
   streakText: {
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  quoteCard: {
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  quoteIcon: {
+    fontSize: 20,
+    marginBottom: 8,
+  },
+  quoteText: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    lineHeight: 21,
+  },
+  quoteAuthor: {
+    fontSize: 12,
+    marginTop: 8,
+    textAlign: 'center',
   },
   menuContainer: {
     width: '100%',

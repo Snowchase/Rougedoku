@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Linking,
   ScrollView,
@@ -8,18 +8,29 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { NavigationHeader } from '../../components/navigation-header';
 import { SwipeableScreen } from '../../components/SwipeableScreen';
 import { ScreenErrorBoundary } from '../../components/ScreenErrorBoundary';
 import { useAudio } from '../../contexts/AudioContext';
-import { useSettings } from '../../contexts/SettingsContext';
+import { useSettings, NotificationHour } from '../../contexts/SettingsContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { notificationService } from '../../services/notificationService';
+import { patchNotesService } from '../../services/patchNotesService';
 
 // TODO: Replace these URLs with your actual hosted policy URLs
 const PRIVACY_POLICY_URL = 'https://sudokleprivacy.netlify.app/';
 const TERMS_OF_SERVICE_URL = 'https://sudokleterms.netlify.app/';
 
+const NOTIFICATION_TIMES: { label: string; hour: NotificationHour }[] = [
+  { label: 'Morning\n8 AM', hour: 8 },
+  { label: 'Noon\n12 PM', hour: 12 },
+  { label: 'Evening\n6 PM', hour: 18 },
+  { label: 'Night\n9 PM', hour: 21 },
+];
+
 export default function SettingsScreen() {
+  const router = useRouter();
   const { theme } = useTheme();
   const {
     settings: audioSettings,
@@ -28,10 +39,63 @@ export default function SettingsScreen() {
     setMusicVolume,
     setSfxVolume,
   } = useAudio();
-  const { settings: gameSettings, setBoardLocked } = useSettings();
+  const {
+    settings: gameSettings,
+    setBoardLocked,
+    setNotificationsEnabled,
+    setNotificationHour,
+    setStreakAlertsEnabled,
+  } = useSettings();
+
+  const [hasUnseenNotes, setHasUnseenNotes] = useState(false);
+  const [permissionDenied, setPermissionDenied] = useState(false);
+
+  useEffect(() => {
+    patchNotesService.hasUnseenNotes().then(setHasUnseenNotes);
+    notificationService.getPermissionStatus().then((status) => {
+      setPermissionDenied(status === 'denied');
+    });
+  }, []);
 
   const openLink = (url: string) => {
     Linking.openURL(url).catch((err) => console.error('Failed to open URL:', err));
+  };
+
+  const handleNotificationsToggle = async (enabled: boolean) => {
+    if (enabled) {
+      const granted = await notificationService.requestPermission();
+      if (!granted) {
+        setPermissionDenied(true);
+        return;
+      }
+      setPermissionDenied(false);
+      await setNotificationsEnabled(true);
+      await notificationService.scheduleDailyReminder(gameSettings.notificationHour);
+      if (gameSettings.streakAlertsEnabled) {
+        await notificationService.scheduleStreakAlert();
+      }
+    } else {
+      await setNotificationsEnabled(false);
+      await notificationService.cancelAll();
+    }
+  };
+
+  const handleNotificationHourChange = async (hour: NotificationHour) => {
+    await setNotificationHour(hour);
+    if (gameSettings.notificationsEnabled) {
+      await notificationService.scheduleDailyReminder(hour);
+    }
+  };
+
+  const handleStreakAlertsToggle = async (enabled: boolean) => {
+    await setStreakAlertsEnabled(enabled);
+    if (gameSettings.notificationsEnabled) {
+      if (enabled) {
+        await notificationService.scheduleStreakAlert();
+      } else {
+        await notificationService.cancelStreakAlert();
+      }
+    }
   };
 
   return (
@@ -68,6 +132,102 @@ export default function SettingsScreen() {
               thumbColor="#fff"
             />
           </View>
+        </View>
+
+        {/* Notifications Section */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
+            Notifications
+          </Text>
+          <Text style={[styles.sectionDescription, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+            Stay on top of your daily puzzle and streak
+          </Text>
+        </View>
+
+        <View style={[styles.notificationCard, { backgroundColor: theme.colors.cardBackground }]}>
+          {/* Enable toggle */}
+          <View style={styles.settingRowWithSwitch}>
+            <View style={styles.settingLabelContainer}>
+              <Text style={[styles.settingLabel, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
+                Daily Reminders
+              </Text>
+              <Text style={[styles.settingSubLabel, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+                Remind me to play each day
+              </Text>
+            </View>
+            <Switch
+              value={gameSettings.notificationsEnabled}
+              onValueChange={handleNotificationsToggle}
+              trackColor={{ false: '#D1D5DB', true: theme.colors.primaryButton }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          {/* Permission denied warning */}
+          {permissionDenied && (
+            <TouchableOpacity
+              style={[styles.permissionWarning, { backgroundColor: '#FEF3C7' }]}
+              onPress={() => Linking.openSettings()}
+            >
+              <Text style={[styles.permissionWarningText, { color: '#92400E' }]} maxFontSizeMultiplier={1.2}>
+                ⚠️ Notifications are blocked. Tap here to open Settings and allow them.
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Reminder time picker */}
+          {gameSettings.notificationsEnabled && (
+            <>
+              <View style={[styles.divider, { backgroundColor: theme.colors.cellBackground }]} />
+              <Text style={[styles.settingLabel, { color: theme.colors.textPrimary, marginBottom: 10 }]} maxFontSizeMultiplier={1.2}>
+                Reminder Time
+              </Text>
+              <View style={styles.timeButtonRow}>
+                {NOTIFICATION_TIMES.map(({ label, hour }) => (
+                  <TouchableOpacity
+                    key={hour}
+                    style={[
+                      styles.timeButton,
+                      { backgroundColor: theme.colors.cellBackground },
+                      gameSettings.notificationHour === hour && { backgroundColor: theme.colors.primaryButton },
+                    ]}
+                    onPress={() => handleNotificationHourChange(hour)}
+                  >
+                    <Text
+                      style={[
+                        styles.timeButtonText,
+                        { color: theme.colors.textPrimary },
+                        gameSettings.notificationHour === hour && { color: theme.colors.primaryButtonText },
+                      ]}
+                      allowFontScaling={false}
+                    >
+                      {label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <View style={[styles.divider, { backgroundColor: theme.colors.cellBackground }]} />
+
+              {/* Streak alert toggle */}
+              <View style={styles.settingRowWithSwitch}>
+                <View style={styles.settingLabelContainer}>
+                  <Text style={[styles.settingLabel, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
+                    Streak Alerts
+                  </Text>
+                  <Text style={[styles.settingSubLabel, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+                    Warn me at 9 PM if I haven't played yet
+                  </Text>
+                </View>
+                <Switch
+                  value={gameSettings.streakAlertsEnabled}
+                  onValueChange={handleStreakAlertsToggle}
+                  trackColor={{ false: '#D1D5DB', true: theme.colors.primaryButton }}
+                  thumbColor="#fff"
+                />
+              </View>
+            </>
+          )}
         </View>
 
         {/* Audio Section */}
@@ -229,13 +389,37 @@ export default function SettingsScreen() {
           <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
             About
           </Text>
-          <View style={[styles.infoCard, { backgroundColor: theme.colors.cardBackground }]}>
-            <Text style={[styles.infoText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
-              Sudokle - Daily Sudoku Challenge
-            </Text>
-            <Text style={[styles.infoText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
-              Version 1.1.3
-            </Text>
+          <View style={[styles.aboutCard, { backgroundColor: theme.colors.cardBackground }]}>
+            {/* What's New row */}
+            <TouchableOpacity
+              style={styles.legalLink}
+              onPress={() => router.push('/patch-notes')}
+            >
+              <View style={styles.whatsNewLabel}>
+                <Text style={[styles.legalLinkText, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
+                  What's New
+                </Text>
+                {hasUnseenNotes && (
+                  <View style={[styles.newBadge, { backgroundColor: theme.colors.primaryButton }]}>
+                    <Text style={[styles.newBadgeText, { color: theme.colors.primaryButtonText }]} allowFontScaling={false}>
+                      NEW
+                    </Text>
+                  </View>
+                )}
+              </View>
+              <Text style={[styles.legalLinkArrow, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+                {'>'}
+              </Text>
+            </TouchableOpacity>
+            <View style={[styles.legalDivider, { backgroundColor: theme.colors.cellBackground }]} />
+            <View style={styles.infoRows}>
+              <Text style={[styles.infoText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+                Sudokle - Daily Sudoku Challenge
+              </Text>
+              <Text style={[styles.infoText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+                Version 1.1.5
+              </Text>
+            </View>
           </View>
         </View>
         </ScrollView>
@@ -277,6 +461,17 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
+  notificationCard: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    gap: 16,
+  },
   settingRowWithSwitch: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -295,6 +490,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  permissionWarning: {
+    padding: 12,
+    borderRadius: 10,
+  },
+  permissionWarningText: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  divider: {
+    height: 1,
+  },
+  timeButtonRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  timeButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  timeButtonText: {
+    fontSize: 11,
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 16,
+  },
   infoCard: {
     padding: 16,
     borderRadius: 12,
@@ -303,7 +525,20 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 14,
   },
+  infoRows: {
+    padding: 16,
+    gap: 6,
+  },
   legalCard: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  aboutCard: {
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -329,6 +564,21 @@ const styles = StyleSheet.create({
   legalDivider: {
     height: 1,
     marginHorizontal: 16,
+  },
+  whatsNewLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  newBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  newBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   audioCard: {
     borderRadius: 16,

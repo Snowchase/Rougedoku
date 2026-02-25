@@ -1,17 +1,28 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+export type NotificationHour = 8 | 12 | 18 | 21;
+
 interface GameSettings {
   boardLocked: boolean;
+  notificationsEnabled: boolean;
+  notificationHour: NotificationHour;
+  streakAlertsEnabled: boolean;
 }
 
 interface SettingsContextType {
   settings: GameSettings;
   setBoardLocked: (locked: boolean) => Promise<void>;
+  setNotificationsEnabled: (enabled: boolean) => Promise<void>;
+  setNotificationHour: (hour: NotificationHour) => Promise<void>;
+  setStreakAlertsEnabled: (enabled: boolean) => Promise<void>;
 }
 
 const defaultSettings: GameSettings = {
   boardLocked: true,
+  notificationsEnabled: false,
+  notificationHour: 8,
+  streakAlertsEnabled: true,
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -47,12 +58,31 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   };
 
   const setBoardLocked = async (locked: boolean) => {
-    const newSettings = { ...settings, boardLocked: locked };
-    await saveSettings(newSettings);
+    await saveSettings({ ...settings, boardLocked: locked });
+  };
+
+  const setNotificationsEnabled = async (enabled: boolean) => {
+    await saveSettings({ ...settings, notificationsEnabled: enabled });
+  };
+
+  const setNotificationHour = async (hour: NotificationHour) => {
+    await saveSettings({ ...settings, notificationHour: hour });
+  };
+
+  const setStreakAlertsEnabled = async (enabled: boolean) => {
+    await saveSettings({ ...settings, streakAlertsEnabled: enabled });
   };
 
   return (
-    <SettingsContext.Provider value={{ settings, setBoardLocked }}>
+    <SettingsContext.Provider
+      value={{
+        settings,
+        setBoardLocked,
+        setNotificationsEnabled,
+        setNotificationHour,
+        setStreakAlertsEnabled,
+      }}
+    >
       {children}
     </SettingsContext.Provider>
   );
