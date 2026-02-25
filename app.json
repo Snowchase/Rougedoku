@@ -2,7 +2,7 @@
   "expo": {
     "name": "Sudokle",
     "slug": "sudokle",
-    "version": "1.1.4",
+    "version": "1.1.5",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "sudokleapp",
@@ -16,12 +16,13 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.chase.sudokle",
-      "buildNumber": "5",
+      "buildNumber": "6",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow Sudokle to access your photos to share your scores.",
         "NSCameraUsageDescription": "Allow Sudokle to use your camera to share your scores.",
         "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you and to measure ad performance. You can change this in Settings at any time.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "GADDelayAppMeasurementInit": true
       }
     },
     "android": {
