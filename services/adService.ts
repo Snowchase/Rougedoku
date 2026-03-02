@@ -41,8 +41,8 @@ class AdService {
   private rewardedAd: RewardedAd | null = null;
   private rewardedInterstitialAd: RewardedInterstitialAd | null = null;
   private isInitialized = false;
-  private isLoading = false;
-  private isLoadingInterstitial = false;
+  private loadRewardedAdPromise: Promise<void> | null = null;
+  private loadInterstitialAdPromise: Promise<void> | null = null;
   private hasRequestedATT = false;
 
   /**
@@ -117,31 +117,46 @@ class AdService {
   }
 
   /**
-   * Load a rewarded ad
+   * Load a rewarded ad.
+   * Returns a promise that resolves when the ad is ready, or rejects on error.
+   * Concurrent calls share the same in-flight promise so only one load runs at a time.
    */
-  private async loadRewardedAd(): Promise<void> {
-    if (this.isLoading || (this.rewardedAd && this.rewardedAd.loaded)) {
-      return;
+  private loadRewardedAd(): Promise<void> {
+    if (this.rewardedAd?.loaded) {
+      return Promise.resolve();
     }
 
-    try {
-      this.isLoading = true;
+    if (this.loadRewardedAdPromise) {
+      return this.loadRewardedAdPromise;
+    }
 
-      // Create a new rewarded ad instance
-      this.rewardedAd = RewardedAd.createForAdRequest(REWARDED_AD_UNIT_ID, {
+    this.loadRewardedAdPromise = new Promise<void>((resolve, reject) => {
+      const ad = RewardedAd.createForAdRequest(REWARDED_AD_UNIT_ID, {
         requestNonPersonalizedAdsOnly: false,
       });
+      this.rewardedAd = ad;
 
-      // Load the ad
-      this.rewardedAd.load();
+      const loadedListener = ad.addAdEventListener(AdEventType.LOADED, () => {
+        loadedListener();
+        errorListener();
+        this.loadRewardedAdPromise = null;
+        console.log('Rewarded ad loaded successfully');
+        resolve();
+      });
 
-      console.log('Rewarded ad loaded successfully');
-    } catch (error) {
-      console.error('Failed to load rewarded ad:', error);
-      this.rewardedAd = null;
-    } finally {
-      this.isLoading = false;
-    }
+      const errorListener = ad.addAdEventListener(AdEventType.ERROR, (error) => {
+        loadedListener();
+        errorListener();
+        this.rewardedAd = null;
+        this.loadRewardedAdPromise = null;
+        console.error('Failed to load rewarded ad:', error);
+        reject(error);
+      });
+
+      ad.load();
+    });
+
+    return this.loadRewardedAdPromise;
   }
 
   /**
@@ -161,16 +176,8 @@ class AdService {
       throw new Error('AdService not initialized. Call initialize() first.');
     }
 
-    if (!this.rewardedAd || !this.rewardedAd.loaded) {
-      // Try to load an ad
+    if (!this.rewardedAd?.loaded) {
       await this.loadRewardedAd();
-
-      // Wait a bit for the ad to load
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      if (!this.rewardedAd || !this.rewardedAd.loaded) {
-        throw new Error('No ad available. Please try again in a moment.');
-      }
     }
 
     return new Promise((resolve, reject) => {
@@ -230,34 +237,47 @@ class AdService {
   }
 
   /**
-   * Load a rewarded interstitial ad (for coin boost feature)
+   * Load a rewarded interstitial ad (for coin boost feature).
+   * Returns a promise that resolves when the ad is ready, or rejects on error.
+   * Concurrent calls share the same in-flight promise so only one load runs at a time.
    */
-  private async loadRewardedInterstitialAd(): Promise<void> {
-    if (this.isLoadingInterstitial || (this.rewardedInterstitialAd && this.rewardedInterstitialAd.loaded)) {
-      return;
+  private loadRewardedInterstitialAd(): Promise<void> {
+    if (this.rewardedInterstitialAd?.loaded) {
+      return Promise.resolve();
     }
 
-    try {
-      this.isLoadingInterstitial = true;
+    if (this.loadInterstitialAdPromise) {
+      return this.loadInterstitialAdPromise;
+    }
 
-      // Create a new rewarded interstitial ad instance
-      this.rewardedInterstitialAd = RewardedInterstitialAd.createForAdRequest(
+    this.loadInterstitialAdPromise = new Promise<void>((resolve, reject) => {
+      const ad = RewardedInterstitialAd.createForAdRequest(
         REWARDED_INTERSTITIAL_AD_UNIT_ID,
-        {
-          requestNonPersonalizedAdsOnly: false,
-        }
+        { requestNonPersonalizedAdsOnly: false }
       );
+      this.rewardedInterstitialAd = ad;
 
-      // Load the ad
-      this.rewardedInterstitialAd.load();
+      const loadedListener = ad.addAdEventListener(AdEventType.LOADED, () => {
+        loadedListener();
+        errorListener();
+        this.loadInterstitialAdPromise = null;
+        console.log('Rewarded interstitial ad loaded successfully');
+        resolve();
+      });
 
-      console.log('Rewarded interstitial ad loaded successfully');
-    } catch (error) {
-      console.error('Failed to load rewarded interstitial ad:', error);
-      this.rewardedInterstitialAd = null;
-    } finally {
-      this.isLoadingInterstitial = false;
-    }
+      const errorListener = ad.addAdEventListener(AdEventType.ERROR, (error) => {
+        loadedListener();
+        errorListener();
+        this.rewardedInterstitialAd = null;
+        this.loadInterstitialAdPromise = null;
+        console.error('Failed to load rewarded interstitial ad:', error);
+        reject(error);
+      });
+
+      ad.load();
+    });
+
+    return this.loadInterstitialAdPromise;
   }
 
   /**
@@ -277,16 +297,8 @@ class AdService {
       throw new Error('AdService not initialized. Call initialize() first.');
     }
 
-    if (!this.rewardedInterstitialAd || !this.rewardedInterstitialAd.loaded) {
-      // Try to load an ad
+    if (!this.rewardedInterstitialAd?.loaded) {
       await this.loadRewardedInterstitialAd();
-
-      // Wait a bit for the ad to load
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      if (!this.rewardedInterstitialAd || !this.rewardedInterstitialAd.loaded) {
-        throw new Error('No ad available. Please try again in a moment.');
-      }
     }
 
     return new Promise((resolve, reject) => {
