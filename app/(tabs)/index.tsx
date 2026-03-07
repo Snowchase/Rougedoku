@@ -117,14 +117,9 @@ export default function HomeScreen() {
           {/* Daily Quote */}
           <View style={[styles.quoteCard, { backgroundColor: theme.colors.cardBackground }]}>
             <Text style={styles.quoteIcon} allowFontScaling={false}>💭</Text>
-            <Text style={[styles.quoteText, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
-              "{dailyQuote.text}"
+            <Text style={[styles.quoteText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.1} numberOfLines={3}>
+              "{dailyQuote.text}"{dailyQuote.author ? `  — ${dailyQuote.author}` : ''}
             </Text>
-            {dailyQuote.author && (
-              <Text style={[styles.quoteAuthor, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
-                — {dailyQuote.author}
-              </Text>
-            )}
           </View>
 
           {/* Menu Buttons */}
@@ -318,30 +313,31 @@ const styles = StyleSheet.create({
   quoteCard: {
     width: '100%',
     maxWidth: 360,
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 24,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 16,
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
   quoteIcon: {
-    fontSize: 20,
-    marginBottom: 8,
+    fontSize: 16,
   },
   quoteText: {
-    fontSize: 14,
+    flex: 1,
+    fontSize: 12,
     fontStyle: 'italic',
-    textAlign: 'center',
-    lineHeight: 21,
+    lineHeight: 17,
   },
   quoteAuthor: {
-    fontSize: 12,
-    marginTop: 8,
-    textAlign: 'center',
+    fontSize: 11,
+    marginTop: 2,
   },
   menuContainer: {
     width: '100%',
