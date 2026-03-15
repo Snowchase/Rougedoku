@@ -136,7 +136,7 @@ class AdService {
       });
       this.rewardedAd = ad;
 
-      const loadedListener = ad.addAdEventListener(AdEventType.LOADED, () => {
+      const loadedListener = ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
         loadedListener();
         errorListener();
         this.loadRewardedAdPromise = null;
@@ -257,7 +257,7 @@ class AdService {
       );
       this.rewardedInterstitialAd = ad;
 
-      const loadedListener = ad.addAdEventListener(AdEventType.LOADED, () => {
+      const loadedListener = ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
         loadedListener();
         errorListener();
         this.loadInterstitialAdPromise = null;
