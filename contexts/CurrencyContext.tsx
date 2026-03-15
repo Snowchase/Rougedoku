@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   getCurrencyData,
   getPurchaseData,
@@ -20,6 +21,15 @@ import { Difficulty } from '../components/dailyPuzzleGenerator';
 // Using real ad service for native builds (Android/iOS)
 // Change to '../services/adService.mock' for Expo Go testing
 import { adService } from '../services/adService';
+import {
+  submitReferralCode,
+  getReferralStats,
+  ReferralResult,
+  ReferralStats,
+} from '../services/referralService';
+import { auth } from '../components/firebaseConfig';
+
+const REFERRAL_COINS_GRANTED_KEY = 'sudokle_referral_coins_granted';
 
 interface CurrencyContextType {
   coins: number;
@@ -58,6 +68,9 @@ interface CurrencyContextType {
   isAdReady: () => boolean;
   showBoostAd: () => Promise<boolean>;
   awardBoostBonus: (amount: number) => Promise<void>;
+  applyReferralCode: (code: string) => Promise<ReferralResult>;
+  referralStats: ReferralStats | null;
+  refreshReferralStats: () => Promise<void>;
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
@@ -78,6 +91,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     selectedSong: null,
   });
   const [loading, setLoading] = useState(true);
+  const [referralStats, setReferralStats] = useState<ReferralStats | null>(null);
 
   useEffect(() => {
     loadData();
@@ -92,12 +106,67 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       ]);
       setCurrencyData(currency);
       setPurchaseData(purchases);
+      // Claim any pending referral coins the user earned as a referrer
+      await claimPendingReferralCoins();
     } catch (error) {
       console.error('Error loading currency data:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  /**
+   * Sync referrer coin grants from Firestore to local storage.
+   * When someone uses this user's referral code, their referralCoinsEarned
+   * is incremented in Firestore. On the next launch we detect the delta and
+   * grant the difference locally.
+   */
+  const claimPendingReferralCoins = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const stats = await getReferralStats(user.uid);
+      const firestoreTotal = stats.referralCoinsEarned;
+
+      const grantedStr = await AsyncStorage.getItem(REFERRAL_COINS_GRANTED_KEY);
+      const alreadyGranted = grantedStr ? parseInt(grantedStr, 10) : 0;
+
+      const pending = firestoreTotal - alreadyGranted;
+      if (pending > 0) {
+        const newData = await addCoins(pending);
+        setCurrencyData(newData);
+        await AsyncStorage.setItem(REFERRAL_COINS_GRANTED_KEY, String(firestoreTotal));
+      }
+
+      setReferralStats(stats);
+    } catch (error) {
+      console.error('Error claiming pending referral coins:', error);
+    }
+  };
+
+  const refreshReferralStats = useCallback(async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      const stats = await getReferralStats(user.uid);
+      setReferralStats(stats);
+    } catch (error) {
+      console.error('Error refreshing referral stats:', error);
+    }
+  }, []);
+
+  const applyReferralCode = useCallback(async (code: string): Promise<ReferralResult> => {
+    const result = await submitReferralCode(code);
+    if (result.success && result.coinsEarned) {
+      // Award coins to the referee immediately
+      const newData = await addCoins(result.coinsEarned);
+      setCurrencyData(newData);
+      // Refresh referral stats to reflect hasBeenReferred = true
+      await refreshReferralStats();
+    }
+    return result;
+  }, [refreshReferralStats]);
 
   const refreshCurrency = useCallback(async () => {
     await loadData();
@@ -281,6 +350,9 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
         isAdReady,
         showBoostAd,
         awardBoostBonus,
+        applyReferralCode,
+        referralStats,
+        refreshReferralStats,
       }}
     >
       {children}

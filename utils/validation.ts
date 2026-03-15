@@ -237,4 +237,32 @@ export const RATE_LIMITS = {
     maxActions: 3,
     windowMs: 24 * 60 * 60 * 1000, // 3 changes per day
   },
+  REFERRAL_SUBMISSION: {
+    maxActions: 5,
+    windowMs: 60 * 60 * 1000, // 5 attempts per hour
+  },
 };
+
+const REFERRAL_CODE_LENGTH = 6;
+const REFERRAL_CODE_REGEX = /^[A-Z0-9]+$/;
+
+/**
+ * Validate referral code format
+ */
+export function validateReferralCode(code: string): ValidationResult {
+  if (!code || code.trim().length === 0) {
+    return { isValid: false, error: 'Please enter a referral code' };
+  }
+
+  const normalized = code.trim().toUpperCase();
+
+  if (normalized.length !== REFERRAL_CODE_LENGTH) {
+    return { isValid: false, error: `Referral code must be ${REFERRAL_CODE_LENGTH} characters` };
+  }
+
+  if (!REFERRAL_CODE_REGEX.test(normalized)) {
+    return { isValid: false, error: 'Referral code can only contain letters and numbers' };
+  }
+
+  return { isValid: true };
+}
