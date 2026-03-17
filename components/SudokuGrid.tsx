@@ -15,6 +15,7 @@ import { GestureHandlerRootView, GestureDetector, Gesture } from 'react-native-g
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { getDailyPuzzle, getDateString, isNewDay, isValid, isCompleteBoardValid, type Difficulty } from './dailyPuzzleGenerator';
 import { submitDailyScore, initializeUser } from './friendService';
+import { numberFonts } from '../constants/customizations';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAudio } from '../contexts/AudioContext';
 import { useSettings } from '../contexts/SettingsContext';
@@ -47,7 +48,8 @@ const SudokuGrid = () => {
   const { theme } = useTheme();
   const { playSoundEffect } = useAudio();
   const { settings } = useSettings();
-  const { coins, awardPuzzleCompletion, showBoostAd, awardBoostBonus } = useCurrency();
+  const { coins, awardPuzzleCompletion, showBoostAd, awardBoostBonus, selectedFont } = useCurrency();
+  const activeFontStyle = (numberFonts.find(f => f.id === selectedFont) ?? numberFonts[0]).style;
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [grid, setGrid] = useState<number[][]>([]);
   const [original, setOriginal] = useState<number[][]>([]);
@@ -663,6 +665,7 @@ const SudokuGrid = () => {
           <Text
             style={[
               styles.cellText,
+              activeFontStyle,
               { color: isOriginalCell ? theme.colors.textOriginal : theme.colors.textUser }
             ]}
             allowFontScaling={false}
