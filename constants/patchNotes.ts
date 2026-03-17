@@ -14,6 +14,16 @@ export interface PatchNote {
 
 export const PATCH_NOTES: PatchNote[] = [
   {
+    version: '1.1.6',
+    date: 'March 2026',
+    title: 'Refer a Friend',
+    changes: [
+      { type: 'new', description: 'Referral system — share your code and earn 50 coins for every new player who signs up with it' },
+      { type: 'new', description: 'New players who enter a referral code get 100 bonus coins to kick things off' },
+      { type: 'new', description: 'Referral stats on your profile show how many friends you\'ve referred and total coins earned' },
+    ],
+  },
+  {
     version: '1.1.5',
     date: 'February 2026',
     title: 'Notifications & Daily Quotes',
