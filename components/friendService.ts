@@ -35,6 +35,9 @@ export interface UserProfile {
   createdAt: any;
   friends: string[]; // Array of friend userIds
   blockedUsers?: string[]; // Array of blocked userIds
+  hasBeenReferred?: boolean; // Whether this user used a referral code
+  referralCount?: number; // How many users this user has successfully referred
+  referralCoinsEarned?: number; // Lifetime coins earned from referrals (Firestore source of truth for sync)
 }
 
 export interface FriendRequest {
@@ -139,6 +142,9 @@ export async function initializeUser(username?: string): Promise<UserProfile | n
       createdAt: serverTimestamp(),
       friends: [],
       blockedUsers: [],
+      hasBeenReferred: false,
+      referralCount: 0,
+      referralCoinsEarned: 0,
     };
 
     await setDoc(doc(db, 'users', userId), profile);

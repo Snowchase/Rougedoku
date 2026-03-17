@@ -42,7 +42,7 @@ type FriendsSubTab = 'friends' | 'requests';
 export default function SocialScreen() {
   const router = useRouter();
   const { theme, themeKey, setTheme } = useTheme();
-  const { coins, isAvatarOwned, isThemeOwned } = useCurrency();
+  const { coins, isAvatarOwned, isThemeOwned, applyReferralCode, referralStats, refreshReferralStats } = useCurrency();
 
   // Tab state
   const [activeTab, setActiveTab] = useState<TabType>('profile');
@@ -62,6 +62,10 @@ export default function SocialScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Referral state
+  const [referralCodeInput, setReferralCodeInput] = useState('');
+  const [referralSubmitting, setReferralSubmitting] = useState(false);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -77,6 +81,7 @@ export default function SocialScreen() {
         setSelectedColor(userProfile.profileColor || '#3B82F6');
         await loadFriends();
         await loadPendingRequests();
+        await refreshReferralStats();
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -222,10 +227,32 @@ export default function SocialScreen() {
     if (!profile) return;
     try {
       await Share.share({
-        message: `Add me on Sudokle! My friend code is: ${profile.friendCode}`,
+        message: `Join me on Sudokle! Use my code ${profile.friendCode} to get 100 free coins when you sign up!`,
       });
     } catch (error) {
       console.error('Error sharing:', error);
+    }
+  };
+
+  const handleApplyReferral = async () => {
+    if (!referralCodeInput.trim()) {
+      Alert.alert('Error', 'Please enter a referral code');
+      return;
+    }
+    setReferralSubmitting(true);
+    try {
+      const result = await applyReferralCode(referralCodeInput.trim());
+      if (result.success) {
+        setReferralCodeInput('');
+        Alert.alert(
+          'Code Applied!',
+          `You earned ${result.coinsEarned} coins! The player who referred you also gets bonus coins.`
+        );
+      } else {
+        Alert.alert('Error', result.error || 'Failed to apply referral code');
+      }
+    } finally {
+      setReferralSubmitting(false);
     }
   };
 
@@ -411,10 +438,10 @@ export default function SocialScreen() {
       {/* Share Code Card */}
       <View style={[styles.shareCard, { backgroundColor: theme.colors.cardBackground }]}>
         <Text style={[styles.shareTitle, { color: theme.colors.textPrimary }]}>
-          Share Your Friend Code
+          Refer a Friend
         </Text>
         <Text style={[styles.shareDescription, { color: theme.colors.textSecondary }]}>
-          Friends can add you using this code to compete on leaderboards
+          Share your code — you get 50 coins and your friend gets 100 coins
         </Text>
         <View style={styles.shareCodeContainer}>
           <Text style={[styles.shareCodeText, { color: theme.colors.primaryButton }]}>
@@ -427,6 +454,62 @@ export default function SocialScreen() {
             <Text style={styles.shareButtonText}>Share</Text>
           </TouchableOpacity>
         </View>
+        {(referralStats?.referralCount ?? 0) > 0 && (
+          <Text style={[styles.referralStatsText, { color: theme.colors.textSecondary }]}>
+            {referralStats!.referralCount} {referralStats!.referralCount === 1 ? 'friend' : 'friends'} referred · {referralStats!.referralCoinsEarned} coins earned
+          </Text>
+        )}
+      </View>
+
+      {/* Enter Referral Code Card */}
+      <View style={[styles.referralCard, { backgroundColor: theme.colors.cardBackground }]}>
+        <Text style={[styles.shareTitle, { color: theme.colors.textPrimary }]}>
+          Have a Referral Code?
+        </Text>
+        {referralStats?.hasBeenReferred ? (
+          <>
+            <Text style={[styles.referralUsedText, { color: theme.colors.textSecondary }]}>
+              You've already used a referral code.
+            </Text>
+          </>
+        ) : (
+          <>
+            <Text style={[styles.shareDescription, { color: theme.colors.textSecondary }]}>
+              Enter a friend's code to earn 100 free coins. New players only.
+            </Text>
+            <View style={styles.referralInputRow}>
+              <TextInput
+                style={[
+                  styles.referralInput,
+                  {
+                    color: theme.colors.textPrimary,
+                    borderColor: theme.colors.cellBorder,
+                    backgroundColor: theme.colors.cellBackground,
+                  },
+                ]}
+                placeholder="Enter code"
+                placeholderTextColor={theme.colors.textSecondary}
+                value={referralCodeInput}
+                onChangeText={setReferralCodeInput}
+                autoCapitalize="characters"
+                maxLength={6}
+                editable={!referralSubmitting}
+              />
+              <TouchableOpacity
+                style={[
+                  styles.applyButton,
+                  { backgroundColor: referralSubmitting ? theme.colors.cellBorder : theme.colors.primaryButton },
+                ]}
+                onPress={handleApplyReferral}
+                disabled={referralSubmitting}
+              >
+                <Text style={[styles.applyButtonText, { color: theme.colors.primaryButtonText }]}>
+                  {referralSubmitting ? '...' : 'Apply'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
       </View>
     </ScrollView>
   );
@@ -1066,5 +1149,50 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 20,
     borderRadius: 4,
+  },
+  referralStatsText: {
+    fontSize: 13,
+    marginTop: 12,
+  },
+  referralCard: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  referralInputRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+  },
+  referralInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    fontSize: 16,
+    letterSpacing: 2,
+  },
+  applyButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    justifyContent: 'center',
+    minWidth: 70,
+    alignItems: 'center',
+  },
+  applyButtonText: {
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  referralUsedText: {
+    fontSize: 14,
+    marginTop: 4,
+    fontStyle: 'italic',
   },
 });
