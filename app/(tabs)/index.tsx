@@ -9,6 +9,7 @@ import { getUserStats } from '../../services/statsService';
 import { ScreenErrorBoundary } from '../../components/ScreenErrorBoundary';
 import { getDailyQuote, DailyQuote } from '../../constants/dailyQuotes';
 import { checkAndClaimReturningPlayerGift } from '../../services/returningPlayerGiftService';
+import { useBattlePass } from '../../contexts/BattlePassContext';
 
 const { width } = Dimensions.get('window');
 
@@ -19,6 +20,7 @@ export default function HomeScreen() {
   const { playSelectedSong, stopMusic } = useAudio();
   const { theme } = useTheme();
   const { coins, selectedSong, loading, addBonusCoins } = useCurrency();
+  const { currentTier, battlePassData } = useBattlePass();
   const [currentStreak, setCurrentStreak] = useState<number>(0);
   const [dailyQuote] = useState<DailyQuote>(getDailyQuote());
   const [showGiftModal, setShowGiftModal] = useState(false);
@@ -150,6 +152,18 @@ export default function HomeScreen() {
             <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>Versus</Text>
             <Text style={[styles.menuButtonSubtext, { color: '#EF4444' }]} maxFontSizeMultiplier={1.2}>Coming Soon</Text>
           </View>
+
+          {/* Battle Pass Button */}
+          <TouchableOpacity
+            style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: '#7C3AED' }]}
+            onPress={() => router.push('/battle-pass')}
+          >
+            <Text style={styles.menuButtonIcon} allowFontScaling={false}>🏆</Text>
+            <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>Battle Pass</Text>
+            <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+              {currentTier >= 30 ? 'Max Tier Reached!' : `Tier ${currentTier} · ${battlePassData.currentXP} XP`}
+            </Text>
+          </TouchableOpacity>
 
           {/* Secondary Buttons Group */}
           <View style={styles.secondaryButtonsRow}>

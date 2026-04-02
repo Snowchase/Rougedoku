@@ -154,6 +154,10 @@ export const premiumAvatars: PremiumAvatar[] = [
   { id: 'lightning', emoji: '⚡', name: 'Lightning', price: 400, category: 'special' },
   { id: 'skull', emoji: '💀', name: 'Skull', price: 400, category: 'special' },
   { id: 'ninja', emoji: '🥷', name: 'Ninja', price: 600, category: 'special' },
+
+  // Battle pass exclusive avatars (unlocked via battle pass only)
+  { id: 'astronaut', emoji: '🧑‍🚀', name: 'Astronaut', price: 0, category: 'special' },
+  { id: 'legend', emoji: '🌟', name: 'Legend', price: 0, category: 'special' },
 ];
 
 export const avatarCategories = [
@@ -220,3 +224,86 @@ export const songCategories = [
 ] as const;
 
 export type SongCategory = typeof songCategories[number]['id'];
+
+// Sound packs — replace the 3 game SFX (numberPlace, errorSound, puzzleComplete)
+export interface SoundPack {
+  id: string;
+  name: string;
+  description: string;
+  emoji: string;
+  price: number;        // 0 = battle-pass-only (not purchasable with coins)
+  isBattlePassReward: boolean;
+  files: {
+    numberPlace: any;
+    errorSound: any;
+    puzzleComplete: any;
+  };
+}
+
+export const SOUND_PACKS: SoundPack[] = [
+  {
+    id: 'default',
+    name: 'Classic',
+    description: 'The original Sudokle sounds',
+    emoji: '🎯',
+    price: 0,
+    isBattlePassReward: false,
+    files: {
+      numberPlace: require('../assets/audio/sfx/place.mp3'),
+      errorSound: require('../assets/audio/sfx/error.mp3'),
+      puzzleComplete: require('../assets/audio/sfx/complete.mp3'),
+    },
+  },
+  {
+    id: 'retro',
+    name: 'Retro Arcade',
+    description: '8-bit inspired game sounds',
+    emoji: '👾',
+    price: 200,
+    isBattlePassReward: false,
+    files: {
+      numberPlace: require('../assets/audio/sfx/packs/retro/place.mp3'),
+      errorSound: require('../assets/audio/sfx/packs/retro/error.mp3'),
+      puzzleComplete: require('../assets/audio/sfx/packs/retro/complete.mp3'),
+    },
+  },
+  {
+    id: 'nature',
+    name: 'Nature',
+    description: 'Calm sounds from the natural world',
+    emoji: '🌿',
+    price: 250,
+    isBattlePassReward: false,
+    files: {
+      numberPlace: require('../assets/audio/sfx/packs/nature/place.mp3'),
+      errorSound: require('../assets/audio/sfx/packs/nature/error.mp3'),
+      puzzleComplete: require('../assets/audio/sfx/packs/nature/complete.mp3'),
+    },
+  },
+  {
+    id: 'minimal',
+    name: 'Minimal',
+    description: 'Subtle, clean tones',
+    emoji: '✨',
+    price: 0,
+    isBattlePassReward: true,
+    files: {
+      numberPlace: require('../assets/audio/sfx/packs/minimal/place.mp3'),
+      errorSound: require('../assets/audio/sfx/packs/minimal/error.mp3'),
+      puzzleComplete: require('../assets/audio/sfx/packs/minimal/complete.mp3'),
+    },
+  },
+  {
+    id: 'synthwave',
+    name: 'Synthwave',
+    description: 'Futuristic electronic sounds',
+    emoji: '🌆',
+    price: 0,
+    isBattlePassReward: true,
+    files: {
+      numberPlace: require('../assets/audio/sfx/packs/synthwave/place.mp3'),
+      errorSound: require('../assets/audio/sfx/packs/synthwave/error.mp3'),
+      puzzleComplete: require('../assets/audio/sfx/packs/synthwave/complete.mp3'),
+    },
+  },
+];

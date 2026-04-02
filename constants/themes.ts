@@ -448,6 +448,92 @@ export const themes: { [key: string]: AppTheme } = {
     },
   },
 
+  space: {
+    name: 'Deep Space',
+    price: 0,
+    description: 'Battle pass exclusive — cosmic dark theme',
+    isDark: true,
+    colors: {
+      background: '#03030A',
+      cardBackground: '#0D0D1F',
+
+      gridBorder: '#4F46E5',
+      cellBorder: '#1E1B4B',
+      cellBackground: '#0D0D1F',
+      cellBackgroundAlt: '#13132B',
+      cellOriginal: '#1E1B4B',
+      cellOriginalAlt: '#252560',
+      cellSelected: '#6D28D9',
+      cellWrong: '#BE123C',
+      cellHighlighted: '#2E1065',
+
+      textPrimary: '#E0E7FF',
+      textSecondary: '#818CF8',
+      textOriginal: '#A5B4FC',
+      textUser: '#C4B5FD',
+
+      primaryButton: '#6D28D9',
+      primaryButtonText: '#FFFFFF',
+      secondaryButton: '#1E1B4B',
+      secondaryButtonText: '#E0E7FF',
+
+      difficultyEasy: '#34D399',
+      difficultyMedium: '#FCD34D',
+      difficultyHard: '#F87171',
+      difficultyExpert: '#A78BFA',
+
+      hintButton: '#A78BFA',
+      clearButton: '#F87171',
+      noteButton: '#34D399',
+
+      success: '#34D399',
+      error: '#F87171',
+      warning: '#FCD34D',
+    },
+  },
+  battlepass: {
+    name: 'Battle Pass Gold',
+    price: 0,
+    description: 'Battle pass exclusive — prestige golden theme',
+    isDark: false,
+    colors: {
+      background: '#FFFBEB',
+      cardBackground: '#FEF3C7',
+
+      gridBorder: '#D97706',
+      cellBorder: '#FDE68A',
+      cellBackground: '#FFFBEB',
+      cellBackgroundAlt: '#FEF9E7',
+      cellOriginal: '#FDE68A',
+      cellOriginalAlt: '#FCD34D',
+      cellSelected: '#F59E0B',
+      cellWrong: '#DC2626',
+      cellHighlighted: '#FDE68A',
+
+      textPrimary: '#78350F',
+      textSecondary: '#92400E',
+      textOriginal: '#92400E',
+      textUser: '#B45309',
+
+      primaryButton: '#D97706',
+      primaryButtonText: '#FFFFFF',
+      secondaryButton: '#FDE68A',
+      secondaryButtonText: '#78350F',
+
+      difficultyEasy: '#059669',
+      difficultyMedium: '#D97706',
+      difficultyHard: '#DC2626',
+      difficultyExpert: '#7C3AED',
+
+      hintButton: '#D97706',
+      clearButton: '#DC2626',
+      noteButton: '#059669',
+
+      success: '#059669',
+      error: '#DC2626',
+      warning: '#D97706',
+    },
+  },
   neon: {
     name: 'Neon Nights',
     price: 800,

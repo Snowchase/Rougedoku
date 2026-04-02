@@ -12,7 +12,8 @@ import { useRouter, Stack } from 'expo-router';
 import { useTheme } from '../contexts/ThemeContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { themes, themeKeys, ThemeKey } from '../constants/themes';
-import { numberFonts, premiumAvatars, avatarCategories, AvatarCategory, premiumSongs, songCategories, SongCategory } from '../constants/customizations';
+import { numberFonts, premiumAvatars, avatarCategories, AvatarCategory, premiumSongs, songCategories, SongCategory, SOUND_PACKS } from '../constants/customizations';
+import SoundPackCard from '../components/SoundPackCard';
 import { ScreenErrorBoundary } from '../components/ScreenErrorBoundary';
 // Using real ad service for native builds (Android/iOS)
 // Change to '../services/adService.mock' for Expo Go testing
@@ -26,7 +27,7 @@ import {
   FeaturedItemType
 } from '../services/featuredItemService';
 
-type ShopTab = 'themes' | 'fonts' | 'avatars' | 'songs' | 'rewards';
+type ShopTab = 'themes' | 'fonts' | 'avatars' | 'songs' | 'soundPacks' | 'rewards';
 
 export default function ShopScreen() {
   const router = useRouter();
@@ -45,6 +46,10 @@ export default function ShopScreen() {
     buySong,
     selectedSong,
     setSelectedSong,
+    isSoundPackOwned,
+    buySoundPack,
+    selectedSoundPack,
+    setSelectedSoundPack,
     watchRewardedAd,
     isAdReady,
   } = useCurrency();
@@ -619,6 +624,70 @@ export default function ShopScreen() {
     );
   };
 
+  const handlePurchaseSoundPack = async (packId: string, packName: string, price: number) => {
+    const owned = isSoundPackOwned(packId);
+    if (owned) {
+      await setSelectedSoundPack(packId);
+      Alert.alert('Sound Pack Active', `${packName} is now your active sound pack!`);
+      return;
+    }
+
+    if (price === 0) {
+      // Battle pass only — not purchasable
+      Alert.alert('Battle Pass Reward', `${packName} is unlocked via the Battle Pass. Keep playing to earn XP!`);
+      return;
+    }
+
+    if (coins < price) {
+      Alert.alert('Not Enough Coins', `You need ${price - coins} more coins to unlock ${packName}.`);
+      return;
+    }
+
+    Alert.alert(
+      'Unlock Sound Pack',
+      `Spend ${price} coins to unlock ${packName}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Unlock',
+          onPress: async () => {
+            const result = await buySoundPack(packId, price);
+            if (result.success) {
+              await setSelectedSoundPack(packId);
+              Alert.alert('Sound Pack Unlocked!', `${packName} is now yours!`);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const renderSoundPacksTab = () => (
+    <View style={styles.soundPacksContainer}>
+      <Text style={[styles.soundPacksHint, { color: theme.colors.textSecondary }]}>
+        Sound packs change your placement, error, and completion sounds.
+      </Text>
+      {SOUND_PACKS.map((pack) => (
+        <SoundPackCard
+          key={pack.id}
+          pack={pack}
+          isOwned={isSoundPackOwned(pack.id)}
+          isSelected={selectedSoundPack === pack.id}
+          coins={coins}
+          onPress={() => handlePurchaseSoundPack(pack.id, pack.name, pack.price)}
+          themeColors={{
+            cardBackground: theme.colors.cardBackground,
+            textPrimary: theme.colors.textPrimary,
+            textSecondary: theme.colors.textSecondary,
+            primaryButton: theme.colors.primaryButton,
+            primaryButtonText: theme.colors.primaryButtonText,
+            success: theme.colors.success,
+          }}
+        />
+      ))}
+    </View>
+  );
+
   const renderFeaturedItem = () => {
     if (!featuredItem) return null;
 
@@ -817,6 +886,7 @@ export default function ShopScreen() {
     { id: 'fonts', label: 'Fonts', icon: '🔤' },
     { id: 'avatars', label: 'Avatars', icon: '😀' },
     { id: 'songs', label: 'Music', icon: '🎵' },
+    { id: 'soundPacks', label: 'Sounds', icon: '🔊' },
     { id: 'rewards', label: 'Info', icon: '💰' },
   ];
 
@@ -912,6 +982,15 @@ export default function ShopScreen() {
               Unlock premium tracks for gameplay
             </Text>
             {renderSongsGrid()}
+          </>
+        )}
+
+        {activeTab === 'soundPacks' && (
+          <>
+            <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
+              Sound Packs
+            </Text>
+            {renderSoundPacksTab()}
           </>
         )}
 
@@ -1480,5 +1559,13 @@ const styles = StyleSheet.create({
   songOriginalPrice: {
     fontSize: 10,
     textDecorationLine: 'line-through',
+  },
+  soundPacksContainer: {
+    paddingBottom: 8,
+  },
+  soundPacksHint: {
+    fontSize: 13,
+    marginBottom: 14,
+    marginTop: 2,
   },
 });
