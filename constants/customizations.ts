@@ -155,7 +155,7 @@ export const premiumAvatars: PremiumAvatar[] = [
   { id: 'skull', emoji: '💀', name: 'Skull', price: 400, category: 'special' },
   { id: 'ninja', emoji: '🥷', name: 'Ninja', price: 600, category: 'special' },
 
-  // Battle pass exclusive avatars (unlocked via battle pass only)
+  // Sudoku pass exclusive avatars (unlocked via sudoku pass only)
   { id: 'astronaut', emoji: '🧑‍🚀', name: 'Astronaut', price: 0, category: 'special' },
   { id: 'legend', emoji: '🌟', name: 'Legend', price: 0, category: 'special' },
 ];
@@ -231,8 +231,8 @@ export interface SoundPack {
   name: string;
   description: string;
   emoji: string;
-  price: number;        // 0 = battle-pass-only (not purchasable with coins)
-  isBattlePassReward: boolean;
+  price: number;        // 0 = sudoku-pass-only (not purchasable with coins)
+  isSudokuPassReward: boolean;
   files: {
     numberPlace: any;
     errorSound: any;
@@ -247,7 +247,7 @@ export const SOUND_PACKS: SoundPack[] = [
     description: 'The original Sudokle sounds',
     emoji: '🎯',
     price: 0,
-    isBattlePassReward: false,
+    isSudokuPassReward: false,
     files: {
       numberPlace: require('../assets/audio/sfx/place.mp3'),
       errorSound: require('../assets/audio/sfx/error.mp3'),
@@ -260,7 +260,7 @@ export const SOUND_PACKS: SoundPack[] = [
     description: '8-bit inspired game sounds',
     emoji: '👾',
     price: 200,
-    isBattlePassReward: false,
+    isSudokuPassReward: false,
     files: {
       numberPlace: require('../assets/audio/sfx/packs/retro/place.mp3'),
       errorSound: require('../assets/audio/sfx/packs/retro/error.mp3'),
@@ -273,7 +273,7 @@ export const SOUND_PACKS: SoundPack[] = [
     description: 'Calm sounds from the natural world',
     emoji: '🌿',
     price: 250,
-    isBattlePassReward: false,
+    isSudokuPassReward: false,
     files: {
       numberPlace: require('../assets/audio/sfx/packs/nature/place.mp3'),
       errorSound: require('../assets/audio/sfx/packs/nature/error.mp3'),
@@ -286,7 +286,7 @@ export const SOUND_PACKS: SoundPack[] = [
     description: 'Subtle, clean tones',
     emoji: '✨',
     price: 0,
-    isBattlePassReward: true,
+    isSudokuPassReward: true,
     files: {
       numberPlace: require('../assets/audio/sfx/packs/minimal/place.mp3'),
       errorSound: require('../assets/audio/sfx/packs/minimal/error.mp3'),
@@ -299,7 +299,7 @@ export const SOUND_PACKS: SoundPack[] = [
     description: 'Futuristic electronic sounds',
     emoji: '🌆',
     price: 0,
-    isBattlePassReward: true,
+    isSudokuPassReward: true,
     files: {
       numberPlace: require('../assets/audio/sfx/packs/synthwave/place.mp3'),
       errorSound: require('../assets/audio/sfx/packs/synthwave/error.mp3'),

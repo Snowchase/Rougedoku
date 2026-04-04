@@ -1,40 +1,43 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import {
-  BattlePassData,
+  SudokuPassData,
   TierReward,
-  BATTLE_PASS_TIERS,
-  loadBattlePassData,
-  saveBattlePassData,
+  SUDOKU_PASS_TIERS,
+  loadSudokuPassData,
+  saveSudokuPassData,
   computeCurrentTier,
   computeTierProgress,
   getNewlyCompletedTiers,
+  addOneMonth,
   MAX_XP,
-} from '../services/battlePassService';
+} from '../services/sudokuPassService';
 import { useCurrency } from './CurrencyContext';
 import { Difficulty } from '../components/dailyPuzzleGenerator';
 
-const BATTLE_PASS_XP_PER_DIFFICULTY: Record<Difficulty, number> = {
+const SUDOKU_PASS_XP_PER_DIFFICULTY: Record<Difficulty, number> = {
   easy: 10,
   medium: 25,
   hard: 50,
   expert: 100,
 };
 
-interface BattlePassContextType {
-  battlePassData: BattlePassData;
+interface SudokuPassContextType {
+  sudokuPassData: SudokuPassData;
   isLoading: boolean;
   currentTier: number;
   tierProgress: number; // 0.0–1.0 within the current incomplete tier
+  seasonEndDate: string; // ISO date string
   addXP: (amount: number) => Promise<TierReward[]>;
   addXPForDifficulty: (difficulty: Difficulty) => Promise<TierReward[]>;
-  refreshBattlePass: () => Promise<void>;
+  refreshSudokuPass: () => Promise<void>;
 }
 
-const BattlePassContext = createContext<BattlePassContextType | undefined>(undefined);
+const SudokuPassContext = createContext<SudokuPassContextType | undefined>(undefined);
 
-export function BattlePassProvider({ children }: { children: ReactNode }) {
-  const [battlePassData, setBattlePassData] = useState<BattlePassData>({
+export function SudokuPassProvider({ children }: { children: ReactNode }) {
+  const [sudokuPassData, setSudokuPassData] = useState<SudokuPassData>({
     season: 1,
+    seasonStartDate: new Date().toISOString().slice(0, 10),
     currentXP: 0,
     claimedTiers: [],
   });
@@ -55,16 +58,16 @@ export function BattlePassProvider({ children }: { children: ReactNode }) {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const data = await loadBattlePassData();
-      setBattlePassData(data);
+      const data = await loadSudokuPassData();
+      setSudokuPassData(data);
     } catch (error) {
-      console.error('Error loading battle pass data:', error);
+      console.error('Error loading sudoku pass data:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const refreshBattlePass = useCallback(async () => {
+  const refreshSudokuPass = useCallback(async () => {
     await loadData();
   }, []);
 
@@ -89,7 +92,7 @@ export function BattlePassProvider({ children }: { children: ReactNode }) {
   }, [addBonusCoins, unlockAvatarFree, unlockSongFree, unlockThemeFree, unlockSoundPackFree]);
 
   const addXP = useCallback(async (amount: number): Promise<TierReward[]> => {
-    const current = await loadBattlePassData();
+    const current = await loadSudokuPassData();
     const oldXP = current.currentXP;
     const newXP = Math.min(oldXP + amount, MAX_XP);
 
@@ -98,7 +101,7 @@ export function BattlePassProvider({ children }: { children: ReactNode }) {
 
     for (const tierNum of newlyCompletedTierNumbers) {
       if (!current.claimedTiers.includes(tierNum)) {
-        const tierDef = BATTLE_PASS_TIERS.find(t => t.tier === tierNum);
+        const tierDef = SUDOKU_PASS_TIERS.find(t => t.tier === tierNum);
         if (tierDef) {
           await grantReward(tierDef.reward);
           earnedRewards.push(tierDef.reward);
@@ -108,39 +111,41 @@ export function BattlePassProvider({ children }: { children: ReactNode }) {
     }
 
     current.currentXP = newXP;
-    await saveBattlePassData(current);
-    setBattlePassData({ ...current });
+    await saveSudokuPassData(current);
+    setSudokuPassData({ ...current });
 
     return earnedRewards;
   }, [grantReward]);
 
   const addXPForDifficulty = useCallback(async (difficulty: Difficulty): Promise<TierReward[]> => {
-    const xp = BATTLE_PASS_XP_PER_DIFFICULTY[difficulty];
+    const xp = SUDOKU_PASS_XP_PER_DIFFICULTY[difficulty];
     return addXP(xp);
   }, [addXP]);
 
-  const currentTier = computeCurrentTier(battlePassData.currentXP);
-  const tierProgress = computeTierProgress(battlePassData.currentXP);
+  const currentTier = computeCurrentTier(sudokuPassData.currentXP);
+  const tierProgress = computeTierProgress(sudokuPassData.currentXP);
+  const seasonEndDate = addOneMonth(sudokuPassData.seasonStartDate);
 
   return (
-    <BattlePassContext.Provider value={{
-      battlePassData,
+    <SudokuPassContext.Provider value={{
+      sudokuPassData,
       isLoading,
       currentTier,
       tierProgress,
+      seasonEndDate,
       addXP,
       addXPForDifficulty,
-      refreshBattlePass,
+      refreshSudokuPass,
     }}>
       {children}
-    </BattlePassContext.Provider>
+    </SudokuPassContext.Provider>
   );
 }
 
-export function useBattlePass() {
-  const context = useContext(BattlePassContext);
+export function useSudokuPass() {
+  const context = useContext(SudokuPassContext);
   if (!context) {
-    throw new Error('useBattlePass must be used within a BattlePassProvider');
+    throw new Error('useSudokuPass must be used within a SudokuPassProvider');
   }
   return context;
 }

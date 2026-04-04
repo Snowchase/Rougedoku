@@ -372,7 +372,7 @@ export async function isSoundPackUnlocked(packId: string): Promise<boolean> {
   return (purchases.unlockedSoundPacks ?? ['default']).includes(packId);
 }
 
-// Free-unlock helpers for battle pass rewards
+// Free-unlock helpers for sudoku pass rewards
 export async function unlockThemeFree(themeKey: string): Promise<void> {
   const purchases = await getPurchaseData();
   if (!purchases.unlockedThemes.includes(themeKey)) {

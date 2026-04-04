@@ -8,30 +8,37 @@ import {
 } from 'react-native';
 import { Stack, useFocusEffect } from 'expo-router';
 import { useTheme } from '../contexts/ThemeContext';
-import { useBattlePass } from '../contexts/BattlePassContext';
-import { BATTLE_PASS_TIERS } from '../services/battlePassService';
-import BattlePassTierCard from '../components/BattlePassTierCard';
+import { useSudokuPass } from '../contexts/SudokuPassContext';
+import { SUDOKU_PASS_TIERS } from '../services/sudokuPassService';
+import SudokuPassTierCard from '../components/SudokuPassTierCard';
 import { ScreenErrorBoundary } from '../components/ScreenErrorBoundary';
 
 const XP_PER_TIER = 150;
 const TOTAL_TIERS = 30;
 
-export default function BattlePassScreen() {
-  const { theme } = useTheme();
-  const { battlePassData, isLoading, currentTier, tierProgress, refreshBattlePass } = useBattlePass();
+/** Formats an ISO date string (YYYY-MM-DD) to a human-readable date like "May 4, 2026". */
+function formatDate(iso: string): string {
+  const [year, month, day] = iso.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+}
 
-  // Refresh battle pass data whenever this screen gains focus so XP earned
+export default function SudokuPassScreen() {
+  const { theme } = useTheme();
+  const { sudokuPassData, isLoading, currentTier, tierProgress, seasonEndDate, refreshSudokuPass } = useSudokuPass();
+
+  // Refresh sudoku pass data whenever this screen gains focus so XP earned
   // during gameplay (written via CurrencyContext) is reflected immediately.
   useFocusEffect(
     React.useCallback(() => {
-      refreshBattlePass();
-    }, [refreshBattlePass])
+      refreshSudokuPass();
+    }, [refreshSudokuPass])
   );
 
   const xpToNextTier =
     currentTier >= TOTAL_TIERS
       ? 0
-      : (currentTier + 1) * XP_PER_TIER - battlePassData.currentXP;
+      : (currentTier + 1) * XP_PER_TIER - sudokuPassData.currentXP;
 
   const getCardStatus = (tierNum: number): 'locked' | 'current' | 'unlocked' => {
     if (tierNum <= currentTier) return 'unlocked';
@@ -40,11 +47,11 @@ export default function BattlePassScreen() {
   };
 
   return (
-    <ScreenErrorBoundary screenName="BattlePass">
+    <ScreenErrorBoundary screenName="SudokuPass">
       <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <Stack.Screen
           options={{
-            title: 'Battle Pass',
+            title: 'Sudoku Pass',
             headerStyle: { backgroundColor: theme.colors.cardBackground },
             headerTintColor: theme.colors.primaryButton,
             headerTitleStyle: { color: theme.colors.textPrimary },
@@ -56,7 +63,7 @@ export default function BattlePassScreen() {
           <View style={styles.headerTop}>
             <View>
               <Text style={[styles.seasonLabel, { color: theme.colors.textSecondary }]}>
-                Season {battlePassData.season}
+                Season {sudokuPassData.season}
               </Text>
               <Text style={[styles.tierLabel, { color: theme.colors.textPrimary }]}>
                 {currentTier >= TOTAL_TIERS
@@ -66,7 +73,7 @@ export default function BattlePassScreen() {
             </View>
             <View style={styles.xpBadge}>
               <Text style={[styles.xpBadgeText, { color: theme.colors.primaryButton }]}>
-                {battlePassData.currentXP} XP
+                {sudokuPassData.currentXP} XP
               </Text>
             </View>
           </View>
@@ -94,6 +101,14 @@ export default function BattlePassScreen() {
           <Text style={[styles.howToEarn, { color: theme.colors.textSecondary }]}>
             Earn XP by completing puzzles: Easy +10 · Medium +25 · Hard +50 · Expert +100
           </Text>
+
+          {/* Season end date */}
+          <View style={[styles.endDateRow, { borderTopColor: theme.colors.textSecondary + '30' }]}>
+            <Text style={styles.endDateIcon}>⏰</Text>
+            <Text style={[styles.endDateText, { color: theme.colors.textSecondary }]}>
+              Season ends {formatDate(seasonEndDate)} — rewards are yours forever
+            </Text>
+          </View>
         </View>
 
         {isLoading ? (
@@ -108,8 +123,8 @@ export default function BattlePassScreen() {
             contentContainerStyle={styles.tiersRow}
             showsHorizontalScrollIndicator={false}
           >
-            {BATTLE_PASS_TIERS.map((tier) => (
-              <BattlePassTierCard
+            {SUDOKU_PASS_TIERS.map((tier) => (
+              <SudokuPassTierCard
                 key={tier.tier}
                 tier={tier}
                 status={getCardStatus(tier.tier)}
@@ -193,6 +208,21 @@ const styles = StyleSheet.create({
   howToEarn: {
     fontSize: 11,
     marginTop: 4,
+  },
+  endDateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    gap: 6,
+  },
+  endDateIcon: {
+    fontSize: 13,
+  },
+  endDateText: {
+    fontSize: 11,
+    flex: 1,
   },
   loader: {
     flex: 1,

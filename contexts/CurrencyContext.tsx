@@ -26,12 +26,12 @@ import {
 import { Difficulty } from '../components/dailyPuzzleGenerator';
 import { audioManager } from '../services/audioManager';
 import {
-  loadBattlePassData,
-  saveBattlePassData,
+  loadSudokuPassData,
+  saveSudokuPassData,
   getNewlyCompletedTiers,
-  BATTLE_PASS_TIERS,
+  SUDOKU_PASS_TIERS,
   MAX_XP,
-} from '../services/battlePassService';
+} from '../services/sudokuPassService';
 // Using real ad service for native builds (Android/iOS)
 // Change to '../services/adService.mock' for Expo Go testing
 import { adService } from '../services/adService';
@@ -83,7 +83,7 @@ interface CurrencyContextType {
   isFontOwned: (fontId: string) => boolean;
   isSongOwned: (songId: string) => boolean;
   isSoundPackOwned: (packId: string) => boolean;
-  // Battle pass free-unlock methods
+  // Sudoku pass free-unlock methods
   unlockThemeFree: (themeKey: string) => Promise<void>;
   unlockAvatarFree: (avatarId: string) => Promise<void>;
   unlockSongFree: (songId: string) => Promise<void>;
@@ -205,7 +205,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     setCurrencyData(newData);
   }, []);
 
-  const BATTLE_PASS_XP: Record<Difficulty, number> = {
+  const SUDOKU_PASS_XP: Record<Difficulty, number> = {
     easy: 10, medium: 25, hard: 50, expert: 100,
   };
 
@@ -222,17 +222,17 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     const newData = await addCoins(reward.total);
     setCurrencyData(newData);
 
-    // Award battle pass XP and grant any newly unlocked tier rewards
+    // Award sudoku pass XP and grant any newly unlocked tier rewards
     try {
-      const bpData = await loadBattlePassData();
+      const bpData = await loadSudokuPassData();
       const oldXP = bpData.currentXP;
-      const xpGain = BATTLE_PASS_XP[difficulty];
+      const xpGain = SUDOKU_PASS_XP[difficulty];
       const newXP = Math.min(oldXP + xpGain, MAX_XP);
       const newTiers = getNewlyCompletedTiers(oldXP, newXP);
 
       for (const tierNum of newTiers) {
         if (!bpData.claimedTiers.includes(tierNum)) {
-          const tierDef = BATTLE_PASS_TIERS.find(t => t.tier === tierNum);
+          const tierDef = SUDOKU_PASS_TIERS.find(t => t.tier === tierNum);
           if (tierDef) {
             const r = tierDef.reward;
             if (r.type === 'coins') await addCoins(parseInt(r.id, 10));
@@ -246,14 +246,14 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       }
 
       bpData.currentXP = newXP;
-      await saveBattlePassData(bpData);
+      await saveSudokuPassData(bpData);
       // Reload currency to reflect any coin grants from tiers
       if (newTiers.length > 0) {
         const refreshed = await getCurrencyData();
         setCurrencyData(refreshed);
       }
     } catch (e) {
-      console.error('Error awarding battle pass XP:', e);
+      console.error('Error awarding sudoku pass XP:', e);
     }
 
     return {

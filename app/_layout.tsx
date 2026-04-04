@@ -10,7 +10,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { AudioProvider } from '@/contexts/AudioContext';
 import { SettingsProvider } from '@/contexts/SettingsContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
-import { BattlePassProvider } from '@/contexts/BattlePassContext';
+import { SudokuPassProvider } from '@/contexts/SudokuPassContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useSettings } from '@/contexts/SettingsContext';
 // Using real ad service for native builds (Android/iOS)
@@ -54,18 +54,18 @@ export default function RootLayout() {
           <AudioProvider>
             <SettingsProvider>
               <CurrencyProvider>
-                <BattlePassProvider>
+                <SudokuPassProvider>
                   <AppInitializer />
                   <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
                     <Stack>
                       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                       <Stack.Screen name="shop" options={{ presentation: 'modal', title: 'Shop' }} />
-                      <Stack.Screen name="battle-pass" options={{ presentation: 'modal', title: 'Battle Pass' }} />
+                      <Stack.Screen name="sudoku-pass" options={{ presentation: 'modal', title: 'Sudoku Pass' }} />
                       <Stack.Screen name="patch-notes" options={{ headerShown: false }} />
                     </Stack>
                     <StatusBar style="auto" />
                   </NavigationThemeProvider>
-                </BattlePassProvider>
+                </SudokuPassProvider>
               </CurrencyProvider>
             </SettingsProvider>
           </AudioProvider>

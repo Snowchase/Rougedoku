@@ -19,7 +19,7 @@ interface Props {
 }
 
 export default function SoundPackCard({ pack, isOwned, isSelected, coins, onPress, themeColors }: Props) {
-  const isBattlePassOnly = pack.isBattlePassReward && pack.price === 0;
+  const isSudokuPassOnly = pack.isSudokuPassReward && pack.price === 0;
   const canAfford = coins >= pack.price;
 
   return (
@@ -50,7 +50,7 @@ export default function SoundPackCard({ pack, isOwned, isSelected, coins, onPres
           <View style={[styles.statusBadge, { backgroundColor: themeColors.success }]}>
             <Text style={styles.statusText}>Select</Text>
           </View>
-        ) : isBattlePassOnly ? (
+        ) : isSudokuPassOnly ? (
           <View style={[styles.statusBadge, { backgroundColor: '#7C3AED' }]}>
             <Text style={styles.statusText}>🏆 Pass</Text>
           </View>

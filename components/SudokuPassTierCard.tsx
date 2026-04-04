@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { BattlePassTier } from '../services/battlePassService';
+import { SudokuPassTier } from '../services/sudokuPassService';
 
 interface Props {
-  tier: BattlePassTier;
+  tier: SudokuPassTier;
   status: 'locked' | 'current' | 'unlocked';
   progress?: number; // 0.0–1.0, only relevant for 'current' status
   themeColors: {
@@ -16,7 +16,7 @@ interface Props {
   };
 }
 
-export default function BattlePassTierCard({ tier, status, progress = 0, themeColors }: Props) {
+export default function SudokuPassTierCard({ tier, status, progress = 0, themeColors }: Props) {
   const isUnlocked = status === 'unlocked';
   const isCurrent = status === 'current';
 

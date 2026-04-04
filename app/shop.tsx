@@ -633,8 +633,8 @@ export default function ShopScreen() {
     }
 
     if (price === 0) {
-      // Battle pass only — not purchasable
-      Alert.alert('Battle Pass Reward', `${packName} is unlocked via the Battle Pass. Keep playing to earn XP!`);
+      // Sudoku pass only — not purchasable
+      Alert.alert('Sudoku Pass Reward', `${packName} is unlocked via the Sudoku Pass. Keep playing to earn XP!`);
       return;
     }
 

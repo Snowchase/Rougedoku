@@ -451,7 +451,7 @@ export const themes: { [key: string]: AppTheme } = {
   space: {
     name: 'Deep Space',
     price: 0,
-    description: 'Battle pass exclusive — cosmic dark theme',
+    description: 'Sudoku Pass exclusive — cosmic dark theme',
     isDark: true,
     colors: {
       background: '#03030A',
@@ -491,10 +491,10 @@ export const themes: { [key: string]: AppTheme } = {
       warning: '#FCD34D',
     },
   },
-  battlepass: {
-    name: 'Battle Pass Gold',
+  sudokupass: {
+    name: 'Sudoku Pass Gold',
     price: 0,
-    description: 'Battle pass exclusive — prestige golden theme',
+    description: 'Sudoku Pass exclusive — prestige golden theme',
     isDark: false,
     colors: {
       background: '#FFFBEB',
