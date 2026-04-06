@@ -9,6 +9,7 @@ import { getUserStats } from '../../services/statsService';
 import { ScreenErrorBoundary } from '../../components/ScreenErrorBoundary';
 import { getDailyQuote, DailyQuote } from '../../constants/dailyQuotes';
 import { checkAndClaimReturningPlayerGift } from '../../services/returningPlayerGiftService';
+import { useSudokuPass } from '../../contexts/SudokuPassContext';
 
 const { width } = Dimensions.get('window');
 
@@ -19,6 +20,7 @@ export default function HomeScreen() {
   const { playSelectedSong, stopMusic } = useAudio();
   const { theme } = useTheme();
   const { coins, selectedSong, loading, addBonusCoins } = useCurrency();
+  const { currentTier, sudokuPassData } = useSudokuPass();
   const [currentStreak, setCurrentStreak] = useState<number>(0);
   const [dailyQuote] = useState<DailyQuote>(getDailyQuote());
   const [showGiftModal, setShowGiftModal] = useState(false);
@@ -170,11 +172,13 @@ export default function HomeScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.secondaryButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.warning }]}
-              onPress={() => router.push('/(tabs)/leaderboards')}
+              style={[styles.secondaryButton, { backgroundColor: theme.colors.cardBackground, borderColor: '#7C3AED' }]}
+              onPress={() => router.push('/sudoku-pass')}
             >
               <Text style={styles.secondaryButtonIcon} allowFontScaling={false}>🏆</Text>
-              <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]} numberOfLines={1} allowFontScaling={false}>Leaders</Text>
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]} numberOfLines={1} allowFontScaling={false}>
+                {currentTier >= 30 ? 'Max!' : `T${currentTier}`} Pass
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

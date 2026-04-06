@@ -10,6 +10,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { AudioProvider } from '@/contexts/AudioContext';
 import { SettingsProvider } from '@/contexts/SettingsContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { SudokuPassProvider } from '@/contexts/SudokuPassContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useSettings } from '@/contexts/SettingsContext';
 // Using real ad service for native builds (Android/iOS)
@@ -53,15 +54,18 @@ export default function RootLayout() {
           <AudioProvider>
             <SettingsProvider>
               <CurrencyProvider>
-                <AppInitializer />
-                <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-                  <Stack>
-                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                    <Stack.Screen name="shop" options={{ presentation: 'modal', title: 'Shop' }} />
-                    <Stack.Screen name="patch-notes" options={{ headerShown: false }} />
-                  </Stack>
-                  <StatusBar style="auto" />
-                </NavigationThemeProvider>
+                <SudokuPassProvider>
+                  <AppInitializer />
+                  <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                    <Stack>
+                      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                      <Stack.Screen name="shop" options={{ presentation: 'modal', title: 'Shop' }} />
+                      <Stack.Screen name="sudoku-pass" options={{ presentation: 'modal', title: 'Sudoku Pass' }} />
+                      <Stack.Screen name="patch-notes" options={{ headerShown: false }} />
+                    </Stack>
+                    <StatusBar style="auto" />
+                  </NavigationThemeProvider>
+                </SudokuPassProvider>
               </CurrencyProvider>
             </SettingsProvider>
           </AudioProvider>

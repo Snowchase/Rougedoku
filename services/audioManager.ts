@@ -1,6 +1,7 @@
 import { Audio, AVPlaybackStatus } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Asset } from 'expo-asset';
+import { SOUND_PACKS } from '../constants/customizations';
 
 // Audio file references
 // To add your own MP3s:
@@ -93,6 +94,12 @@ class AudioManager {
   private isFading = false;
   private musicOperationLock: Promise<void> = Promise.resolve();
   private cancelCurrentFade = false;
+  private activeSoundPackId: string = 'default';
+
+  /** Called by CurrencyContext whenever selectedSoundPack changes. */
+  setActiveSoundPack(packId: string) {
+    this.activeSoundPackId = packId;
+  }
 
   async initialize() {
     if (this.isInitialized) return;
@@ -440,20 +447,30 @@ class AudioManager {
       return;
     }
 
-    // Check if audio file exists
-    if (!AUDIO_FILES[effect]) {
+    // For packable effects (not buttonClick), try the active sound pack first
+    let assetToPlay: any = null;
+    if (effect !== 'buttonClick' && this.activeSoundPackId !== 'default') {
+      const pack = SOUND_PACKS.find(p => p.id === this.activeSoundPackId);
+      if (pack) {
+        assetToPlay = pack.files[effect as keyof typeof pack.files];
+      }
+    }
+
+    // Fall back to default AUDIO_FILES if no pack asset resolved
+    if (!assetToPlay) {
+      assetToPlay = AUDIO_FILES[effect];
+    }
+
+    if (!assetToPlay) {
       console.log(`Audio file for ${effect} not found. Add your MP3 files to enable sound effects.`);
       return;
     }
 
     try {
-      const { sound } = await Audio.Sound.createAsync(
-        AUDIO_FILES[effect],
-        {
-          shouldPlay: true,
-          volume: this.settings.sfxVolume,
-        }
-      );
+      const { sound } = await Audio.Sound.createAsync(assetToPlay, {
+        shouldPlay: true,
+        volume: this.settings.sfxVolume,
+      });
 
       // Auto-unload after playing
       sound.setOnPlaybackStatusUpdate((status: AVPlaybackStatus) => {
@@ -463,6 +480,32 @@ class AudioManager {
       });
     } catch (error) {
       console.error(`Error playing sound effect ${effect}:`, error);
+    }
+  }
+
+  /** Play a sound effect from a pre-resolved asset module (used by sound packs). */
+  async playSoundEffectAsset(asset: any) {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
+    if (!this.settings.soundEffectsEnabled || !asset) {
+      return;
+    }
+
+    try {
+      const { sound } = await Audio.Sound.createAsync(asset, {
+        shouldPlay: true,
+        volume: this.settings.sfxVolume,
+      });
+
+      sound.setOnPlaybackStatusUpdate((status: AVPlaybackStatus) => {
+        if (status.isLoaded && status.didJustFinish) {
+          sound.unloadAsync();
+        }
+      });
+    } catch (error) {
+      console.error('Error playing sound effect asset:', error);
     }
   }
 

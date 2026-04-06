@@ -10,6 +10,7 @@ import {
   Alert,
   RefreshControl,
   Share,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -27,17 +28,34 @@ import {
   rejectFriendRequest,
   getFriends,
   removeFriend,
+  getGlobalScores,
+  getFriendsScores,
+  getAllTimeBestScores,
   AVATAR_OPTIONS,
   PROFILE_COLORS,
   type UserProfile,
   type FriendRequest,
+  type DailyScore,
 } from '../../components/friendService';
+import { getDateString } from '../../components/dailyPuzzleGenerator';
+import { getUserStats, formatStatsForDisplay, type FormattedStats } from '../../services/statsService';
+import StatsDisplay from '../../components/StatsDisplay';
 import { NavigationHeader } from '../../components/navigation-header';
 import { SwipeableScreen } from '../../components/SwipeableScreen';
 import { ScreenErrorBoundary } from '../../components/ScreenErrorBoundary';
 
-type TabType = 'profile' | 'friends';
+type TabType = 'profile' | 'friends' | 'leaderboards';
 type FriendsSubTab = 'friends' | 'requests';
+type LeaderboardTab = 'stats' | 'allTime' | 'daily';
+type ViewType = 'global' | 'friends';
+type LBDifficulty = 'easy' | 'medium' | 'hard' | 'expert';
+
+const DIFFICULTY_COLORS: Record<LBDifficulty, string> = {
+  easy: '#10B981',
+  medium: '#F59E0B',
+  hard: '#EF4444',
+  expert: '#8B5CF6',
+};
 
 export default function SocialScreen() {
   const router = useRouter();
@@ -66,9 +84,27 @@ export default function SocialScreen() {
   const [referralCodeInput, setReferralCodeInput] = useState('');
   const [referralSubmitting, setReferralSubmitting] = useState(false);
 
+  // Leaderboard state
+  const [lbTab, setLbTab] = useState<LeaderboardTab>('stats');
+  const [lbViewType, setLbViewType] = useState<ViewType>('global');
+  const [lbDifficulty, setLbDifficulty] = useState<LBDifficulty>('medium');
+  const [lbScores, setLbScores] = useState<DailyScore[]>([]);
+  const [lbLoading, setLbLoading] = useState(false);
+  const [lbRefreshing, setLbRefreshing] = useState(false);
+  const [lbCurrentUserId, setLbCurrentUserId] = useState<string | null>(null);
+  const [lbSelectedDate, setLbSelectedDate] = useState<Date>(new Date());
+  const [lbUserStats, setLbUserStats] = useState<FormattedStats | null>(null);
+
   useEffect(() => {
     loadData();
+    initLbAuth();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'leaderboards' && lbTab !== 'stats') {
+      loadLbScores();
+    }
+  }, [activeTab, lbTab, lbViewType, lbDifficulty, lbSelectedDate]);
 
   const loadData = async () => {
     setLoading(true);
@@ -255,6 +291,231 @@ export default function SocialScreen() {
       setReferralSubmitting(false);
     }
   };
+
+  // Leaderboard functions
+  const initLbAuth = async () => {
+    const user = getCurrentUser();
+    if (!user) {
+      await initializeUser();
+      const newUser = getCurrentUser();
+      setLbCurrentUserId(newUser?.uid || null);
+      if (newUser) await loadLbUserStats(newUser.uid);
+    } else {
+      setLbCurrentUserId(user.uid);
+      await loadLbUserStats(user.uid);
+    }
+  };
+
+  const loadLbUserStats = async (userId: string) => {
+    try {
+      const stats = await getUserStats(userId);
+      if (stats) setLbUserStats(formatStatsForDisplay(stats));
+    } catch (error) {
+      console.error('Error loading lb user stats:', error);
+    }
+  };
+
+  const loadLbScores = async () => {
+    setLbLoading(true);
+    try {
+      let fetchedScores: DailyScore[] = [];
+      if (lbTab === 'allTime') {
+        fetchedScores = await getAllTimeBestScores(lbDifficulty, 100);
+      } else {
+        const dateStr = getDateString(lbSelectedDate);
+        if (lbViewType === 'global') {
+          fetchedScores = await getGlobalScores(dateStr, lbDifficulty, 100);
+        } else {
+          fetchedScores = await getFriendsScores(dateStr, lbDifficulty);
+        }
+      }
+      setLbScores(fetchedScores);
+    } catch (error) {
+      console.error('Error loading lb scores:', error);
+    } finally {
+      setLbLoading(false);
+    }
+  };
+
+  const onLbRefresh = async () => {
+    setLbRefreshing(true);
+    if (lbTab === 'stats' && lbCurrentUserId) {
+      await loadLbUserStats(lbCurrentUserId);
+    } else {
+      await loadLbScores();
+    }
+    setLbRefreshing(false);
+  };
+
+  const lbIsToday = () => getDateString(lbSelectedDate) === getDateString(new Date());
+
+  const formatDisplayDate = (date: Date): string => {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const dateStr = getDateString(date);
+    if (dateStr === getDateString(today)) return 'Today';
+    if (dateStr === getDateString(yesterday)) return 'Yesterday';
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  };
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getMedalEmoji = (rank: number): string => {
+    if (rank === 1) return '🥇';
+    if (rank === 2) return '🥈';
+    if (rank === 3) return '🥉';
+    return `${rank}`;
+  };
+
+  const renderLbScoreRow = (score: DailyScore, index: number) => {
+    const isCurrentUser = score.userId === lbCurrentUserId;
+    const rank = index + 1;
+    return (
+      <View
+        key={`${score.userId}-${score.date}-${score.difficulty}`}
+        style={[
+          styles.scoreRow,
+          { backgroundColor: theme.colors.cardBackground },
+          isCurrentUser && { backgroundColor: theme.colors.primaryButton + '15', borderColor: theme.colors.primaryButton, borderWidth: 2 },
+        ]}
+      >
+        <View style={styles.rankContainer}>
+          <Text style={[styles.rankText, rank <= 3 && styles.rankTextMedal]}>{getMedalEmoji(rank)}</Text>
+        </View>
+        <View style={[styles.lbAvatarContainer, { backgroundColor: score.profileColor || '#3B82F6' }]}>
+          <Text style={styles.lbAvatarEmoji}>{score.avatar || '😀'}</Text>
+        </View>
+        <View style={styles.scoreInfo}>
+          <Text style={[styles.lbUsername, { color: theme.colors.textPrimary }, isCurrentUser && { color: theme.colors.primaryButton }]}>
+            {score.username}{isCurrentUser ? ' (You)' : ''}
+          </Text>
+          {lbTab === 'allTime' && (
+            <Text style={[styles.lbDateText, { color: theme.colors.textSecondary }]}>{score.date}</Text>
+          )}
+        </View>
+        <View style={styles.scoreStats}>
+          <Text style={[styles.lbTimeText, { color: theme.colors.textPrimary }, isCurrentUser && { color: theme.colors.primaryButton }]}>
+            {formatTime(score.timeSeconds)}
+          </Text>
+          <Text style={[styles.hintsText, { color: theme.colors.textSecondary }]}>{score.hintsUsed} 💡</Text>
+        </View>
+      </View>
+    );
+  };
+
+  const renderLeaderboardsTab = () => (
+    <View style={styles.tabContent}>
+      {/* Leaderboard inner tabs */}
+      <View style={[styles.lbTabContainer, { backgroundColor: theme.colors.background }]}>
+        {(['stats', 'allTime', 'daily'] as LeaderboardTab[]).map((t) => (
+          <TouchableOpacity
+            key={t}
+            style={[styles.lbTab, lbTab === t && { backgroundColor: theme.colors.primaryButton }]}
+            onPress={() => setLbTab(t)}
+          >
+            <Text style={[styles.lbTabText, { color: lbTab === t ? theme.colors.primaryButtonText : theme.colors.textSecondary }]}>
+              {t === 'stats' ? '📊 Stats' : t === 'allTime' ? '🏆 All-Time' : '📅 Daily'}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Date nav (daily only) */}
+      {lbTab === 'daily' && (
+        <View style={[styles.dateNavContainer, { backgroundColor: theme.colors.background, borderBottomColor: theme.colors.cellBorder }]}>
+          <TouchableOpacity style={[styles.dateNavButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.cellBorder }]}
+            onPress={() => { const d = new Date(lbSelectedDate); d.setDate(d.getDate() - 1); setLbSelectedDate(d); }}>
+            <Text style={[styles.dateNavArrow, { color: theme.colors.primaryButton }]}>←</Text>
+          </TouchableOpacity>
+          <View style={styles.dateCenterContainer}>
+            <Text style={[styles.dateDisplay, { color: theme.colors.textPrimary }]}>{formatDisplayDate(lbSelectedDate)}</Text>
+            {!lbIsToday() && (
+              <TouchableOpacity onPress={() => setLbSelectedDate(new Date())} style={[styles.todayButton, { backgroundColor: theme.colors.primaryButton }]}>
+                <Text style={[styles.todayButtonText, { color: theme.colors.primaryButtonText }]}>Today</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          <TouchableOpacity
+            style={[styles.dateNavButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.cellBorder }, lbIsToday() && { opacity: 0.3 }]}
+            onPress={() => { const d = new Date(lbSelectedDate); d.setDate(d.getDate() + 1); if (d <= new Date()) setLbSelectedDate(d); }}
+            disabled={lbIsToday()}>
+            <Text style={[styles.dateNavArrow, { color: theme.colors.primaryButton }]}>→</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* View selector (daily only) */}
+      {lbTab === 'daily' && (
+        <View style={[styles.viewContainer, { backgroundColor: theme.colors.background }]}>
+          {(['global', 'friends'] as ViewType[]).map((v) => (
+            <TouchableOpacity key={v}
+              style={[styles.viewButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.cellBorder }, lbViewType === v && { backgroundColor: theme.colors.primaryButton + '20', borderColor: theme.colors.primaryButton }]}
+              onPress={() => setLbViewType(v)}>
+              <Text style={[styles.viewText, { color: lbViewType === v ? theme.colors.primaryButton : theme.colors.textSecondary }]}>
+                {v === 'global' ? '🌎 Global' : '👥 Friends'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+      {/* Difficulty selector (non-stats) */}
+      {lbTab !== 'stats' && (
+        <View style={[styles.difficultyContainer, { backgroundColor: theme.colors.background }]}>
+          {(['easy', 'medium', 'hard', 'expert'] as LBDifficulty[]).map((diff) => (
+            <TouchableOpacity key={diff}
+              style={[styles.difficultyButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.cellBorder }, lbDifficulty === diff && { backgroundColor: DIFFICULTY_COLORS[diff], borderColor: DIFFICULTY_COLORS[diff] }]}
+              onPress={() => setLbDifficulty(diff)}>
+              <Text style={[styles.difficultyText, lbDifficulty === diff && { color: '#fff' }]}>
+                {diff.toUpperCase()}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+      {/* Content */}
+      <ScrollView style={styles.tabContent}
+        refreshControl={<RefreshControl refreshing={lbRefreshing} onRefresh={onLbRefresh} />}>
+        {lbTab === 'stats' ? (
+          <View style={{ padding: 16 }}>
+            {lbUserStats ? (
+              <StatsDisplay stats={lbUserStats} theme={theme} />
+            ) : (
+              <View style={styles.lbLoadingContainer}>
+                <ActivityIndicator size="large" color={theme.colors.primaryButton} />
+                <Text style={[styles.lbLoadingText, { color: theme.colors.textSecondary }]}>Loading your stats...</Text>
+              </View>
+            )}
+          </View>
+        ) : lbLoading ? (
+          <View style={styles.lbLoadingContainer}>
+            <ActivityIndicator size="large" color={theme.colors.primaryButton} />
+            <Text style={[styles.lbLoadingText, { color: theme.colors.textSecondary }]}>Loading scores...</Text>
+          </View>
+        ) : lbScores.length === 0 ? (
+          <View style={styles.lbLoadingContainer}>
+            <Text style={[styles.lbLoadingText, { color: theme.colors.textSecondary }]}>
+              {lbTab === 'allTime'
+                ? 'No scores recorded yet.\nComplete a puzzle to appear on the leaderboard!'
+                : lbViewType === 'friends'
+                  ? 'No friends have completed this puzzle yet.\nAdd friends to see their scores!'
+                  : `No scores yet for ${formatDisplayDate(lbSelectedDate)}.\nBe the first to complete it!`}
+            </Text>
+          </View>
+        ) : (
+          <View style={{ padding: 12, gap: 8 }}>
+            {lbScores.map((score, index) => renderLbScoreRow(score, index))}
+          </View>
+        )}
+      </ScrollView>
+    </View>
+  );
 
   const renderProfileTab = () => (
     <ScrollView
@@ -695,41 +956,32 @@ export default function SocialScreen() {
 
         {/* Main Tabs */}
         <View style={[styles.mainTabs, { backgroundColor: theme.colors.cardBackground }]}>
-          <TouchableOpacity
-            style={[
-              styles.mainTab,
-              activeTab === 'profile' && { backgroundColor: theme.colors.primaryButton },
-            ]}
-            onPress={() => setActiveTab('profile')}
-          >
-            <Text
+          {(['profile', 'friends', 'leaderboards'] as TabType[]).map((tab) => (
+            <TouchableOpacity
+              key={tab}
               style={[
-                styles.mainTabText,
-                { color: activeTab === 'profile' ? theme.colors.primaryButtonText : theme.colors.textPrimary },
+                styles.mainTab,
+                activeTab === tab && { backgroundColor: theme.colors.primaryButton },
               ]}
+              onPress={() => setActiveTab(tab)}
             >
-              Profile
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.mainTab,
-              activeTab === 'friends' && { backgroundColor: theme.colors.primaryButton },
-            ]}
-            onPress={() => setActiveTab('friends')}
-          >
-            <Text
-              style={[
-                styles.mainTabText,
-                { color: activeTab === 'friends' ? theme.colors.primaryButtonText : theme.colors.textPrimary },
-              ]}
-            >
-              Friends
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={[
+                  styles.mainTabText,
+                  { color: activeTab === tab ? theme.colors.primaryButtonText : theme.colors.textPrimary },
+                ]}
+              >
+                {tab === 'profile' ? 'Profile' : tab === 'friends' ? 'Friends' : 'Leaders'}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        {activeTab === 'profile' ? renderProfileTab() : renderFriendsTab()}
+        {activeTab === 'profile'
+          ? renderProfileTab()
+          : activeTab === 'friends'
+            ? renderFriendsTab()
+            : renderLeaderboardsTab()}
       </View>
     </SwipeableScreen>
     </ScreenErrorBoundary>
@@ -1194,5 +1446,160 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 4,
     fontStyle: 'italic',
+  },
+  // Leaderboard styles
+  lbTabContainer: {
+    flexDirection: 'row',
+    padding: 12,
+    gap: 8,
+  },
+  lbTab: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  lbTabText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  dateNavContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+  },
+  dateNavButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  dateNavArrow: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  dateCenterContainer: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
+  },
+  dateDisplay: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  todayButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  todayButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  viewContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
+  },
+  viewButton: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  viewText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  difficultyContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+    gap: 6,
+  },
+  difficultyButton: {
+    flex: 1,
+    paddingVertical: 7,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 2,
+  },
+  difficultyText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#6B7280',
+  },
+  scoreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  rankContainer: {
+    width: 36,
+    alignItems: 'center',
+  },
+  rankText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#6B7280',
+  },
+  rankTextMedal: {
+    fontSize: 22,
+  },
+  lbAvatarContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 6,
+  },
+  lbAvatarEmoji: {
+    fontSize: 20,
+  },
+  scoreInfo: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  lbUsername: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  lbDateText: {
+    fontSize: 11,
+    marginTop: 1,
+  },
+  scoreStats: {
+    alignItems: 'flex-end',
+  },
+  lbTimeText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  hintsText: {
+    fontSize: 11,
+    marginTop: 1,
+  },
+  lbLoadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  lbLoadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

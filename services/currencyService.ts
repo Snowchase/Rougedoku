@@ -16,8 +16,10 @@ export interface PurchaseData {
   unlockedCellStyles: string[];
   unlockedFonts: string[];
   unlockedSongs: string[];
+  unlockedSoundPacks: string[];
   selectedFont: string;
   selectedSong: string | null;
+  selectedSoundPack: string;
 }
 
 // Coin rewards based on difficulty
@@ -64,8 +66,10 @@ const defaultPurchaseData: PurchaseData = {
   unlockedCellStyles: ['default'],
   unlockedFonts: ['default'], // Default font is free
   unlockedSongs: [], // No songs unlocked by default (uses default music)
+  unlockedSoundPacks: ['default'], // Default sound pack is free
   selectedFont: 'default',
   selectedSong: null, // null means use default music
+  selectedSoundPack: 'default',
 };
 
 export async function getCurrencyData(): Promise<CurrencyData> {
@@ -327,4 +331,68 @@ export async function isSongUnlocked(songId: string): Promise<boolean> {
 export async function getSelectedSong(): Promise<string | null> {
   const purchases = await getPurchaseData();
   return purchases.selectedSong;
+}
+
+// Sound pack purchase/select functions
+export async function purchaseSoundPack(packId: string, price: number): Promise<{ success: boolean; message: string }> {
+  const purchases = await getPurchaseData();
+
+  if ((purchases.unlockedSoundPacks ?? ['default']).includes(packId)) {
+    return { success: false, message: 'Sound pack already owned' };
+  }
+
+  const result = await spendCoins(price);
+  if (!result.success) {
+    return { success: false, message: 'Not enough coins' };
+  }
+
+  purchases.unlockedSoundPacks = [...(purchases.unlockedSoundPacks ?? ['default']), packId];
+  await savePurchaseData(purchases);
+
+  return { success: true, message: 'Sound pack unlocked!' };
+}
+
+export async function unlockSoundPackFree(packId: string): Promise<void> {
+  const purchases = await getPurchaseData();
+  const current = purchases.unlockedSoundPacks ?? ['default'];
+  if (!current.includes(packId)) {
+    purchases.unlockedSoundPacks = [...current, packId];
+    await savePurchaseData(purchases);
+  }
+}
+
+export async function setSelectedSoundPack(packId: string): Promise<void> {
+  const purchases = await getPurchaseData();
+  purchases.selectedSoundPack = packId;
+  await savePurchaseData(purchases);
+}
+
+export async function isSoundPackUnlocked(packId: string): Promise<boolean> {
+  const purchases = await getPurchaseData();
+  return (purchases.unlockedSoundPacks ?? ['default']).includes(packId);
+}
+
+// Free-unlock helpers for sudoku pass rewards
+export async function unlockThemeFree(themeKey: string): Promise<void> {
+  const purchases = await getPurchaseData();
+  if (!purchases.unlockedThemes.includes(themeKey)) {
+    purchases.unlockedThemes = [...purchases.unlockedThemes, themeKey];
+    await savePurchaseData(purchases);
+  }
+}
+
+export async function unlockAvatarFree(avatarId: string): Promise<void> {
+  const purchases = await getPurchaseData();
+  if (!purchases.unlockedAvatars.includes(avatarId)) {
+    purchases.unlockedAvatars = [...purchases.unlockedAvatars, avatarId];
+    await savePurchaseData(purchases);
+  }
+}
+
+export async function unlockSongFree(songId: string): Promise<void> {
+  const purchases = await getPurchaseData();
+  if (!purchases.unlockedSongs.includes(songId)) {
+    purchases.unlockedSongs = [...purchases.unlockedSongs, songId];
+    await savePurchaseData(purchases);
+  }
 }
