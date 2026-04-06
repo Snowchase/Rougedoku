@@ -432,7 +432,7 @@ export default function ShopScreen() {
         ]}
         onPress={() => handlePurchaseFont(font.id, font.name, displayPrice)}
       >
-        <View style={styles.fontPreview}>
+        <View style={[styles.fontPreview, { backgroundColor: theme.colors.cellBackground }]}>
           <Text
             style={[
               styles.fontPreviewText,
@@ -1185,7 +1185,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
-    backgroundColor: '#F3F4F6',
     borderRadius: 8,
   },
   fontPreviewText: {
