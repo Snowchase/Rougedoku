@@ -20,6 +20,8 @@ export default function SudokuPassTierCard({ tier, status, progress = 0, themeCo
   const isUnlocked = status === 'unlocked';
   const isCurrent = status === 'current';
 
+  const badgeColor = isUnlocked ? themeColors.success : isCurrent ? themeColors.primaryButton : '#6B7280';
+
   return (
     <View style={[
       styles.card,
@@ -27,102 +29,131 @@ export default function SudokuPassTierCard({ tier, status, progress = 0, themeCo
       isUnlocked && { borderColor: themeColors.success, borderWidth: 2 },
       isCurrent && { borderColor: themeColors.primaryButton, borderWidth: 2 },
     ]}>
-      {/* Tier number badge */}
-      <View style={[
-        styles.tierBadge,
-        { backgroundColor: isUnlocked ? themeColors.success : isCurrent ? themeColors.primaryButton : '#6B7280' },
-      ]}>
+      {/* Left: Tier badge */}
+      <View style={[styles.tierBadge, { backgroundColor: badgeColor }]}>
         <Text style={styles.tierNumber}>{tier.tier}</Text>
       </View>
 
-      {/* Reward icon */}
-      <Text style={styles.rewardEmoji}>{tier.reward.emoji}</Text>
-
-      {/* Reward label */}
-      <Text
-        style={[styles.rewardLabel, { color: themeColors.textPrimary }]}
-        numberOfLines={2}
-      >
-        {tier.reward.label}
-      </Text>
-
-      {/* XP requirement */}
-      <Text style={[styles.xpText, { color: themeColors.textSecondary }]}>
-        {tier.xpRequired} XP
-      </Text>
-
-      {/* Progress bar (current tier only) */}
-      {isCurrent && (
-        <View style={[styles.progressTrack, { backgroundColor: '#E5E7EB' }]}>
-          <View style={[
-            styles.progressFill,
-            { backgroundColor: themeColors.primaryButton, width: `${Math.round(progress * 100)}%` },
-          ]} />
+      {/* Center: Emoji + label */}
+      <View style={styles.centerContent}>
+        <View style={styles.rewardRow}>
+          <Text style={styles.rewardEmoji}>{tier.reward.emoji}</Text>
+          <View style={styles.labelContainer}>
+            <Text style={[styles.rewardLabel, { color: themeColors.textPrimary }]} numberOfLines={1}>
+              {tier.reward.label}
+            </Text>
+            <Text style={[styles.xpText, { color: themeColors.textSecondary }]}>
+              {tier.xpRequired} XP required
+            </Text>
+          </View>
         </View>
-      )}
 
-      {/* Unlocked checkmark */}
-      {isUnlocked && (
-        <Text style={[styles.checkmark, { color: themeColors.success }]}>✓</Text>
-      )}
+        {/* Progress bar (current tier only) */}
+        {isCurrent && (
+          <View style={[styles.progressTrack, { backgroundColor: '#E5E7EB' }]}>
+            <View style={[
+              styles.progressFill,
+              { backgroundColor: themeColors.primaryButton, width: `${Math.round(progress * 100)}%` },
+            ]} />
+          </View>
+        )}
+      </View>
+
+      {/* Right: Status indicator */}
+      <View style={styles.statusContainer}>
+        {isUnlocked ? (
+          <View style={[styles.checkCircle, { backgroundColor: themeColors.success }]}>
+            <Text style={styles.checkmark}>✓</Text>
+          </View>
+        ) : isCurrent ? (
+          <View style={[styles.checkCircle, { backgroundColor: themeColors.primaryButton }]}>
+            <Text style={styles.checkmark}>▶</Text>
+          </View>
+        ) : (
+          <View style={[styles.checkCircle, { backgroundColor: '#D1D5DB' }]}>
+            <Text style={styles.lockIcon}>🔒</Text>
+          </View>
+        )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    width: 100,
-    minHeight: 140,
-    borderRadius: 12,
-    padding: 10,
-    marginHorizontal: 5,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    marginBottom: 8,
     borderWidth: 1,
     borderColor: 'transparent',
   },
   tierBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 6,
+    marginRight: 12,
+    flexShrink: 0,
   },
   tierNumber: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
+  },
+  centerContent: {
+    flex: 1,
+    marginRight: 8,
+  },
+  rewardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   rewardEmoji: {
-    fontSize: 28,
-    marginBottom: 4,
+    fontSize: 26,
+    flexShrink: 0,
+  },
+  labelContainer: {
+    flex: 1,
   },
   rewardLabel: {
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   xpText: {
-    fontSize: 10,
-    textAlign: 'center',
-    marginBottom: 4,
+    fontSize: 12,
   },
   progressTrack: {
-    width: '100%',
-    height: 4,
-    borderRadius: 2,
+    height: 5,
+    borderRadius: 3,
     overflow: 'hidden',
-    marginTop: 4,
+    marginTop: 8,
   },
   progressFill: {
-    height: 4,
-    borderRadius: 2,
+    height: 5,
+    borderRadius: 3,
+  },
+  statusContainer: {
+    flexShrink: 0,
+  },
+  checkCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   checkmark: {
-    fontSize: 16,
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: '700',
-    marginTop: 2,
+  },
+  lockIcon: {
+    fontSize: 14,
   },
 });

@@ -153,18 +153,6 @@ export default function HomeScreen() {
             <Text style={[styles.menuButtonSubtext, { color: '#EF4444' }]} maxFontSizeMultiplier={1.2}>Coming Soon</Text>
           </View>
 
-          {/* Sudoku Pass Button */}
-          <TouchableOpacity
-            style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: '#7C3AED' }]}
-            onPress={() => router.push('/sudoku-pass')}
-          >
-            <Text style={styles.menuButtonIcon} allowFontScaling={false}>🏆</Text>
-            <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>Sudoku Pass</Text>
-            <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
-              {currentTier >= 30 ? 'Max Tier Reached!' : `Tier ${currentTier} · ${sudokuPassData.currentXP} XP`}
-            </Text>
-          </TouchableOpacity>
-
           {/* Secondary Buttons Group */}
           <View style={styles.secondaryButtonsRow}>
             <TouchableOpacity
@@ -184,11 +172,13 @@ export default function HomeScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.secondaryButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.warning }]}
-              onPress={() => router.push('/(tabs)/leaderboards')}
+              style={[styles.secondaryButton, { backgroundColor: theme.colors.cardBackground, borderColor: '#7C3AED' }]}
+              onPress={() => router.push('/sudoku-pass')}
             >
               <Text style={styles.secondaryButtonIcon} allowFontScaling={false}>🏆</Text>
-              <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]} numberOfLines={1} allowFontScaling={false}>Leaders</Text>
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]} numberOfLines={1} allowFontScaling={false}>
+                {currentTier >= 30 ? 'Max!' : `T${currentTier}`} Pass
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

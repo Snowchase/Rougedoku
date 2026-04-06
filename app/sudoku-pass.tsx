@@ -119,10 +119,21 @@ export default function SudokuPassScreen() {
           />
         ) : (
           <ScrollView
-            horizontal
-            contentContainerStyle={styles.tiersRow}
-            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tiersList}
+            showsVerticalScrollIndicator={false}
           >
+            {/* Legend */}
+            <View style={[styles.legend, { backgroundColor: theme.colors.cardBackground }]}>
+              <View style={styles.legendRow}>
+                <View style={[styles.legendDot, { backgroundColor: theme.colors.success }]} />
+                <Text style={[styles.legendText, { color: theme.colors.textSecondary }]}>Unlocked</Text>
+                <View style={[styles.legendDot, { backgroundColor: theme.colors.primaryButton }]} />
+                <Text style={[styles.legendText, { color: theme.colors.textSecondary }]}>In Progress</Text>
+                <View style={[styles.legendDot, { backgroundColor: '#6B7280' }]} />
+                <Text style={[styles.legendText, { color: theme.colors.textSecondary }]}>Locked</Text>
+              </View>
+            </View>
+
             {SUDOKU_PASS_TIERS.map((tier) => (
               <SudokuPassTierCard
                 key={tier.tier}
@@ -141,18 +152,6 @@ export default function SudokuPassScreen() {
             ))}
           </ScrollView>
         )}
-
-        {/* Legend */}
-        <View style={[styles.legend, { backgroundColor: theme.colors.cardBackground }]}>
-          <View style={styles.legendRow}>
-            <View style={[styles.legendDot, { backgroundColor: theme.colors.success }]} />
-            <Text style={[styles.legendText, { color: theme.colors.textSecondary }]}>Unlocked</Text>
-            <View style={[styles.legendDot, { backgroundColor: theme.colors.primaryButton }]} />
-            <Text style={[styles.legendText, { color: theme.colors.textSecondary }]}>In Progress</Text>
-            <View style={[styles.legendDot, { backgroundColor: '#6B7280' }]} />
-            <Text style={[styles.legendText, { color: theme.colors.textSecondary }]}>Locked</Text>
-          </View>
-        </View>
       </View>
     </ScreenErrorBoundary>
   );
@@ -229,14 +228,15 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: 40,
   },
-  tiersRow: {
+  tiersList: {
     paddingHorizontal: 12,
-    paddingVertical: 16,
-    alignItems: 'flex-start',
+    paddingTop: 8,
+    paddingBottom: 16,
   },
   legend: {
     padding: 12,
-    marginTop: 4,
+    marginBottom: 8,
+    borderRadius: 10,
   },
   legendRow: {
     flexDirection: 'row',
