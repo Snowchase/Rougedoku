@@ -382,7 +382,6 @@ export default function SocialScreen() {
           styles.scoreRow,
           { backgroundColor: theme.colors.cardBackground },
           isCurrentUser && { backgroundColor: theme.colors.primaryButton + '15', borderColor: theme.colors.primaryButton, borderWidth: 2 },
-          rank <= 3 && !isCurrentUser && { backgroundColor: '#FFFBEB' },
         ]}
       >
         <View style={styles.rankContainer}>
@@ -972,7 +971,7 @@ export default function SocialScreen() {
                   { color: activeTab === tab ? theme.colors.primaryButtonText : theme.colors.textPrimary },
                 ]}
               >
-                {tab === 'profile' ? 'Profile' : tab === 'friends' ? 'Friends' : '🏆'}
+                {tab === 'profile' ? 'Profile' : tab === 'friends' ? 'Friends' : 'Leaders'}
               </Text>
             </TouchableOpacity>
           ))}
