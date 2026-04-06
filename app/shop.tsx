@@ -95,6 +95,15 @@ export default function ShopScreen() {
       return;
     }
 
+    if (themeData.price === 0) {
+      Alert.alert(
+        'Sudoku Pass Exclusive',
+        `${themeData.name} is a Sudoku Pass reward. Earn XP by completing puzzles to unlock it!`,
+        [{ text: 'OK' }, { text: 'View Pass', onPress: () => router.push('/sudoku-pass') }]
+      );
+      return;
+    }
+
     if (coins < price) {
       Alert.alert(
         'Not Enough Coins',
@@ -133,6 +142,15 @@ export default function ShopScreen() {
       return;
     }
 
+    if (price === 0) {
+      Alert.alert(
+        'Sudoku Pass Exclusive',
+        `${fontName} is a Sudoku Pass reward. Earn XP by completing puzzles to unlock it!`,
+        [{ text: 'OK' }, { text: 'View Pass', onPress: () => router.push('/sudoku-pass') }]
+      );
+      return;
+    }
+
     if (coins < price) {
       Alert.alert('Not Enough Coins', `You need ${price - coins} more coins.`);
       return;
@@ -163,6 +181,15 @@ export default function ShopScreen() {
       return;
     }
 
+    if (price === 0) {
+      Alert.alert(
+        'Sudoku Pass Exclusive',
+        `${emoji} ${name} is a Sudoku Pass reward. Earn XP by completing puzzles to unlock it!`,
+        [{ text: 'OK' }, { text: 'View Pass', onPress: () => router.push('/sudoku-pass') }]
+      );
+      return;
+    }
+
     if (coins < price) {
       Alert.alert('Not Enough Coins', `You need ${price - coins} more coins.`);
       return;
@@ -190,6 +217,15 @@ export default function ShopScreen() {
     if (isSongOwned(songId)) {
       await setSelectedSong(songId);
       Alert.alert('Song Selected', `${name} is now your background music!`);
+      return;
+    }
+
+    if (price === 0) {
+      Alert.alert(
+        'Sudoku Pass Exclusive',
+        `${name} is a Sudoku Pass reward. Earn XP by completing puzzles to unlock it!`,
+        [{ text: 'OK' }, { text: 'View Pass', onPress: () => router.push('/sudoku-pass') }]
+      );
       return;
     }
 
@@ -355,6 +391,10 @@ export default function ShopScreen() {
             <View style={[styles.ownedBadge, { backgroundColor: theme.colors.success }]}>
               <Text style={styles.ownedText}>Owned</Text>
             </View>
+          ) : themeData.price === 0 ? (
+            <View style={[styles.ownedBadge, { backgroundColor: '#7C3AED' }]}>
+              <Text style={styles.ownedText}>🏆 Pass</Text>
+            </View>
           ) : isFeaturedItem ? (
             <View style={styles.featuredPriceBadge}>
               <Text style={styles.featuredBadgeLabel}>DEAL</Text>
@@ -491,6 +531,8 @@ export default function ShopScreen() {
                 </Text>
                 {owned ? (
                   <Text style={[styles.avatarOwned, { color: theme.colors.success }]}>Owned</Text>
+                ) : avatar.price === 0 ? (
+                  <Text style={[styles.avatarPrice, { color: '#7C3AED' }]}>🏆 Pass</Text>
                 ) : isFeaturedAvatar ? (
                   <View style={styles.avatarFeaturedPrice}>
                     <Text style={styles.avatarDealLabel}>DEAL</Text>
