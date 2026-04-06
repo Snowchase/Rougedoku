@@ -14,6 +14,21 @@ export interface PatchNote {
 
 export const PATCH_NOTES: PatchNote[] = [
   {
+    version: '1.1.7',
+    date: 'April 2026',
+    title: 'Sudoku Pass & Polish',
+    changes: [
+      { type: 'new', description: 'Sudoku Pass — earn XP by completing puzzles and unlock exclusive avatars, themes, music, and sound packs across 30 tiers' },
+      { type: 'new', description: 'Sound Packs — swap your placement, error, and completion sounds with new packs in the Shop' },
+      { type: 'new', description: 'Reset button in-game lets you restart the puzzle from scratch without losing your timer' },
+      { type: 'new', description: 'Leaderboards moved into the Social tab for easier access' },
+      { type: 'improved', description: 'Zoom buttons now hidden when the Lock Board setting is enabled' },
+      { type: 'fixed', description: 'Starting (given) numbers could be erased — they are now properly protected' },
+      { type: 'fixed', description: 'Sudoku Pass exclusive items no longer purchasable for 0 coins in the Shop' },
+      { type: 'fixed', description: 'Leaderboard scores not displaying correctly in the Social tab' },
+    ],
+  },
+  {
     version: '1.1.6',
     date: 'March 2026',
     title: 'Refer a Friend',

@@ -242,6 +242,9 @@ const SudokuGrid = () => {
 
     const { row, col } = selectedCell;
 
+    // Never allow modifying original (given) cells
+    if (original[row]?.[col] !== 0) return;
+
     if (noteMode && num !== 0) {
       const key = `${row}-${col}`;
       const cellNotes = notes[key] || [];
@@ -490,6 +493,30 @@ const SudokuGrid = () => {
       setStartTime(Date.now() - (elapsedTime * 1000));
       setIsPaused(false);
     }
+  };
+
+  const handleResetPuzzle = () => {
+    Alert.alert(
+      'Restart Puzzle?',
+      'This will clear all your filled numbers and notes. Your time will keep running.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Restart',
+          style: 'destructive',
+          onPress: () => {
+            setGrid(original.map(r => [...r]));
+            setNotes({});
+            setHintsUsed(0);
+            setMistakesCount(0);
+            setNoteMode(false);
+            setSelectedCell(null);
+            setHighlightedNumber(null);
+            setIsComplete(false);
+          },
+        },
+      ]
+    );
   };
 
   // Zoom controls
@@ -802,32 +829,29 @@ const SudokuGrid = () => {
         </View>
       )}
 
-      {/* Zoom Controls */}
-      <View style={styles.zoomControls}>
-        <TouchableOpacity
-          style={[styles.zoomButton, { backgroundColor: theme.colors.secondaryButton }, settings.boardLocked && { backgroundColor: theme.isDark ? '#27272A' : '#D1D5DB' }]}
-          onPress={handleZoomOut}
-          disabled={settings.boardLocked}
-        >
-          <Text style={[styles.zoomButtonText, { color: theme.colors.secondaryButtonText }, settings.boardLocked && { color: theme.colors.textSecondary }]} allowFontScaling={false}>−</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.zoomButton, { backgroundColor: theme.colors.secondaryButton }, settings.boardLocked && { backgroundColor: theme.isDark ? '#27272A' : '#D1D5DB' }]}
-          onPress={handleZoomReset}
-          disabled={settings.boardLocked}
-        >
-          <Text style={[styles.zoomResetText, { color: theme.colors.secondaryButtonText }, settings.boardLocked && { color: theme.colors.textSecondary }]} allowFontScaling={false}>
-            {settings.boardLocked ? '🔒' : 'Reset'}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.zoomButton, { backgroundColor: theme.colors.secondaryButton }, settings.boardLocked && { backgroundColor: theme.isDark ? '#27272A' : '#D1D5DB' }]}
-          onPress={handleZoomIn}
-          disabled={settings.boardLocked}
-        >
-          <Text style={[styles.zoomButtonText, { color: theme.colors.secondaryButtonText }, settings.boardLocked && { color: theme.colors.textSecondary }]} allowFontScaling={false}>+</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Zoom Controls — only shown when zoom/pan is enabled */}
+      {!settings.boardLocked && (
+        <View style={styles.zoomControls}>
+          <TouchableOpacity
+            style={[styles.zoomButton, { backgroundColor: theme.colors.secondaryButton }]}
+            onPress={handleZoomOut}
+          >
+            <Text style={[styles.zoomButtonText, { color: theme.colors.secondaryButtonText }]} allowFontScaling={false}>−</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.zoomButton, { backgroundColor: theme.colors.secondaryButton }]}
+            onPress={handleZoomReset}
+          >
+            <Text style={[styles.zoomResetText, { color: theme.colors.secondaryButtonText }]} allowFontScaling={false}>Reset</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.zoomButton, { backgroundColor: theme.colors.secondaryButton }]}
+            onPress={handleZoomIn}
+          >
+            <Text style={[styles.zoomButtonText, { color: theme.colors.secondaryButtonText }]} allowFontScaling={false}>+</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Grid with Pinch-to-Zoom and Pan */}
       <GestureDetector gesture={composedGesture}>
@@ -900,6 +924,14 @@ const SudokuGrid = () => {
               disabled={isPaused}
             >
               <Text style={styles.actionButtonText} allowFontScaling={false}>Clear</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: '#6B7280' }]}
+              onPress={handleResetPuzzle}
+              disabled={isPaused}
+            >
+              <Text style={styles.actionButtonText} allowFontScaling={false}>↺ Reset</Text>
             </TouchableOpacity>
           </View>
         </>

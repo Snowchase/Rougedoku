@@ -2,7 +2,7 @@
   "expo": {
     "name": "Sudokle",
     "slug": "sudokle",
-    "version": "1.1.6",
+    "version": "1.1.7",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "sudokleapp",
@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.chase.sudokle",
-      "buildNumber": "8",
+      "buildNumber": "9",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow Sudokle to access your photos to share your scores.",
         "NSCameraUsageDescription": "Allow Sudokle to use your camera to share your scores.",
@@ -27,7 +27,7 @@
     },
     "android": {
       "package": "com.snowchase.sudokle",
-      "versionCode": 6,
+      "versionCode": 7,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

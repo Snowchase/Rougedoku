@@ -62,17 +62,17 @@ function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-/** Returns the ISO date string 1 calendar month after the given date. */
-export function addOneMonth(dateISO: string): string {
-  const d = new Date(dateISO);
-  d.setMonth(d.getMonth() + 1);
-  return d.toISOString().slice(0, 10);
+/** Fixed end date for Season 1 of the Sudoku Pass. */
+export const SEASON_END_DATE = '2026-05-16';
+
+/** Returns the season end date (fixed for the current season). */
+export function addOneMonth(_dateISO: string): string {
+  return SEASON_END_DATE;
 }
 
 /** True if today is past the season end date. */
-export function isSeasonExpired(seasonStartDate: string): boolean {
-  const endDate = addOneMonth(seasonStartDate);
-  return todayISO() > endDate;
+export function isSeasonExpired(_seasonStartDate: string): boolean {
+  return todayISO() > SEASON_END_DATE;
 }
 
 function makeDefaultData(): SudokuPassData {

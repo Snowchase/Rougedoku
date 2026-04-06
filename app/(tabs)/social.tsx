@@ -417,7 +417,7 @@ export default function SocialScreen() {
           <TouchableOpacity
             key={t}
             style={[styles.lbTab, lbTab === t && { backgroundColor: theme.colors.primaryButton }]}
-            onPress={() => { setLbTab(t); if (t !== 'stats') loadLbScores(); }}
+            onPress={() => setLbTab(t)}
           >
             <Text style={[styles.lbTabText, { color: lbTab === t ? theme.colors.primaryButtonText : theme.colors.textSecondary }]}>
               {t === 'stats' ? '📊 Stats' : t === 'allTime' ? '🏆 All-Time' : '📅 Daily'}
