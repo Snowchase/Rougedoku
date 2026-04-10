@@ -4,12 +4,10 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { useAudio } from '../../contexts/AudioContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
-import { getCurrentUser } from '../../components/friendService';
-import { getUserStats } from '../../services/statsService';
 import { ScreenErrorBoundary } from '../../components/ScreenErrorBoundary';
-import { getDailyQuote, DailyQuote } from '../../constants/dailyQuotes';
 import { checkAndClaimReturningPlayerGift } from '../../services/returningPlayerGiftService';
-import { useSudokuPass } from '../../contexts/SudokuPassContext';
+import { useRun } from '../../contexts/RunContext';
+import { RUN_CONFIG } from '../../constants/runConfig';
 
 const { width } = Dimensions.get('window');
 
@@ -20,9 +18,7 @@ export default function HomeScreen() {
   const { playSelectedSong, stopMusic } = useAudio();
   const { theme } = useTheme();
   const { coins, selectedSong, loading, addBonusCoins } = useCurrency();
-  const { currentTier, sudokuPassData } = useSudokuPass();
-  const [currentStreak, setCurrentStreak] = useState<number>(0);
-  const [dailyQuote] = useState<DailyQuote>(getDailyQuote());
+  const { activeRun, hasActiveRun, startNewRun, isLoading: runLoading } = useRun();
   const [showGiftModal, setShowGiftModal] = useState(false);
 
   // Check for returning player gift once currency is loaded
@@ -38,28 +34,11 @@ export default function HomeScreen() {
   // Play selected song (or default home music) when screen is focused, stop when unfocused
   useFocusEffect(
     React.useCallback(() => {
-      let isMounted = true;
-      console.log('[HOME] useFocusEffect MOUNT - selectedSong:', selectedSong, 'loading:', loading);
-
-      // Wait for selectedSong to load from storage before playing music
-      if (loading) {
-        console.log('[HOME] Still loading selectedSong, skipping music start');
-        return;
-      }
-
-      // Start playing selected song (or fall back to home music) with fade in
-      // The audio manager now handles race conditions internally
+      if (loading) return;
       playSelectedSong(selectedSong, 'homeMusic', 1500).catch(err => {
         console.error('[HOME] Error starting home music:', err);
       });
-
-      // Load streak
-      loadStreak();
-
       return () => {
-        isMounted = false;
-        console.log('[HOME] useFocusEffect CLEANUP - calling stopMusic');
-        // Stop music when leaving screen (audio manager queues this properly)
         stopMusic(800).catch(err => {
           console.error('[HOME] Error stopping music:', err);
         });
@@ -67,14 +46,11 @@ export default function HomeScreen() {
     }, [selectedSong, loading, playSelectedSong, stopMusic])
   );
 
-  const loadStreak = async () => {
-    const user = getCurrentUser();
-    if (user) {
-      const stats = await getUserStats(user.uid);
-      if (stats) {
-        setCurrentStreak(stats.currentStreak);
-      }
+  const handlePlayPress = async () => {
+    if (!hasActiveRun) {
+      await startNewRun();
     }
+    router.push('/(tabs)/play');
   };
 
   return (
@@ -105,35 +81,47 @@ export default function HomeScreen() {
           {/* App Title */}
           <View style={styles.titleContainer}>
             <Text style={[styles.title, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.1}>SUDOKLE</Text>
-            <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>New puzzle every day at midnight!</Text>
-
-            {/* Streak Badge */}
-            {currentStreak > 0 && (
-              <View style={[styles.streakBadge, { backgroundColor: theme.isDark ? '#422006' : '#FEF3C7', borderColor: theme.isDark ? '#F59E0B' : '#F59E0B' }]}>
-                <Text style={styles.streakEmoji} allowFontScaling={false}>🔥</Text>
-                <Text style={[styles.streakText, { color: theme.isDark ? '#FCD34D' : '#92400E' }]} maxFontSizeMultiplier={1.2}>{currentStreak} Day Streak!</Text>
-              </View>
-            )}
+            <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>Sudoku Roguelike</Text>
           </View>
 
-          {/* Daily Quote */}
-          <View style={[styles.quoteCard, { backgroundColor: theme.colors.cardBackground }]}>
-            <Text style={styles.quoteIcon} allowFontScaling={false}>💭</Text>
-            <Text style={[styles.quoteText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.1} numberOfLines={3}>
-              "{dailyQuote.text}"{dailyQuote.author ? `  — ${dailyQuote.author}` : ''}
-            </Text>
-          </View>
+          {/* Run Status Card */}
+          {!runLoading && (
+            <View style={[styles.quoteCard, { backgroundColor: theme.colors.cardBackground }]}>
+              {hasActiveRun && activeRun ? (
+                <>
+                  <Text style={styles.quoteIcon} allowFontScaling={false}>⚔️</Text>
+                  <Text style={[styles.quoteText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.1}>
+                    Floor {activeRun.currentFloor}/{activeRun.maxFloors}
+                    {'  '}{'❤️'.repeat(activeRun.livesRemaining)}{'🖤'.repeat(Math.max(0, activeRun.maxLives - activeRun.livesRemaining))}
+                    {'  '}💡{activeRun.hintsRemaining}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.quoteIcon} allowFontScaling={false}>🗺️</Text>
+                  <Text style={[styles.quoteText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.1}>
+                    No run in progress. Start a new run to begin your roguelike adventure!
+                  </Text>
+                </>
+              )}
+            </View>
+          )}
 
           {/* Menu Buttons */}
           <View style={styles.menuContainer}>
           {/* Primary Buttons Group */}
           <TouchableOpacity
             style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.primaryButton }]}
-            onPress={() => router.push('/(tabs)/play')}
+            onPress={handlePlayPress}
+            disabled={runLoading}
           >
-            <Text style={styles.menuButtonIcon} allowFontScaling={false}>🎮</Text>
-            <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>Play</Text>
-            <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>Solve today's puzzle</Text>
+            <Text style={styles.menuButtonIcon} allowFontScaling={false}>{hasActiveRun ? '▶️' : '🎮'}</Text>
+            <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
+              {hasActiveRun ? 'Continue Run' : 'Start Run'}
+            </Text>
+            <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+              {hasActiveRun && activeRun ? `Floor ${activeRun.currentFloor} of ${activeRun.maxFloors}` : 'Begin a new roguelike run'}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -173,11 +161,11 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={[styles.secondaryButton, { backgroundColor: theme.colors.cardBackground, borderColor: '#7C3AED' }]}
-              onPress={() => router.push('/sudoku-pass')}
+              onPress={() => router.push('/(tabs)/leaderboards')}
             >
               <Text style={styles.secondaryButtonIcon} allowFontScaling={false}>🏆</Text>
               <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]} numberOfLines={1} allowFontScaling={false}>
-                {currentTier >= 30 ? 'Max!' : `T${currentTier}`} Pass
+                Scores
               </Text>
             </TouchableOpacity>
           </View>

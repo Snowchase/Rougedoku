@@ -47,8 +47,8 @@ export default function PlayScreen() {
     <ScreenErrorBoundary screenName="Play">
       <SwipeableScreen>
         <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-          <NavigationHeader title="Daily Puzzle" />
-          <SudokuGrid difficulty="medium" />
+          <NavigationHeader title="Run" />
+          <SudokuGrid />
         </View>
       </SwipeableScreen>
     </ScreenErrorBoundary>

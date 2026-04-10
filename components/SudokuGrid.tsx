@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,63 +10,75 @@ import {
   AppState,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GestureHandlerRootView, GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { getDailyPuzzle, getDateString, isNewDay, isValid, isCompleteBoardValid, type Difficulty } from './dailyPuzzleGenerator';
-import { submitDailyScore, initializeUser } from './friendService';
+import { isValid, isCompleteBoardValid } from '../services/puzzleGenerator';
+import { initializeUser } from './friendService';
 import { numberFonts } from '../constants/customizations';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAudio } from '../contexts/AudioContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useCurrency } from '../contexts/CurrencyContext';
-import { isBoostEligible, markBoostUsed, calculateBoostBonus } from '../services/coinBoostService';
+import { useRun } from '../contexts/RunContext';
+import {
+  TILE_COLORS,
+  TILE_ICONS,
+  FLOOR_MODIFIER_INFO,
+  type TileModifier,
+  RUN_CONFIG,
+} from '../constants/runConfig';
+import { getFloorDifficulty } from '../services/puzzleGenerator';
+import { addCoins } from '../services/currencyService';
 
 const GRID_SIZE = 9;
 const { width } = Dimensions.get('window');
 const CELL_SIZE = Math.min((width - 40) / GRID_SIZE, 45);
 
-// Difficulty configurations
-const DIFFICULTY_CONFIG = {
-  easy: { clues: 45, maxHints: 5, color: '#10B981' },
-  medium: { clues: 35, maxHints: 3, color: '#F59E0B' },
-  hard: { clues: 28, maxHints: 2, color: '#EF4444' },
-  expert: { clues: 24, maxHints: 1, color: '#8B5CF6' },
-};
-
-interface GameState {
-  grid: number[][];
-  hintsUsed: number;
-  mistakesCount: number;
-  elapsedTime: number;
-  isComplete: boolean;
-  notes: {[key: string]: number[]};
-  lastPlayed: string;
-}
-
 const SudokuGrid = () => {
   const { theme } = useTheme();
   const { playSoundEffect } = useAudio();
   const { settings } = useSettings();
-  const { coins, awardPuzzleCompletion, showBoostAd, awardBoostBonus, selectedFont } = useCurrency();
+  const { coins, selectedFont, addBonusCoins } = useCurrency();
+  const {
+    activeRun,
+    floorState,
+    triggerTileEffect,
+    recordMistake,
+    useHint: runUseHint,
+    completeFloor,
+    selectUpgrade,
+    failRun,
+    updateFloorProgress,
+  } = useRun();
   const activeFontStyle = (numberFonts.find(f => f.id === selectedFont) ?? numberFonts[0]).style;
-  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
+
+  // ── Local puzzle state (synced from RunContext on load) ───────────────────
   const [grid, setGrid] = useState<number[][]>([]);
   const [original, setOriginal] = useState<number[][]>([]);
   const [solution, setSolution] = useState<number[][]>([]);
   const [selectedCell, setSelectedCell] = useState<{row: number, col: number} | null>(null);
   const [startTime, setStartTime] = useState(Date.now());
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [hintsUsed, setHintsUsed] = useState(0);
-  const [mistakesCount, setMistakesCount] = useState(0);
   const [noteMode, setNoteMode] = useState(false);
   const [notes, setNotes] = useState<{[key: string]: number[]}>({});
   const [isComplete, setIsComplete] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [todayDate, setTodayDate] = useState('');
   const [highlightedNumber, setHighlightedNumber] = useState<number | null>(null);
 
-  // Zoom and pan functionality
+  // Track whether floor-clear flow is in progress (prevent double-trigger)
+  const completionInProgress = useRef(false);
+
+  // ── Derived from RunContext ────────────────────────────────────────────────
+  const tileModifiers = floorState?.tileModifiers ?? {};
+  const floorModifiers = floorState?.floorModifiers ?? [];
+  const currentFloor = activeRun?.currentFloor ?? 1;
+  const maxFloors = activeRun?.maxFloors ?? RUN_CONFIG.maxFloors;
+  const livesRemaining = activeRun?.livesRemaining ?? RUN_CONFIG.startingLives;
+  const maxLives = activeRun?.maxLives ?? RUN_CONFIG.startingLives;
+  const hintsRemaining = activeRun?.hintsRemaining ?? 0;
+  const difficulty = getFloorDifficulty(currentFloor);
+
+  // ── Zoom and pan ──────────────────────────────────────────────────────────
   const scale = useSharedValue(1);
   const savedScale = useSharedValue(1);
   const translateX = useSharedValue(0);
@@ -77,41 +89,42 @@ const SudokuGrid = () => {
   // Count how many of each number (1-9) are in the grid
   const numberCounts = useMemo(() => {
     const counts: {[key: number]: number} = {};
-    for (let num = 1; num <= 9; num++) {
-      counts[num] = 0;
-    }
-    grid.forEach(row => {
-      row.forEach(cell => {
-        if (cell !== 0) {
-          counts[cell]++;
-        }
-      });
-    });
+    for (let num = 1; num <= 9; num++) counts[num] = 0;
+    grid.forEach(row => row.forEach(cell => { if (cell !== 0) counts[cell]++; }));
     return counts;
   }, [grid]);
 
-  // Initialize user on mount
+  // ── Initialize user on mount ──────────────────────────────────────────────
   useEffect(() => {
     initializeUser();
   }, []);
 
-  // Load or create puzzle on mount and difficulty change
+  // ── Load puzzle from RunContext.floorState ────────────────────────────────
   useEffect(() => {
-    loadDailyPuzzle();
-  }, [difficulty]);
+    if (!floorState) return;
+    setGrid(floorState.grid.map(r => [...r]));
+    setOriginal(floorState.original.map(r => [...r]));
+    setSolution(floorState.solution.map(r => [...r]));
+    setNotes(floorState.notes ?? {});
+    setElapsedTime(floorState.elapsedTime);
+    setIsComplete(floorState.isComplete);
+    setStartTime(Date.now() - floorState.elapsedTime * 1000);
+    setSelectedCell(null);
+    setNoteMode(false);
+    setHighlightedNumber(null);
+    completionInProgress.current = false;
+  }, [floorState?.floor]); // Re-init only when the floor number changes
 
-  // Timer
+  // ── Timer ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (isComplete || isPaused) return;
-
     const interval = setInterval(() => {
       setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
     }, 1000);
-
     return () => clearInterval(interval);
   }, [startTime, isComplete, isPaused]);
 
-  // Reset board position when locked
+  // ── Reset board position when locked ─────────────────────────────────────
   useEffect(() => {
     if (settings.boardLocked) {
       scale.value = withSpring(1);
@@ -123,103 +136,22 @@ const SudokuGrid = () => {
     }
   }, [settings.boardLocked]);
 
-  // Auto-pause when app goes to background
+  // ── Auto-pause when app goes to background ────────────────────────────────
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState) => {
       if (nextAppState === 'background' || nextAppState === 'inactive') {
-        // Auto-pause when app goes to background
-        if (!isComplete && !isPaused) {
-          setIsPaused(true);
-        }
+        if (!isComplete && !isPaused) setIsPaused(true);
       }
     });
-
-    return () => {
-      subscription.remove();
-    };
+    return () => subscription.remove();
   }, [isComplete, isPaused]);
 
-  // Save game state periodically
+  // ── Persist grid progress to RunContext ───────────────────────────────────
   useEffect(() => {
     if (grid.length > 0 && !isComplete) {
-      saveGameState();
+      updateFloorProgress({ grid, notes, elapsedTime });
     }
-  }, [grid, hintsUsed, mistakesCount, elapsedTime, notes]);
-
-  const getStorageKey = () => `sudokle_${todayDate}_${difficulty}`;
-
-  const loadDailyPuzzle = async () => {
-    const today = getDateString();
-    setTodayDate(today);
-
-    try {
-      // Try to load saved state for today
-      const storageKey = `sudokle_${today}_${difficulty}`;
-      const savedState = await AsyncStorage.getItem(storageKey);
-      
-      if (savedState) {
-        const state: GameState = JSON.parse(savedState);
-
-        // Check if it's actually today's puzzle
-        if (state.lastPlayed === today) {
-          // Resume saved game (even if complete, so users can see their finished puzzle)
-          const { puzzle, solution: sol } = getDailyPuzzle(difficulty, new Date());
-          setGrid(state.grid);
-          setOriginal(puzzle);
-          setSolution(sol);
-          setHintsUsed(state.hintsUsed);
-          setMistakesCount(state.mistakesCount || 0);
-          setElapsedTime(state.elapsedTime);
-          setNotes(state.notes || {});
-          setIsComplete(state.isComplete);
-          setStartTime(Date.now() - (state.elapsedTime * 1000));
-          console.log(state.isComplete ? 'Loaded completed puzzle' : 'Resumed saved puzzle');
-          return;
-        }
-      }
-
-      // Load new daily puzzle
-      loadNewDailyPuzzle();
-    } catch (error) {
-      console.error('Error loading puzzle:', error);
-      loadNewDailyPuzzle();
-    }
-  };
-
-  const loadNewDailyPuzzle = () => {
-    const { puzzle, solution: sol } = getDailyPuzzle(difficulty, new Date());
-    setGrid(puzzle.map(row => [...row]));
-    setOriginal(puzzle.map(row => [...row]));
-    setSolution(sol);
-    setStartTime(Date.now());
-    setElapsedTime(0);
-    setHintsUsed(0);
-    setMistakesCount(0);
-    setNotes({});
-    setIsComplete(false);
-    setSelectedCell(null);
-    setNoteMode(false);
-    setIsPaused(false);
-    setHighlightedNumber(null);
-    console.log('Loaded new daily puzzle for', getDateString(), difficulty);
-  };
-
-  const saveGameState = async () => {
-    try {
-      const state: GameState = {
-        grid,
-        hintsUsed,
-        mistakesCount,
-        elapsedTime,
-        isComplete,
-        notes,
-        lastPlayed: todayDate,
-      };
-      await AsyncStorage.setItem(getStorageKey(), JSON.stringify(state));
-    } catch (error) {
-      console.error('Error saving game state:', error);
-    }
-  };
+  }, [grid, notes, elapsedTime]);
 
   const handleCellPress = (row: number, col: number) => {
     // Select the cell
@@ -234,232 +166,200 @@ const SudokuGrid = () => {
     }
   };
 
-  const handleNumberPress = (num: number) => {
+  const handleNumberPress = useCallback(async (num: number) => {
     if (!selectedCell) {
       Alert.alert('No cell selected', 'Please select an empty cell first');
       return;
     }
 
     const { row, col } = selectedCell;
+    const key = `${row}-${col}`;
 
-    // Never allow modifying original (given) cells
+    // Never modify original (given) cells
     if (original[row]?.[col] !== 0) return;
 
+    // Fragile tile: block erasure once a number has been placed
+    if (num === 0) {
+      const mod = tileModifiers[key];
+      if (mod?.type === 'fragile' && mod.triggered && grid[row][col] !== 0) {
+        Alert.alert('🔒 Fragile', 'This cell is locked — it cannot be erased.');
+        return;
+      }
+    }
+
+    // Notes mode
     if (noteMode && num !== 0) {
-      const key = `${row}-${col}`;
       const cellNotes = notes[key] || [];
       const newNotes = { ...notes };
-
-      if (cellNotes.includes(num)) {
-        newNotes[key] = cellNotes.filter(n => n !== num);
-      } else {
-        newNotes[key] = [...cellNotes, num].sort();
-      }
-
+      newNotes[key] = cellNotes.includes(num)
+        ? cellNotes.filter(n => n !== num)
+        : [...cellNotes, num].sort();
       setNotes(newNotes);
       return;
     }
 
     const newGrid = grid.map(r => [...r]);
 
-    // Check if the placement violates Sudoku rules
+    // Validate placement
     let isRuleViolation = false;
     if (num !== 0) {
-      // Temporarily clear the cell to check if the number can be placed
-      const originalValue = newGrid[row][col];
+      const prev = newGrid[row][col];
       newGrid[row][col] = 0;
       isRuleViolation = !isValid(newGrid, row, col, num);
-      newGrid[row][col] = originalValue;
+      newGrid[row][col] = prev;
     }
 
     newGrid[row][col] = num;
     setGrid(newGrid);
 
-    const key = `${row}-${col}`;
-    if (notes[key]) {
+    // Clear notes for this cell when a number is placed
+    if (num !== 0 && notes[key]) {
       const newNotes = { ...notes };
       delete newNotes[key];
       setNotes(newNotes);
     }
 
-    // Update highlighted number to match the newly placed number
     if (num !== 0) {
       setHighlightedNumber(num);
     } else {
       setHighlightedNumber(null);
     }
 
-    // Handle feedback based on placement validity
     if (num !== 0 && isRuleViolation) {
-      // Number violates Sudoku rules (duplicate in row/column/box)
+      // Rule violation
       playSoundEffect('errorSound');
-      setMistakesCount(mistakesCount + 1);
-      Alert.alert('❌ Rule Violation', "This number conflicts with another in the same row, column, or box!");
+
+      const livesLost = await recordMistake();
+
+      // Check iron floor modifier: any mistake fails the floor
+      if (floorModifiers.includes('iron')) {
+        Alert.alert(
+          '🔩 Iron — Floor Failed',
+          'No mistakes are allowed on this floor.',
+          [{ text: 'OK', onPress: () => failRun() }],
+        );
+        return;
+      }
+
+      // Check if lives ran out
+      const newLives = livesRemaining - livesLost;
+      if (newLives <= 0) {
+        await failRun();
+        Alert.alert('💀 Run Over', 'You ran out of lives!');
+        return;
+      }
+
+      if (livesLost > 0) {
+        Alert.alert(
+          '❌ Mistake',
+          `${livesLost === 2 ? '⚔️ Double Edge: ' : ''}Lost ${livesLost} life${livesLost > 1 ? 's' : ''}. ${newLives} remaining.`,
+        );
+      }
+
+      // Cursed tile: extra life already deducted via recordMistake → applyTileEffect chain
+      // Just show the tile icon for the cursed cell
+      await triggerTileEffect(key, false);
     } else if (num !== 0) {
-      // Valid placement according to Sudoku rules
-      // This includes forced forks (alternative valid solutions) - NOT counted as mistakes
+      // Valid placement
       playSoundEffect('numberPlace');
-    }
 
-    checkCompletion(newGrid);
-  };
+      // Lock fragile tile immediately (triggered before further checks)
+      if (tileModifiers[key]?.type === 'fragile' && !tileModifiers[key].triggered) {
+        await triggerTileEffect(key, true);
+      } else if (tileModifiers[key] && !tileModifiers[key].triggered) {
+        const { event, revealCellKey } = await triggerTileEffect(key, true);
 
-  const checkCompletion = async (currentGrid: number[][]) => {
-    // Check if all cells are filled
-    const allFilled = currentGrid.every(row =>
-      row.every(cell => cell !== 0)
-    );
-
-    // Check if the board is a valid Sudoku solution
-    const complete = allFilled && isCompleteBoardValid(currentGrid);
-
-    if (complete) {
-      setIsComplete(true);
-
-      // Play completion sound
-      playSoundEffect('puzzleComplete');
-
-      // Save completion
-      const state: GameState = {
-        grid: currentGrid,
-        hintsUsed,
-        mistakesCount,
-        elapsedTime,
-        isComplete: true,
-        notes,
-        lastPlayed: todayDate,
-      };
-      await AsyncStorage.setItem(getStorageKey(), JSON.stringify(state));
-
-      // Award coins for completion
-      let coinReward = { total: 0, breakdown: { baseReward: 0, timeBonus: 0, hintPenalty: 0, mistakePenalty: 0, firstBonus: 0 } };
-      try {
-        coinReward = await awardPuzzleCompletion(todayDate, difficulty, elapsedTime, hintsUsed, mistakesCount);
-        console.log('Coins awarded:', coinReward.total);
-      } catch (error) {
-        console.error('Error awarding coins:', error);
-      }
-
-      // Submit score to Firebase
-      try {
-        const result = await submitDailyScore(todayDate, difficulty, elapsedTime, hintsUsed);
-        if (result.success) {
-          console.log('Score submitted successfully');
-        } else {
-          console.error('Error submitting score:', result.error);
-          // Note: Score submission failed but game is still complete locally
+        // Hint tile auto-reveals a neighbour — update local grid
+        if (revealCellKey && event?.effect === 'reveal_cell') {
+          const [rr, rc] = revealCellKey.split('-').map(Number);
+          // floorState grid already updated in RunContext; sync locally
+          const revealed = solution[rr][rc];
+          setGrid(prev => {
+            const g = prev.map(r => [...r]);
+            g[rr][rc] = revealed;
+            return g;
+          });
         }
-      } catch (error) {
-        console.error('Error submitting score:', error);
+
+        // Show brief tile event feedback
+        if (event) {
+          const tileLabel = TILE_ICONS[event.type] ?? '';
+          if (event.effect === 'gain_life') {
+            Alert.alert(`${tileLabel} Shield`, `+${event.value} life restored!`);
+          }
+          // Gold/bonus coins are shown at floor clear summary, not here
+        }
       }
 
-      // Check if this difficulty is eligible for a boost ad
-      let boostEligible = false;
-      try {
-        boostEligible = await isBoostEligible(difficulty);
-      } catch (error) {
-        console.error('Error checking boost eligibility:', error);
-      }
-
-      showCompletionScreen(coinReward, boostEligible);
+      checkCompletion(newGrid);
     }
-  };
+  }, [
+    selectedCell, original, tileModifiers, floorModifiers, noteMode, notes,
+    grid, solution, isComplete, livesRemaining, recordMistake, triggerTileEffect,
+    failRun, playSoundEffect,
+  ]);
 
-  const showCompletionScreen = (
-    coinReward: { total: number; breakdown: { baseReward: number; timeBonus: number; hintPenalty: number; mistakePenalty: number; firstBonus: number } },
-    boostEligible: boolean
-  ) => {
-    const minutes = Math.floor(elapsedTime / 60);
-    const seconds = elapsedTime % 60;
+  const checkCompletion = useCallback(async (currentGrid: number[][]) => {
+    if (isComplete || completionInProgress.current) return;
 
-    const difficultyEmoji = {
-      easy: '🟢',
-      medium: '🟡',
-      hard: '🟠',
-      expert: '🔴',
-    };
+    const allFilled = currentGrid.every(row => row.every(cell => cell !== 0));
+    const complete = allFilled && isCompleteBoardValid(currentGrid);
+    if (!complete) return;
 
-    let rewardText = `\n\n🪙 +${coinReward.total} coins earned!`;
-    if (coinReward.breakdown.timeBonus > 0) {
-      rewardText += `\n   ⚡ Time bonus: +${coinReward.breakdown.timeBonus}`;
-    }
-    if (coinReward.breakdown.firstBonus > 0) {
-      rewardText += `\n   ⭐ First clear: +${coinReward.breakdown.firstBonus}`;
-    }
-    if (coinReward.breakdown.hintPenalty > 0) {
-      rewardText += `\n   💡 Hints used: -${coinReward.breakdown.hintPenalty}`;
-    }
-    if (coinReward.breakdown.mistakePenalty > 0) {
-      rewardText += `\n   ❌ Mistakes: -${coinReward.breakdown.mistakePenalty}`;
-    }
+    completionInProgress.current = true;
+    setIsComplete(true);
+    playSoundEffect('puzzleComplete');
 
-    const shareText = `Sudokle ${todayDate}\n${difficultyEmoji[difficulty]} ${difficulty.toUpperCase()}\n⏱️ ${minutes}:${seconds.toString().padStart(2, '0')}\n💡 ${hintsUsed} hints\n❌ ${mistakesCount} mistakes${rewardText}`;
+    try {
+      const { reward, upgradeChoices } = await completeFloor();
+      await addCoins(reward.total);
 
-    Alert.alert(
-      '🎉 Daily Puzzle Complete!',
-      shareText + '\n\nCome back tomorrow for a new puzzle!',
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            if (boostEligible) {
-              showBoostOfferPopup(coinReward.total);
-            }
+      const mins = Math.floor(elapsedTime / 60);
+      const secs = elapsedTime % 60;
+
+      let rewardText = `Floor ${currentFloor} of ${maxFloors} complete!\n⏱️ ${mins}:${secs.toString().padStart(2, '0')}\n\n🪙 +${reward.total} coins`;
+      if (reward.goldBonus > 0) rewardText += `\n   🪙 Gold tiles: +${reward.goldBonus}`;
+      if (reward.multiplierBonus > 0) rewardText += `\n   ⭐ Multiplier: +${reward.multiplierBonus}`;
+      if (reward.speedBonus > 0) rewardText += `\n   ⚡ Speed bonus: +${reward.speedBonus}`;
+
+      const isLastFloor = currentFloor >= maxFloors;
+
+      Alert.alert(
+        isLastFloor ? '🏆 Run Complete!' : '🎉 Floor Clear!',
+        rewardText,
+        [
+          {
+            text: isLastFloor ? 'Finish' : (upgradeChoices.length > 0 ? 'Choose Upgrade' : 'Next Floor'),
+            onPress: async () => {
+              if (isLastFloor) {
+                await selectUpgrade(null, reward.total);
+                // TODO: navigate to run-summary screen
+              } else if (upgradeChoices.length > 0) {
+                // TODO: navigate to upgrade-draft screen, then call selectUpgrade
+                // For now, skip upgrade and advance
+                await selectUpgrade(null, reward.total);
+              } else {
+                await selectUpgrade(null, reward.total);
+              }
+            },
           },
-        },
-      ]
-    );
-  };
-
-  const showBoostOfferPopup = (baseTotal: number) => {
-    const bonusAmount = calculateBoostBonus(baseTotal);
-
-    Alert.alert(
-      '🚀 Bonus Opportunity!',
-      `Watch a short ad to earn 20% more coins!\n\n+${bonusAmount} bonus coins`,
-      [
-        {
-          text: 'No Thanks',
-          style: 'cancel',
-          onPress: async () => {
-            await markBoostUsed(difficulty);
-          },
-        },
-        {
-          text: 'Watch Ad',
-          onPress: async () => {
-            await markBoostUsed(difficulty);
-            const rewarded = await showBoostAd();
-            if (rewarded) {
-              await awardBoostBonus(bonusAmount);
-              Alert.alert(
-                '🎉 Bonus Earned!',
-                `+${bonusAmount} bonus coins added!\n\n🪙 Total coins from this puzzle: ${baseTotal + bonusAmount}`
-              );
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const useHint = () => {
-    const maxHints = DIFFICULTY_CONFIG[difficulty].maxHints;
-    
-    if (hintsUsed >= maxHints) {
-      Alert.alert('No hints left', `You've used all ${maxHints} hints for this difficulty!`);
-      return;
+        ],
+      );
+    } catch (err) {
+      console.error('Error completing floor:', err);
     }
+  }, [isComplete, elapsedTime, currentFloor, maxFloors, completeFloor, selectUpgrade, playSoundEffect]);
 
+  const handleUseHint = useCallback(async () => {
     if (!selectedCell) {
       Alert.alert('Select a cell', 'Please select an empty cell first');
       return;
     }
 
     const { row, col } = selectedCell;
-    
+
     if (original[row][col] !== 0) {
-      Alert.alert('Cannot hint', 'This cell is already filled');
+      Alert.alert('Cannot hint', 'This cell is already a given — no hint needed');
       return;
     }
 
@@ -468,10 +368,20 @@ const SudokuGrid = () => {
       return;
     }
 
+    const granted = await runUseHint();
+    if (!granted) {
+      if (floorModifiers.includes('no_hints')) {
+        Alert.alert('🚫 No Hints', 'The No Hints modifier is active this floor.');
+      } else {
+        Alert.alert('No hints left', 'You have no hints remaining in this run.');
+      }
+      return;
+    }
+
+    const hintValue = solution[row][col];
     const newGrid = grid.map(r => [...r]);
-    newGrid[row][col] = solution[row][col];
+    newGrid[row][col] = hintValue;
     setGrid(newGrid);
-    setHintsUsed(hintsUsed + 1);
 
     const key = `${row}-${col}`;
     if (notes[key]) {
@@ -480,11 +390,8 @@ const SudokuGrid = () => {
       setNotes(newNotes);
     }
 
-    // Highlight all instances of the hint number
-    setHighlightedNumber(solution[row][col]);
-
-    Alert.alert('💡 Hint used', `Placed ${solution[row][col]} at (${row + 1}, ${col + 1})`);
-  };
+    setHighlightedNumber(hintValue);
+  }, [selectedCell, original, grid, solution, notes, floorModifiers, runUseHint]);
 
   const togglePause = () => {
     if (!isPaused) {
@@ -633,29 +540,34 @@ const SudokuGrid = () => {
       Math.floor(selectedCell.col / 3) === Math.floor(col / 3) &&
       !isSelected;
 
-    // Get the appropriate background color based on state
+    // ── Base background ──────────────────────────────────────────────────────
     let backgroundColor = isAlt ? theme.colors.cellBackgroundAlt : theme.colors.cellBackground;
     if (isOriginal) {
       backgroundColor = isAlt ? theme.colors.cellOriginalAlt : theme.colors.cellOriginal;
     }
 
-    // Apply row/column/box highlighting (lighter than selected cell)
+    // ── Tile modifier tint (lowest priority, below all highlights) ───────────
+    const modifier = !isOriginal ? tileModifiers[`${row}-${col}`] : undefined;
+    if (modifier && !modifier.triggered) {
+      backgroundColor = TILE_COLORS[modifier.type];
+    }
+
+    // ── Row/column/box highlight ─────────────────────────────────────────────
     if (isInSelectedRow || isInSelectedCol || isInSelectedBox) {
-      // Theme-aware highlight colors for row/column/box
       backgroundColor = theme.isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.08)';
     }
 
-    // Number highlighting (when same number is in different cells)
+    // ── Number highlight ─────────────────────────────────────────────────────
     if (isHighlighted && !isSelected) {
       backgroundColor = theme.colors.cellHighlighted;
     }
 
-    // Selected cell gets priority
+    // ── Selected cell ────────────────────────────────────────────────────────
     if (isSelected) {
       backgroundColor = theme.colors.cellSelected;
     }
 
-    // Wrong cells get highest priority
+    // ── Wrong cells (highest priority) ───────────────────────────────────────
     if (isWrong) {
       backgroundColor = theme.colors.cellWrong;
     }
@@ -680,6 +592,17 @@ const SudokuGrid = () => {
     const key = `${row}-${col}`;
     const cellNotes = notes[key] || [];
     const isOriginalCell = original[row][col] !== 0;
+    const modifier: TileModifier | undefined = !isOriginalCell ? tileModifiers[key] : undefined;
+    const hasFog = floorModifiers.includes('fog_of_war');
+
+    // Fog of War: hide user-placed numbers that aren't in the selected row/col/box
+    const isRelatedToSelected =
+      selectedCell &&
+      (selectedCell.row === row ||
+       selectedCell.col === col ||
+       (Math.floor(selectedCell.row / 3) === Math.floor(row / 3) &&
+        Math.floor(selectedCell.col / 3) === Math.floor(col / 3)));
+    const fogHidden = hasFog && !isOriginalCell && value !== 0 && !isRelatedToSelected && !isPaused;
 
     return (
       <TouchableOpacity
@@ -693,11 +616,11 @@ const SudokuGrid = () => {
             style={[
               styles.cellText,
               activeFontStyle,
-              { color: isOriginalCell ? theme.colors.textOriginal : theme.colors.textUser }
+              { color: isOriginalCell ? theme.colors.textOriginal : theme.colors.textUser },
             ]}
             allowFontScaling={false}
           >
-            {isPaused ? '' : value}
+            {isPaused ? '' : fogHidden ? '·' : value}
           </Text>
         ) : cellNotes.length > 0 && !isPaused ? (
           <View style={styles.notesContainer}>
@@ -708,15 +631,22 @@ const SudokuGrid = () => {
             ))}
           </View>
         ) : null}
+
+        {/* Tile modifier badge — shown in top-right corner of untriggered modifier cells */}
+        {modifier && !modifier.triggered && !isPaused && (
+          <Text style={styles.tileBadge} allowFontScaling={false}>
+            {TILE_ICONS[modifier.type]}
+          </Text>
+        )}
       </TouchableOpacity>
     );
   };
 
-  if (grid.length === 0) {
+  if (grid.length === 0 || !floorState) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
-          Loading today's puzzle...
+          Loading floor {currentFloor}...
         </Text>
       </SafeAreaView>
     );
@@ -726,59 +656,52 @@ const SudokuGrid = () => {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
         <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.contentContainer}>
-      {/* Header with Date and Coins */}
+      {/* Header: Floor progress + coins */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={[styles.title, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>SUDOKLE</Text>
-          <Text style={[styles.date, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>{todayDate}</Text>
+          <Text style={[styles.title, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
+            Floor {currentFloor} <Text style={[styles.floorOf, { color: theme.colors.textSecondary }]}>/ {maxFloors}</Text>
+          </Text>
+          <Text style={[styles.date, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+            {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+          </Text>
         </View>
         <View style={[styles.coinDisplay, { backgroundColor: theme.isDark ? '#422006' : '#FEF3C7' }]}>
           <Text style={[styles.coinText, { color: theme.isDark ? '#FCD34D' : '#92400E' }]} maxFontSizeMultiplier={1.2}>🪙 {coins}</Text>
         </View>
       </View>
+
       {isComplete && (
         <View style={styles.completedBadgeContainer}>
-          <Text style={[styles.completedBadge, { color: theme.colors.success }]} maxFontSizeMultiplier={1.2}>✅ Completed!</Text>
+          <Text style={[styles.completedBadge, { color: theme.colors.success }]} maxFontSizeMultiplier={1.2}>✅ Floor Complete!</Text>
         </View>
       )}
 
-      {/* Game Info Card - Grouped difficulty, timer, hints */}
+      {/* Floor modifier banner */}
+      {floorModifiers.length > 0 && (
+        <View style={[styles.modifierBanner, { backgroundColor: theme.isDark ? '#3F1A1A' : '#FEF2F2' }]}>
+          {floorModifiers.map(mod => (
+            <Text key={mod} style={[styles.modifierBannerText, { color: theme.isDark ? '#FCA5A5' : '#B91C1C' }]} allowFontScaling={false}>
+              {FLOOR_MODIFIER_INFO[mod].icon} {FLOOR_MODIFIER_INFO[mod].name}
+            </Text>
+          ))}
+        </View>
+      )}
+
+      {/* Game Info Card: lives, timer, hints */}
       <View style={[styles.gameInfoCard, { backgroundColor: theme.colors.cardBackground }]}>
-        {/* Difficulty Tabs */}
-        <View style={styles.difficultyTabs}>
-          {(Object.keys(DIFFICULTY_CONFIG) as Difficulty[]).map(diff => (
-            <TouchableOpacity
-              key={diff}
-              style={[
-                styles.difficultyTab,
-                { backgroundColor: theme.isDark ? '#27272A' : '#F3F4F6' },
-                difficulty === diff && {
-                  backgroundColor: DIFFICULTY_CONFIG[diff].color,
-                }
-              ]}
-              onPress={() => {
-                playSoundEffect('buttonClick');
-                setDifficulty(diff);
-              }}
-            >
-              <Text
-                style={[
-                  styles.difficultyTabText,
-                  { color: theme.colors.textSecondary },
-                  difficulty === diff && styles.difficultyTabTextActive
-                ]}
-                allowFontScaling={false}
-              >
-                {diff.charAt(0).toUpperCase() + diff.slice(1)}
-              </Text>
-            </TouchableOpacity>
+        {/* Lives row */}
+        <View style={styles.livesRow}>
+          {Array.from({ length: maxLives }).map((_, i) => (
+            <Text key={i} style={styles.lifeIcon} allowFontScaling={false}>
+              {i < livesRemaining ? '❤️' : '🖤'}
+            </Text>
           ))}
         </View>
 
-        {/* Divider */}
         <View style={[styles.divider, { backgroundColor: theme.isDark ? '#3F3F46' : '#E5E7EB' }]} />
 
-        {/* Timer, Hints, and Mistakes Row */}
+        {/* Timer, Hints, Pause Row */}
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
             <Text style={styles.statIcon} allowFontScaling={false}>⏱️</Text>
@@ -792,18 +715,21 @@ const SudokuGrid = () => {
             <Text style={styles.statIcon} allowFontScaling={false}>💡</Text>
             <View style={styles.statInfo}>
               <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]} allowFontScaling={false}>Hints</Text>
-              <Text style={[styles.statValue, { color: theme.colors.textPrimary }]} allowFontScaling={false}>
-                {hintsUsed}/{DIFFICULTY_CONFIG[difficulty].maxHints}
+              <Text style={[
+                styles.statValue,
+                { color: floorModifiers.includes('no_hints') ? '#9CA3AF' : theme.colors.textPrimary },
+              ]} allowFontScaling={false}>
+                {floorModifiers.includes('no_hints') ? '—' : hintsRemaining}
               </Text>
             </View>
           </View>
 
           <View style={styles.statItem}>
-            <Text style={styles.statIcon} allowFontScaling={false}>❌</Text>
+            <Text style={styles.statIcon} allowFontScaling={false}>📍</Text>
             <View style={styles.statInfo}>
-              <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]} allowFontScaling={false}>Mistakes</Text>
+              <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]} allowFontScaling={false}>Floor</Text>
               <Text style={[styles.statValue, { color: theme.colors.textPrimary }]} allowFontScaling={false}>
-                {mistakesCount}
+                {currentFloor}/{maxFloors}
               </Text>
             </View>
           </View>
@@ -912,10 +838,10 @@ const SudokuGrid = () => {
 
             <TouchableOpacity
               style={[styles.actionButton, { backgroundColor: theme.colors.hintButton }]}
-              onPress={useHint}
+              onPress={handleUseHint}
               disabled={isPaused}
             >
-              <Text style={styles.actionButtonText} allowFontScaling={false}>💡 Hint</Text>
+              <Text style={styles.actionButtonText} allowFontScaling={false}>💡 {hintsRemaining}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -940,7 +866,7 @@ const SudokuGrid = () => {
       {isComplete && (
         <View style={[styles.completedContainer, { backgroundColor: theme.isDark ? '#052e16' : '#F0FDF4' }]}>
           <Text style={[styles.completedText, { color: theme.colors.success }]} maxFontSizeMultiplier={1.2}>
-            🎉 Come back tomorrow for a new puzzle!
+            {currentFloor >= maxFloors ? '🏆 Run Complete!' : '🎉 Floor cleared — great work!'}
           </Text>
         </View>
       )}
@@ -1210,6 +1136,40 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  // ── Roguelike additions ──────────────────────────────────────────────────
+  floorOf: {
+    fontSize: 20,
+    fontWeight: '400',
+  },
+  modifierBanner: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  modifierBannerText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  livesRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 4,
+    paddingBottom: 2,
+  },
+  lifeIcon: {
+    fontSize: 20,
+  },
+  tileBadge: {
+    position: 'absolute',
+    top: 1,
+    right: 2,
+    fontSize: 8,
+    lineHeight: 10,
   },
 });
 
