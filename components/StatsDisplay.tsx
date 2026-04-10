@@ -10,26 +10,34 @@ interface StatsDisplayProps {
 export default function StatsDisplay({ stats, theme }: StatsDisplayProps) {
   return (
     <View style={styles.container}>
-      {/* Streak Section */}
+      {/* Run Records */}
       <View style={[styles.card, { backgroundColor: theme.colors.cardBackground }]}>
         <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
-          🔥 Streaks
+          🗺️ Run Records
         </Text>
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: theme.colors.primaryButton }]}>
-              {stats.currentStreak}
+              {stats.maxFloorReached}
             </Text>
             <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>
-              Current Streak
+              Best Floor
             </Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: theme.colors.difficultyHard }]}>
-              {stats.bestStreak}
+            <Text style={[styles.statValue, { color: theme.colors.difficultyMedium }]}>
+              {stats.runsCompleted}
             </Text>
             <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>
-              Best Streak
+              Runs Won
+            </Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, { color: theme.colors.textPrimary }]}>
+              {stats.runsAttempted}
+            </Text>
+            <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>
+              Total Runs
             </Text>
           </View>
         </View>
@@ -43,15 +51,15 @@ export default function StatsDisplay({ stats, theme }: StatsDisplayProps) {
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: theme.colors.primaryButton }]}>
-              {stats.totalSolved}
+              {stats.totalFloorsCleared}
             </Text>
             <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>
-              Total Solved
+              Floors Cleared
             </Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: theme.colors.difficultyMedium }]}>
-              {stats.winRate}%
+            <Text style={[styles.statValue, { color: theme.colors.difficultyHard }]}>
+              {stats.completionRate}%
             </Text>
             <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>
               Win Rate
@@ -60,67 +68,26 @@ export default function StatsDisplay({ stats, theme }: StatsDisplayProps) {
         </View>
       </View>
 
-      {/* Average Times by Difficulty */}
+      {/* Coins & Mistakes */}
       <View style={[styles.card, { backgroundColor: theme.colors.cardBackground }]}>
         <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
-          ⏱️ Average Times
+          🪙 Economy
         </Text>
-        <View style={styles.difficultyRow}>
-          <View style={styles.difficultyItem}>
-            <View style={[styles.difficultyBadge, { backgroundColor: theme.colors.difficultyEasy }]}>
-              <Text style={styles.difficultyText}>Easy</Text>
-            </View>
-            <Text style={[styles.timeValue, { color: theme.colors.textPrimary }]}>
-              {stats.averageTimeEasy}
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, { color: '#F59E0B' }]}>
+              {stats.totalCoinsEarned}
+            </Text>
+            <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>
+              Coins Earned
             </Text>
           </View>
-          <View style={styles.difficultyItem}>
-            <View style={[styles.difficultyBadge, { backgroundColor: theme.colors.difficultyMedium }]}>
-              <Text style={styles.difficultyText}>Medium</Text>
-            </View>
-            <Text style={[styles.timeValue, { color: theme.colors.textPrimary }]}>
-              {stats.averageTimeMedium}
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, { color: theme.colors.difficultyHard }]}>
+              {stats.totalMistakes}
             </Text>
-          </View>
-          <View style={styles.difficultyItem}>
-            <View style={[styles.difficultyBadge, { backgroundColor: theme.colors.difficultyHard }]}>
-              <Text style={styles.difficultyText}>Hard</Text>
-            </View>
-            <Text style={[styles.timeValue, { color: theme.colors.textPrimary }]}>
-              {stats.averageTimeHard}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Best Times by Difficulty */}
-      <View style={[styles.card, { backgroundColor: theme.colors.cardBackground }]}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
-          🏆 Best Times
-        </Text>
-        <View style={styles.difficultyRow}>
-          <View style={styles.difficultyItem}>
-            <View style={[styles.difficultyBadge, { backgroundColor: theme.colors.difficultyEasy }]}>
-              <Text style={styles.difficultyText}>Easy</Text>
-            </View>
-            <Text style={[styles.timeValue, { color: theme.colors.textPrimary }]}>
-              {stats.bestTimeEasy}
-            </Text>
-          </View>
-          <View style={styles.difficultyItem}>
-            <View style={[styles.difficultyBadge, { backgroundColor: theme.colors.difficultyMedium }]}>
-              <Text style={styles.difficultyText}>Medium</Text>
-            </View>
-            <Text style={[styles.timeValue, { color: theme.colors.textPrimary }]}>
-              {stats.bestTimeMedium}
-            </Text>
-          </View>
-          <View style={styles.difficultyItem}>
-            <View style={[styles.difficultyBadge, { backgroundColor: theme.colors.difficultyHard }]}>
-              <Text style={styles.difficultyText}>Hard</Text>
-            </View>
-            <Text style={[styles.timeValue, { color: theme.colors.textPrimary }]}>
-              {stats.bestTimeHard}
+            <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>
+              Total Mistakes
             </Text>
           </View>
         </View>
@@ -162,27 +129,5 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 12,
     textAlign: 'center',
-  },
-  difficultyRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  difficultyItem: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  difficultyBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  difficultyText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  timeValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
   },
 });

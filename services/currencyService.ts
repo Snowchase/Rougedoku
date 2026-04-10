@@ -1,5 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Difficulty } from '../components/dailyPuzzleGenerator';
 
 const CURRENCY_STORAGE_KEY = 'sudokle_currency';
 const PURCHASES_STORAGE_KEY = 'sudokle_purchases';
@@ -21,38 +20,6 @@ export interface PurchaseData {
   selectedSong: string | null;
   selectedSoundPack: string;
 }
-
-// Coin rewards based on difficulty
-const DIFFICULTY_BASE_REWARDS: Record<Difficulty, number> = {
-  easy: 10,
-  medium: 25,
-  hard: 50,
-  expert: 100,
-};
-
-// Time bonus thresholds (in seconds) for extra coins
-const TIME_BONUSES: { threshold: number; bonus: number }[] = [
-  { threshold: 180, bonus: 50 },   // Under 3 minutes
-  { threshold: 300, bonus: 30 },   // Under 5 minutes
-  { threshold: 600, bonus: 15 },   // Under 10 minutes
-  { threshold: 900, bonus: 5 },    // Under 15 minutes
-];
-
-// Hint penalty (coins deducted per hint used)
-const HINT_PENALTY = 5;
-
-// Mistake penalty (coins deducted per mistake made)
-const MISTAKE_PENALTY = 5;
-
-// First completion bonus for each difficulty
-const FIRST_COMPLETION_BONUS = 50;
-
-// Daily streak bonuses
-const STREAK_BONUSES: { days: number; bonus: number }[] = [
-  { days: 7, bonus: 100 },
-  { days: 30, bonus: 500 },
-  { days: 100, bonus: 2000 },
-];
 
 const defaultCurrencyData: CurrencyData = {
   coins: 50, // Starting coins for new users
@@ -115,46 +82,6 @@ export async function savePurchaseData(data: PurchaseData): Promise<void> {
   } catch (error) {
     console.error('Error saving purchase data:', error);
   }
-}
-
-export function calculatePuzzleReward(
-  difficulty: Difficulty,
-  elapsedTime: number,
-  hintsUsed: number,
-  mistakesCount: number = 0,
-  isFirstCompletion: boolean = false
-): { baseReward: number; timeBonus: number; hintPenalty: number; mistakePenalty: number; firstBonus: number; total: number } {
-  const baseReward = DIFFICULTY_BASE_REWARDS[difficulty];
-
-  // Calculate time bonus
-  let timeBonus = 0;
-  for (const { threshold, bonus } of TIME_BONUSES) {
-    if (elapsedTime <= threshold) {
-      timeBonus = bonus;
-      break;
-    }
-  }
-
-  // Calculate hint penalty
-  const hintPenalty = hintsUsed * HINT_PENALTY;
-
-  // Calculate mistake penalty
-  const mistakePenalty = mistakesCount * MISTAKE_PENALTY;
-
-  // First completion bonus
-  const firstBonus = isFirstCompletion ? FIRST_COMPLETION_BONUS : 0;
-
-  // Calculate total (minimum 1 coin)
-  const total = Math.max(1, baseReward + timeBonus - hintPenalty - mistakePenalty + firstBonus);
-
-  return {
-    baseReward,
-    timeBonus,
-    hintPenalty,
-    mistakePenalty,
-    firstBonus,
-    total,
-  };
 }
 
 export async function addCoins(amount: number): Promise<CurrencyData> {
@@ -281,21 +208,6 @@ export async function isFontUnlocked(fontId: string): Promise<boolean> {
 export async function getSelectedFont(): Promise<string> {
   const purchases = await getPurchaseData();
   return purchases.selectedFont || 'default';
-}
-
-// Check if this is the first time completing a specific puzzle
-export async function checkFirstCompletion(date: string, difficulty: Difficulty): Promise<boolean> {
-  const key = `sudokle_first_completion_${date}_${difficulty}`;
-  try {
-    const completed = await AsyncStorage.getItem(key);
-    if (!completed) {
-      await AsyncStorage.setItem(key, 'true');
-      return true;
-    }
-    return false;
-  } catch (error) {
-    return false;
-  }
 }
 
 // Song purchase functions

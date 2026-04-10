@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useRouter } from 'expo-router';
 import {
   View,
   Text,
@@ -35,6 +36,7 @@ const { width } = Dimensions.get('window');
 const CELL_SIZE = Math.min((width - 40) / GRID_SIZE, 45);
 
 const SudokuGrid = () => {
+  const router = useRouter();
   const { theme } = useTheme();
   const { playSoundEffect } = useAudio();
   const { settings } = useSettings();
@@ -233,10 +235,11 @@ const SudokuGrid = () => {
 
       // Check iron floor modifier: any mistake fails the floor
       if (floorModifiers.includes('iron')) {
+        await failRun();
         Alert.alert(
-          '🔩 Iron — Floor Failed',
+          '🔩 Iron — Run Failed',
           'No mistakes are allowed on this floor.',
-          [{ text: 'OK', onPress: () => failRun() }],
+          [{ text: 'OK', onPress: () => router.replace('/run-summary') }],
         );
         return;
       }
@@ -245,7 +248,11 @@ const SudokuGrid = () => {
       const newLives = livesRemaining - livesLost;
       if (newLives <= 0) {
         await failRun();
-        Alert.alert('💀 Run Over', 'You ran out of lives!');
+        Alert.alert(
+          '💀 Run Over',
+          'You ran out of lives!',
+          [{ text: 'See Results', onPress: () => router.replace('/run-summary') }],
+        );
         return;
       }
 
@@ -296,7 +303,7 @@ const SudokuGrid = () => {
   }, [
     selectedCell, original, tileModifiers, floorModifiers, noteMode, notes,
     grid, solution, isComplete, livesRemaining, recordMistake, triggerTileEffect,
-    failRun, playSoundEffect,
+    failRun, playSoundEffect, router,
   ]);
 
   const checkCompletion = useCallback(async (currentGrid: number[][]) => {
@@ -316,30 +323,37 @@ const SudokuGrid = () => {
 
       const mins = Math.floor(elapsedTime / 60);
       const secs = elapsedTime % 60;
+      const isLastFloor = currentFloor >= maxFloors;
 
       let rewardText = `Floor ${currentFloor} of ${maxFloors} complete!\n⏱️ ${mins}:${secs.toString().padStart(2, '0')}\n\n🪙 +${reward.total} coins`;
       if (reward.goldBonus > 0) rewardText += `\n   🪙 Gold tiles: +${reward.goldBonus}`;
       if (reward.multiplierBonus > 0) rewardText += `\n   ⭐ Multiplier: +${reward.multiplierBonus}`;
       if (reward.speedBonus > 0) rewardText += `\n   ⚡ Speed bonus: +${reward.speedBonus}`;
 
-      const isLastFloor = currentFloor >= maxFloors;
+      const nextLabel = isLastFloor ? 'Finish' : (upgradeChoices.length > 0 ? 'Choose Upgrade' : 'Next Floor');
 
       Alert.alert(
         isLastFloor ? '🏆 Run Complete!' : '🎉 Floor Clear!',
         rewardText,
         [
           {
-            text: isLastFloor ? 'Finish' : (upgradeChoices.length > 0 ? 'Choose Upgrade' : 'Next Floor'),
-            onPress: async () => {
+            text: nextLabel,
+            onPress: () => {
               if (isLastFloor) {
-                await selectUpgrade(null, reward.total);
-                // TODO: navigate to run-summary screen
+                // selectUpgrade finalises the run as 'completed'
+                selectUpgrade(null, reward.total).then(() => {
+                  router.replace('/run-summary');
+                });
               } else if (upgradeChoices.length > 0) {
-                // TODO: navigate to upgrade-draft screen, then call selectUpgrade
-                // For now, skip upgrade and advance
-                await selectUpgrade(null, reward.total);
+                router.push({
+                  pathname: '/upgrade-draft',
+                  params: {
+                    choices: JSON.stringify(upgradeChoices),
+                    rewardCoins: String(reward.total),
+                  },
+                });
               } else {
-                await selectUpgrade(null, reward.total);
+                selectUpgrade(null, reward.total);
               }
             },
           },
@@ -348,7 +362,7 @@ const SudokuGrid = () => {
     } catch (err) {
       console.error('Error completing floor:', err);
     }
-  }, [isComplete, elapsedTime, currentFloor, maxFloors, completeFloor, selectUpgrade, playSoundEffect]);
+  }, [isComplete, elapsedTime, currentFloor, maxFloors, completeFloor, selectUpgrade, playSoundEffect, router]);
 
   const handleUseHint = useCallback(async () => {
     if (!selectedCell) {

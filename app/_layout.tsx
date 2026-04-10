@@ -61,6 +61,8 @@ export default function RootLayout() {
                       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                       <Stack.Screen name="shop" options={{ presentation: 'modal', title: 'Shop' }} />
                       <Stack.Screen name="patch-notes" options={{ headerShown: false }} />
+                      <Stack.Screen name="upgrade-draft" options={{ headerShown: false, gestureEnabled: false }} />
+                      <Stack.Screen name="run-summary" options={{ headerShown: false, gestureEnabled: false }} />
                     </Stack>
                     <StatusBar style="auto" />
                   </NavigationThemeProvider>
