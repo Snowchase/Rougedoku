@@ -44,7 +44,6 @@ export default function SettingsScreen() {
     setBoardLocked,
     setNotificationsEnabled,
     setNotificationHour,
-    setStreakAlertsEnabled,
   } = useSettings();
 
   const [hasUnseenNotes, setHasUnseenNotes] = useState(false);
@@ -71,9 +70,6 @@ export default function SettingsScreen() {
       setPermissionDenied(false);
       await setNotificationsEnabled(true);
       await notificationService.scheduleDailyReminder(gameSettings.notificationHour);
-      if (gameSettings.streakAlertsEnabled) {
-        await notificationService.scheduleStreakAlert();
-      }
     } else {
       await setNotificationsEnabled(false);
       await notificationService.cancelAll();
@@ -84,17 +80,6 @@ export default function SettingsScreen() {
     await setNotificationHour(hour);
     if (gameSettings.notificationsEnabled) {
       await notificationService.scheduleDailyReminder(hour);
-    }
-  };
-
-  const handleStreakAlertsToggle = async (enabled: boolean) => {
-    await setStreakAlertsEnabled(enabled);
-    if (gameSettings.notificationsEnabled) {
-      if (enabled) {
-        await notificationService.scheduleStreakAlert();
-      } else {
-        await notificationService.cancelStreakAlert();
-      }
     }
   };
 
@@ -140,7 +125,7 @@ export default function SettingsScreen() {
             Notifications
           </Text>
           <Text style={[styles.sectionDescription, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
-            Stay on top of your daily puzzle and streak
+            Get reminded when it's time to play
           </Text>
         </View>
 
@@ -207,25 +192,6 @@ export default function SettingsScreen() {
                 ))}
               </View>
 
-              <View style={[styles.divider, { backgroundColor: theme.colors.cellBackground }]} />
-
-              {/* Streak alert toggle */}
-              <View style={styles.settingRowWithSwitch}>
-                <View style={styles.settingLabelContainer}>
-                  <Text style={[styles.settingLabel, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
-                    Streak Alerts
-                  </Text>
-                  <Text style={[styles.settingSubLabel, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
-                    Warn me at 9 PM if I haven't played yet
-                  </Text>
-                </View>
-                <Switch
-                  value={gameSettings.streakAlertsEnabled}
-                  onValueChange={handleStreakAlertsToggle}
-                  trackColor={{ false: '#D1D5DB', true: theme.colors.primaryButton }}
-                  thumbColor="#fff"
-                />
-              </View>
             </>
           )}
         </View>
@@ -414,7 +380,7 @@ export default function SettingsScreen() {
             <View style={[styles.legalDivider, { backgroundColor: theme.colors.cellBackground }]} />
             <View style={styles.infoRows}>
               <Text style={[styles.infoText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
-                Sudokle - Daily Sudoku Challenge
+                Rougedoku - Sudoku Roguelike
               </Text>
               <Text style={[styles.infoText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
                 Version 1.1.5

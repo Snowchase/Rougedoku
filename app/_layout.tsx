@@ -28,11 +28,11 @@ function AppInitializer() {
 
   useEffect(() => {
     notificationService
-      .initialize(settings.notificationsEnabled, settings.notificationHour, settings.streakAlertsEnabled)
+      .initialize(settings.notificationsEnabled, settings.notificationHour)
       .catch((error) => {
         console.error('Failed to initialize notifications:', error);
       });
-  }, [settings.notificationsEnabled, settings.notificationHour, settings.streakAlertsEnabled]);
+  }, [settings.notificationsEnabled, settings.notificationHour]);
 
   return null;
 }
