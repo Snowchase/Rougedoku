@@ -27,7 +27,9 @@ import {
   FLOOR_MODIFIER_INFO,
   type TileModifier,
   RUN_CONFIG,
+  getScoreThreshold,
 } from '../constants/runConfig';
+import { ScoreBar } from './ScoreBar';
 import { getFloorDifficulty } from '../services/puzzleGenerator';
 import { addCoins } from '../services/currencyService';
 
@@ -51,6 +53,8 @@ const SudokuGrid = () => {
     selectUpgrade,
     failRun,
     updateFloorProgress,
+    scoreSection,
+    applyPerfectClearBonus,
   } = useRun();
   const activeFontStyle = (numberFonts.find(f => f.id === selectedFont) ?? numberFonts[0]).style;
 
@@ -294,16 +298,21 @@ const SudokuGrid = () => {
           if (event.effect === 'gain_life') {
             Alert.alert(`${tileLabel} Shield`, `+${event.value} life restored!`);
           }
-          // Gold/bonus coins are shown at floor clear summary, not here
+          if (event.effect === 'gain_coins' && event.type === 'multiplier') {
+            Alert.alert('⭐ Multiplier', `×${event.value} added! Mult is now ×${(floorState?.currentMult ?? 1)}`);
+          }
         }
       }
+
+      // Section scoring (row/col/box completions + comboist)
+      await scoreSection(newGrid, row, col);
 
       checkCompletion(newGrid);
     }
   }, [
     selectedCell, original, tileModifiers, floorModifiers, noteMode, notes,
     grid, solution, isComplete, livesRemaining, recordMistake, triggerTileEffect,
-    failRun, playSoundEffect, router,
+    failRun, playSoundEffect, router, scoreSection, floorState,
   ]);
 
   const checkCompletion = useCallback(async (currentGrid: number[][]) => {
@@ -318,6 +327,9 @@ const SudokuGrid = () => {
     playSoundEffect('puzzleComplete');
 
     try {
+      // Completionist bonus: perfect clear adds 500 × mult before floor reward calc
+      await applyPerfectClearBonus();
+
       const { reward, upgradeChoices } = await completeFloor();
       await addCoins(reward.total);
 
@@ -327,7 +339,7 @@ const SudokuGrid = () => {
 
       let rewardText = `Floor ${currentFloor} of ${maxFloors} complete!\n⏱️ ${mins}:${secs.toString().padStart(2, '0')}\n\n🪙 +${reward.total} coins`;
       if (reward.goldBonus > 0) rewardText += `\n   🪙 Gold tiles: +${reward.goldBonus}`;
-      if (reward.multiplierBonus > 0) rewardText += `\n   ⭐ Multiplier: +${reward.multiplierBonus}`;
+      if (reward.scoreBonus > 0) rewardText += `\n   ⭐ Score bonus: +${reward.scoreBonus}`;
       if (reward.speedBonus > 0) rewardText += `\n   ⚡ Speed bonus: +${reward.speedBonus}`;
 
       const nextLabel = isLastFloor ? 'Finish' : (upgradeChoices.length > 0 ? 'Choose Upgrade' : 'Next Floor');
@@ -362,7 +374,7 @@ const SudokuGrid = () => {
     } catch (err) {
       console.error('Error completing floor:', err);
     }
-  }, [isComplete, elapsedTime, currentFloor, maxFloors, completeFloor, selectUpgrade, playSoundEffect, router]);
+  }, [isComplete, elapsedTime, currentFloor, maxFloors, completeFloor, selectUpgrade, applyPerfectClearBonus, playSoundEffect, router]);
 
   const handleUseHint = useCallback(async () => {
     if (!selectedCell) {
@@ -416,6 +428,46 @@ const SudokuGrid = () => {
     }
   };
 
+  const handleAdvanceEarly = useCallback(async () => {
+    if (isComplete || completionInProgress.current) return;
+    completionInProgress.current = true;
+    setIsComplete(true);
+    playSoundEffect('puzzleComplete');
+
+    try {
+      // No perfect-clear bonus for advance-early (board not fully solved)
+      const { reward, upgradeChoices } = await completeFloor();
+      await addCoins(reward.total);
+
+      const isLastFloor = currentFloor >= maxFloors;
+      let rewardText = `Advanced early on Floor ${currentFloor}!\n\n🪙 +${reward.total} coins`;
+      if (reward.scoreBonus > 0) rewardText += `\n   ⭐ Score bonus: +${reward.scoreBonus}`;
+      if (reward.goldBonus > 0) rewardText += `\n   🪙 Gold tiles: +${reward.goldBonus}`;
+      if (reward.speedBonus > 0) rewardText += `\n   ⚡ Speed bonus: +${reward.speedBonus}`;
+
+      const nextLabel = isLastFloor ? 'Finish' : (upgradeChoices.length > 0 ? 'Choose Upgrade' : 'Next Floor');
+      Alert.alert(isLastFloor ? '🏆 Run Complete!' : '🎉 Advanced!', rewardText, [
+        {
+          text: nextLabel,
+          onPress: () => {
+            if (isLastFloor) {
+              selectUpgrade(null, reward.total).then(() => router.replace('/run-summary'));
+            } else if (upgradeChoices.length > 0) {
+              router.push({
+                pathname: '/upgrade-draft',
+                params: { choices: JSON.stringify(upgradeChoices), rewardCoins: String(reward.total) },
+              });
+            } else {
+              selectUpgrade(null, reward.total);
+            }
+          },
+        },
+      ]);
+    } catch (err) {
+      console.error('Error advancing early:', err);
+    }
+  }, [isComplete, currentFloor, maxFloors, completeFloor, selectUpgrade, playSoundEffect, router]);
+
   const handleResetPuzzle = () => {
     Alert.alert(
       'Restart Puzzle?',
@@ -428,8 +480,6 @@ const SudokuGrid = () => {
           onPress: () => {
             setGrid(original.map(r => [...r]));
             setNotes({});
-            setHintsUsed(0);
-            setMistakesCount(0);
             setNoteMode(false);
             setSelectedCell(null);
             setHighlightedNumber(null);
@@ -759,6 +809,16 @@ const SudokuGrid = () => {
         </View>
       </View>
 
+      {/* Score Bar */}
+      {!isComplete && (
+        <ScoreBar
+          totalScore={floorState?.totalScore ?? 0}
+          threshold={getScoreThreshold(currentFloor)}
+          currentMult={floorState?.currentMult ?? 1}
+          thresholdReached={floorState?.thresholdReached ?? false}
+        />
+      )}
+
       {/* Pause Overlay */}
       {isPaused && (
         <View style={styles.pauseOverlay}>
@@ -808,6 +868,19 @@ const SudokuGrid = () => {
 
       {!isComplete && (
         <>
+          {/* Advance Early button — shown once score threshold is met */}
+          {floorState?.thresholdReached && (
+            <TouchableOpacity
+              style={[styles.advanceButton, { backgroundColor: '#10B981' }]}
+              onPress={handleAdvanceEarly}
+              disabled={isPaused}
+            >
+              <Text style={styles.advanceButtonText} allowFontScaling={false}>
+                ✓ Advance to Floor {currentFloor + 1}
+              </Text>
+            </TouchableOpacity>
+          )}
+
           {/* Number Pad */}
           <View style={styles.numberPad}>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => {
@@ -1184,6 +1257,18 @@ const styles = StyleSheet.create({
     right: 2,
     fontSize: 8,
     lineHeight: 10,
+  },
+  advanceButton: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  advanceButtonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
 });
 

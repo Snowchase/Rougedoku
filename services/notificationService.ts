@@ -35,8 +35,8 @@ export const notificationService = {
     await Notifications.scheduleNotificationAsync({
       identifier: DAILY_REMINDER_ID,
       content: {
-        title: "Today's puzzle is waiting! 🧩",
-        body: "A new Sudoku is ready. Can you solve it?",
+        title: "Can you Conquer the doku? 🎮",
+        body: "Your next floor is waiting. Continue your run!",
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,
@@ -77,7 +77,6 @@ export const notificationService = {
   async initialize(
     notificationsEnabled: boolean,
     notificationHour: number,
-    streakAlertsEnabled: boolean,
   ): Promise<void> {
     if (Platform.OS === 'web') return;
 
@@ -90,11 +89,5 @@ export const notificationService = {
     if (status !== 'granted') return;
 
     await this.scheduleDailyReminder(notificationHour);
-
-    if (streakAlertsEnabled) {
-      await this.scheduleStreakAlert();
-    } else {
-      await this.cancelStreakAlert();
-    }
   },
 };

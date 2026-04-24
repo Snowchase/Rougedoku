@@ -24,15 +24,19 @@ export type FloorModifier =
   | 'cursed_board'; // all user-fillable cells start with cursed tint
 
 export type UpgradeId =
-  | 'alchemist'     // gold tiles pay 3× instead of 2×
-  | 'armored'       // cursed tiles never cost extra lives
-  | 'surgeon'       // first mistake per floor is forgiven
-  | 'scholar'       // start each floor with +2 hints
-  | 'gambler'       // tile rewards 2×, punishments 2×
-  | 'resilient'     // +1 max life at run start
-  | 'cartographer'  // all tile types revealed before floor starts
-  | 'recycler'      // filling a fragile tile correctly refunds 1 hint
-  | 'medic';        // shield tiles restore 2 lives instead of 1
+  | 'alchemist'      // gold tiles pay 3× instead of 2×
+  | 'armored'        // cursed tiles never cost extra lives
+  | 'surgeon'        // first mistake per floor is forgiven
+  | 'scholar'        // start each floor with +2 hints
+  | 'gambler'        // tile rewards 2×, punishments 2×
+  | 'resilient'      // +1 max life at run start
+  | 'cartographer'   // all tile types revealed before floor starts
+  | 'recycler'       // filling a fragile tile correctly refunds 1 hint
+  | 'medic'          // shield tiles restore 2 lives instead of 1
+  | 'arithmetician'  // row completions give 2× chips
+  | 'geometer'       // box completions give 2× chips
+  | 'comboist'       // each correct placement scores 10 × mult chips
+  | 'completionist'; // clearing the full board adds 500 × mult bonus
 
 export type RunStatus = 'active' | 'completed' | 'failed';
 
@@ -65,20 +69,25 @@ export interface FloorState {
   grid: number[][];
   original: number[][];
   solution: number[][];
-  notes: { [key: string]: number[] };          // "row-col" → candidate numbers
+  notes: { [key: string]: number[] };             // "row-col" → candidate numbers
   tileModifiers: { [key: string]: TileModifier }; // "row-col" → modifier
   floorModifiers: FloorModifier[];
   hintsUsedThisFloor: number;
   mistakesThisFloor: number;
   elapsedTime: number;
   isComplete: boolean;
+  // ── Scoring ───────────────────────────────────────────────────────────────
+  currentMult: number;          // current multiplier (starts at 1, +1 per multiplier tile)
+  totalScore: number;           // running chips×mult total this floor
+  sectionsCompleted: string[];  // 'row-0', 'col-3', 'box-4' — already-scored sections
+  thresholdReached: boolean;    // true once totalScore >= getScoreThreshold(floor)
 }
 
 export interface FloorReward {
   base: number;
   goldBonus: number;
   bonusTileFlat: number;
-  multiplierBonus: number;
+  scoreBonus: number;   // coins derived from totalScore (totalScore ÷ 100, rounded)
   speedBonus: number;
   total: number;
 }
@@ -170,12 +179,35 @@ export const TILE_ICONS: Record<TileType, string> = {
 export const TILE_DESCRIPTIONS: Record<TileType, string> = {
   gold:       '+coins when filled correctly',
   cursed:     'Lose an extra life if filled wrong',
-  multiplier: 'Boosts floor reward if all filled correctly',
+  multiplier: '+1 multiplier immediately when filled correctly',
   shield:     'Restore 1 life when filled correctly',
   hint:       'Reveals a neighboring cell when filled correctly',
   fragile:    'Cannot be erased once a number is placed',
   bonus:      'Flat coin bonus when filled correctly',
 };
+
+// ─── Scoring Constants ────────────────────────────────────────────────────────
+
+/** Chips awarded when a section (row / column / box) is fully completed correctly. */
+export const SECTION_CHIPS = {
+  row: 100,
+  col: 150,
+  box: 200,
+} as const;
+
+/** Bonus chips added to score when the entire board is cleared (Completionist upgrade). */
+export const PERFECT_CLEAR_CHIPS = 500;
+
+/**
+ * Returns the minimum score a player must accumulate on a given floor before
+ * they can advance (either by clearing the board or via the Advance Early button).
+ */
+export function getScoreThreshold(floor: number): number {
+  if (floor <= 5)  return 2000 + (floor - 1) * 400;   // 2000 → 3600
+  if (floor <= 10) return 4000 + (floor - 6) * 600;   // 4000 → 6400
+  if (floor <= 15) return 7000 + (floor - 11) * 800;  // 7000 → 10200
+  return 11000 + (floor - 16) * 1200;                  // 11000 → 15800
+}
 
 // ─── Upgrade Metadata ─────────────────────────────────────────────────────────
 
@@ -187,15 +219,19 @@ export interface UpgradeInfo {
 }
 
 export const UPGRADES: Record<UpgradeId, UpgradeInfo> = {
-  alchemist:    { id: 'alchemist',    name: 'Alchemist',    icon: '🧪', description: 'Gold tiles pay 3× instead of 2×' },
-  armored:      { id: 'armored',      name: 'Armored',      icon: '🛡', description: 'Cursed tiles never cost extra lives' },
-  surgeon:      { id: 'surgeon',      name: 'Surgeon',      icon: '🩺', description: 'First mistake per floor is forgiven' },
-  scholar:      { id: 'scholar',      name: 'Scholar',      icon: '📚', description: 'Start each floor with +2 hints' },
-  gambler:      { id: 'gambler',      name: 'Gambler',      icon: '🎲', description: 'All tile rewards 2×, punishments 2×' },
-  resilient:    { id: 'resilient',    name: 'Resilient',    icon: '💪', description: 'Start the run with +1 max life' },
-  cartographer: { id: 'cartographer', name: 'Cartographer', icon: '🗺', description: 'Tile types revealed before floor starts' },
-  recycler:     { id: 'recycler',     name: 'Recycler',     icon: '♻️', description: 'Filling a fragile tile correctly refunds 1 hint' },
-  medic:        { id: 'medic',        name: 'Medic',        icon: '❤️', description: 'Shield tiles restore 2 lives instead of 1' },
+  alchemist:     { id: 'alchemist',     name: 'Alchemist',     icon: '🧪', description: 'Gold tiles pay 3× instead of 2×' },
+  armored:       { id: 'armored',       name: 'Armored',       icon: '🛡', description: 'Cursed tiles never cost extra lives' },
+  surgeon:       { id: 'surgeon',       name: 'Surgeon',       icon: '🩺', description: 'First mistake per floor is forgiven' },
+  scholar:       { id: 'scholar',       name: 'Scholar',       icon: '📚', description: 'Start each floor with +2 hints' },
+  gambler:       { id: 'gambler',       name: 'Gambler',       icon: '🎲', description: 'All tile rewards 2×, punishments 2×' },
+  resilient:     { id: 'resilient',     name: 'Resilient',     icon: '💪', description: 'Start the run with +1 max life' },
+  cartographer:  { id: 'cartographer',  name: 'Cartographer',  icon: '🗺', description: 'Tile types revealed before floor starts' },
+  recycler:      { id: 'recycler',      name: 'Recycler',      icon: '♻️', description: 'Filling a fragile tile correctly refunds 1 hint' },
+  medic:         { id: 'medic',         name: 'Medic',         icon: '❤️', description: 'Shield tiles restore 2 lives instead of 1' },
+  arithmetician: { id: 'arithmetician', name: 'Arithmetician', icon: '🔢', description: 'Row completions give 2× chips' },
+  geometer:      { id: 'geometer',      name: 'Geometer',      icon: '📐', description: 'Box completions give 2× chips' },
+  comboist:      { id: 'comboist',      name: 'Comboist',      icon: '🎯', description: 'Each correct placement scores 10 × mult chips' },
+  completionist: { id: 'completionist', name: 'Completionist', icon: '🏆', description: 'Full board clear adds 500 × mult bonus score' },
 };
 
 // All upgrade IDs for use in pools

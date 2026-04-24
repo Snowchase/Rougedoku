@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView, Modal } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAudio } from '../../contexts/AudioContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -12,6 +13,7 @@ import { RUN_CONFIG } from '../../constants/runConfig';
 const { width } = Dimensions.get('window');
 
 const GIFT_AMOUNT = 250;
+const TUTORIAL_PROMPTED_KEY = 'rougedoku_tutorial_prompted';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -20,6 +22,7 @@ export default function HomeScreen() {
   const { coins, selectedSong, loading, addBonusCoins } = useCurrency();
   const { activeRun, hasActiveRun, startNewRun, isLoading: runLoading } = useRun();
   const [showGiftModal, setShowGiftModal] = useState(false);
+  const [showTutorialPrompt, setShowTutorialPrompt] = useState(false);
 
   // Check for returning player gift once currency is loaded
   useEffect(() => {
@@ -48,8 +51,25 @@ export default function HomeScreen() {
 
   const handlePlayPress = async () => {
     if (!hasActiveRun) {
+      const prompted = await AsyncStorage.getItem(TUTORIAL_PROMPTED_KEY);
+      if (!prompted) {
+        await AsyncStorage.setItem(TUTORIAL_PROMPTED_KEY, 'true');
+        setShowTutorialPrompt(true);
+        return;
+      }
       await startNewRun();
     }
+    router.push('/(tabs)/play');
+  };
+
+  const handleTutorialYes = () => {
+    setShowTutorialPrompt(false);
+    router.push('/(tabs)/tutorial');
+  };
+
+  const handleTutorialSkip = async () => {
+    setShowTutorialPrompt(false);
+    await startNewRun();
     router.push('/(tabs)/play');
   };
 
@@ -80,7 +100,7 @@ export default function HomeScreen() {
         <View style={styles.content}>
           {/* App Title */}
           <View style={styles.titleContainer}>
-            <Text style={[styles.title, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.1}>SUDOKLE</Text>
+            <Text style={[styles.title, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.1}>ROUGEDOKU</Text>
             <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>Sudoku Roguelike</Text>
           </View>
 
@@ -158,20 +178,46 @@ export default function HomeScreen() {
               <Text style={styles.secondaryButtonIcon} allowFontScaling={false}>🛒</Text>
               <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]} numberOfLines={1} allowFontScaling={false}>Shop</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.secondaryButton, { backgroundColor: theme.colors.cardBackground, borderColor: '#7C3AED' }]}
-              onPress={() => router.push('/(tabs)/leaderboards')}
-            >
-              <Text style={styles.secondaryButtonIcon} allowFontScaling={false}>🏆</Text>
-              <Text style={[styles.secondaryButtonText, { color: theme.colors.textPrimary }]} numberOfLines={1} allowFontScaling={false}>
-                Scores
-              </Text>
-            </TouchableOpacity>
           </View>
         </View>
         </View>
       </ScrollView>
+
+      {/* Tutorial Prompt Modal */}
+      <Modal
+        visible={showTutorialPrompt}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { backgroundColor: theme.colors.cardBackground }]}>
+            <Text style={styles.modalGiftIcon} allowFontScaling={false}>🗡️</Text>
+            <Text style={[styles.modalTitle, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
+              New to Rougedoku?
+            </Text>
+            <Text style={[styles.modalBody, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+              Take the quick tutorial to learn the basics before your first run — tiles, lives, upgrades, and more.
+            </Text>
+            <TouchableOpacity
+              style={[styles.modalButton, { backgroundColor: theme.colors.primaryButton }]}
+              onPress={handleTutorialYes}
+            >
+              <Text style={[styles.modalButtonText, { color: theme.colors.primaryButtonText }]} maxFontSizeMultiplier={1.2}>
+                Show Tutorial
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalSkipButton, { borderColor: theme.colors.textSecondary }]}
+              onPress={handleTutorialSkip}
+            >
+              <Text style={[styles.modalSkipText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+                Skip for now
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Returning Player Gift Modal */}
       <Modal
@@ -187,7 +233,7 @@ export default function HomeScreen() {
               Thank You!
             </Text>
             <Text style={[styles.modalBody, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
-              As a thank-you for playing and helping test Sudokle in its early stages, we've added a gift to your account.
+              As a thank-you for playing and helping test Rougedoku in its early stages, we've added a gift to your account.
             </Text>
             <View style={[styles.coinGiftBadge, { backgroundColor: theme.isDark ? '#422006' : '#FEF3C7' }]}>
               <Text style={styles.coinGiftEmoji} allowFontScaling={false}>🪙</Text>
@@ -271,7 +317,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    fontSize: 48,
+    fontSize: 44,
     fontWeight: 'bold',
     letterSpacing: 3,
   },
@@ -279,28 +325,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginTop: 6,
     letterSpacing: 0.5,
-  },
-  streakBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 18,
-    borderWidth: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  streakEmoji: {
-    fontSize: 20,
-    marginRight: 6,
-  },
-  streakText: {
-    fontSize: 14,
-    fontWeight: 'bold',
   },
   quoteCard: {
     width: '100%',
@@ -326,10 +350,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontStyle: 'italic',
     lineHeight: 17,
-  },
-  quoteAuthor: {
-    fontSize: 11,
-    marginTop: 2,
   },
   menuContainer: {
     width: '100%',
@@ -385,7 +405,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  // Gift modal
+  // Modals
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.55)',
@@ -413,6 +433,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 12,
+    textAlign: 'center',
   },
   modalBody: {
     fontSize: 15,
@@ -441,9 +462,20 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
+    marginBottom: 10,
   },
   modalButtonText: {
     fontSize: 17,
     fontWeight: 'bold',
+  },
+  modalSkipButton: {
+    width: '100%',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1.5,
+  },
+  modalSkipText: {
+    fontSize: 15,
   },
 });

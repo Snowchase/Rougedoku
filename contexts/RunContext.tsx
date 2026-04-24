@@ -30,6 +30,10 @@ import {
   rollUpgradeOptions,
   surgeonForgivesThisMistake,
   generateFloorState,
+  getNewlyCompletedSections,
+  scoreNewSections,
+  scoreCorrectPlacement,
+  scorePerfectClear,
 } from '../services/runService';
 
 // ─── Context Type ─────────────────────────────────────────────────────────────
@@ -102,6 +106,23 @@ interface RunContextType {
    * Ends the run as failed (called when livesRemaining reaches 0).
    */
   failRun: () => Promise<void>;
+
+  /**
+   * Scores newly completed sections after a correct cell placement.
+   * Also applies Comboist per-placement scoring.
+   * Returns total score gained and whether the threshold was just crossed.
+   */
+  scoreSection: (
+    grid: number[][],
+    row: number,
+    col: number,
+  ) => Promise<{ scoreGained: number; thresholdJustReached: boolean }>;
+
+  /**
+   * Applies the Completionist perfect-clear bonus (called when full board is correct).
+   * No-op if upgrade is not owned. Returns coins gained.
+   */
+  applyPerfectClearBonus: () => Promise<{ scoreGained: number }>;
 
   /** Returns true if an active run exists in storage (for home screen). */
   hasActiveRun: boolean;
@@ -283,7 +304,7 @@ export function RunProvider({ children }: { children: ReactNode }) {
     upgradeChoices: UpgradeId[];
   }> => {
     if (!activeRun || !floorState) {
-      return { reward: { base: 0, goldBonus: 0, bonusTileFlat: 0, multiplierBonus: 0, speedBonus: 0, total: 0 }, upgradeChoices: [] };
+      return { reward: { base: 0, goldBonus: 0, bonusTileFlat: 0, scoreBonus: 0, speedBonus: 0, total: 0 }, upgradeChoices: [] };
     }
 
     const completedFloor = { ...floorState, isComplete: true };
@@ -333,6 +354,47 @@ export function RunProvider({ children }: { children: ReactNode }) {
     return { runComplete: false };
   }, [activeRun, floorState, syncState]);
 
+  // ── Section Scoring ─────────────────────────────────────────────────────────
+
+  const scoreSection = useCallback(async (
+    grid: number[][],
+    row: number,
+    col: number,
+  ): Promise<{ scoreGained: number; thresholdJustReached: boolean }> => {
+    if (!activeRun || !floorState) return { scoreGained: 0, thresholdJustReached: false };
+
+    const wasThresholdReached = floorState.thresholdReached;
+
+    // Score newly completed rows/cols/boxes
+    const newSections = getNewlyCompletedSections(
+      grid, floorState.solution, row, col, floorState.sectionsCompleted,
+    );
+    const sectionResult = scoreNewSections(newSections, floorState, activeRun);
+
+    // Comboist: score the individual correct placement on top
+    const comboistResult = scoreCorrectPlacement(sectionResult.updatedFloor, activeRun);
+
+    const totalScoreGained = sectionResult.scoreGained + comboistResult.scoreGained;
+    const finalFloor = comboistResult.updatedFloor;
+    const thresholdJustReached = !wasThresholdReached && finalFloor.thresholdReached;
+
+    if (totalScoreGained > 0 || thresholdJustReached) {
+      await syncState(activeRun, finalFloor);
+    }
+
+    return { scoreGained: totalScoreGained, thresholdJustReached };
+  }, [activeRun, floorState, syncState]);
+
+  const applyPerfectClearBonus = useCallback(async (): Promise<{ scoreGained: number }> => {
+    if (!activeRun || !floorState) return { scoreGained: 0 };
+
+    const { scoreGained, updatedFloor } = scorePerfectClear(floorState, activeRun);
+    if (scoreGained > 0) {
+      await syncState(activeRun, updatedFloor);
+    }
+    return { scoreGained };
+  }, [activeRun, floorState, syncState]);
+
   // ── Run Failure ─────────────────────────────────────────────────────────────
 
   const failRun = useCallback(async () => {
@@ -358,6 +420,8 @@ export function RunProvider({ children }: { children: ReactNode }) {
     completeFloor,
     selectUpgrade,
     failRun,
+    scoreSection,
+    applyPerfectClearBonus,
     hasActiveRun: activeRun !== null && activeRun.status === 'active',
   };
 

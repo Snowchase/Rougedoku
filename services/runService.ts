@@ -14,6 +14,9 @@ import {
   RUN_CONFIG,
   ALL_UPGRADE_IDS,
   UPGRADES,
+  SECTION_CHIPS,
+  PERFECT_CLEAR_CHIPS,
+  getScoreThreshold,
 } from '../constants/runConfig';
 import {
   getFloorPuzzle,
@@ -134,6 +137,10 @@ export function generateFloorState(run: RunState, floor: number): FloorState {
     mistakesThisFloor: 0,
     elapsedTime: 0,
     isComplete: false,
+    currentMult: 1,
+    totalScore: 0,
+    sectionsCompleted: [],
+    thresholdReached: false,
   };
 }
 
@@ -173,6 +180,7 @@ export interface TileEffectResult {
   updatedFloor: FloorState;
   event: TileEvent | null;
   coinsDelta: number;     // coins to award immediately (gold/bonus tiles)
+  multDelta: number;      // +N added to currentMult (multiplier tiles)
   revealCellKey?: string; // for hint tiles
 }
 
@@ -194,7 +202,7 @@ export function applyTileEffect(
 
   // No modifier or already triggered — nothing to do
   if (!modifier || modifier.triggered) {
-    return { updatedRun: run, updatedFloor: floor, event: null, coinsDelta: 0 };
+    return { updatedRun: run, updatedFloor: floor, event: null, coinsDelta: 0, multDelta: 0 };
   }
 
   const hasGambler = run.runUpgrades.includes('gambler');
@@ -214,6 +222,7 @@ export function applyTileEffect(
   };
   let event: TileEvent | null = null;
   let coinsDelta = 0;
+  let multDelta = 0;
   let revealCellKey: string | undefined;
 
   if (correct) {
@@ -268,8 +277,10 @@ export function applyTileEffect(
       }
 
       case 'multiplier': {
-        // multiplier tiles are aggregated at floor-end — no immediate effect
-        event = { type: 'multiplier', cellKey, effect: 'gain_coins', value: 0 };
+        // +1 mult immediately (×2 if gambler)
+        multDelta = hasGambler ? 2 : 1;
+        updatedFloor = { ...updatedFloor, currentMult: updatedFloor.currentMult + multDelta };
+        event = { type: 'multiplier', cellKey, effect: 'gain_coins', value: multDelta };
         break;
       }
 
@@ -294,7 +305,154 @@ export function applyTileEffect(
     }
   }
 
-  return { updatedRun, updatedFloor, event, coinsDelta, revealCellKey };
+  return { updatedRun, updatedFloor, event, coinsDelta, multDelta, revealCellKey };
+}
+
+// ─── Section Scoring ──────────────────────────────────────────────────────────
+
+export interface SectionScoreResult {
+  scoreGained: number;
+  updatedFloor: FloorState;
+}
+
+/** Returns true if every cell in the section matches the solution (all filled correctly). */
+function isSectionComplete(
+  grid: number[][],
+  solution: number[][],
+  type: 'row' | 'col' | 'box',
+  index: number,
+): boolean {
+  if (type === 'row') {
+    for (let c = 0; c < 9; c++) {
+      if (grid[index][c] === 0 || grid[index][c] !== solution[index][c]) return false;
+    }
+    return true;
+  }
+  if (type === 'col') {
+    for (let r = 0; r < 9; r++) {
+      if (grid[r][index] === 0 || grid[r][index] !== solution[r][index]) return false;
+    }
+    return true;
+  }
+  // box: index 0-8, row-major (0=top-left, 1=top-mid, 2=top-right, …)
+  const br = Math.floor(index / 3) * 3;
+  const bc = (index % 3) * 3;
+  for (let r = br; r < br + 3; r++) {
+    for (let c = bc; c < bc + 3; c++) {
+      if (grid[r][c] === 0 || grid[r][c] !== solution[r][c]) return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Returns the section keys newly completed by placing a value in (row, col).
+ * Only returns sections not already in `alreadyCompleted`.
+ */
+export function getNewlyCompletedSections(
+  grid: number[][],
+  solution: number[][],
+  row: number,
+  col: number,
+  alreadyCompleted: string[],
+): string[] {
+  const rowKey  = `row-${row}`;
+  const colKey  = `col-${col}`;
+  const boxIdx  = Math.floor(row / 3) * 3 + Math.floor(col / 3);
+  const boxKey  = `box-${boxIdx}`;
+
+  const newly: string[] = [];
+  if (!alreadyCompleted.includes(rowKey) && isSectionComplete(grid, solution, 'row', row)) {
+    newly.push(rowKey);
+  }
+  if (!alreadyCompleted.includes(colKey) && isSectionComplete(grid, solution, 'col', col)) {
+    newly.push(colKey);
+  }
+  if (!alreadyCompleted.includes(boxKey) && isSectionComplete(grid, solution, 'box', boxIdx)) {
+    newly.push(boxKey);
+  }
+  return newly;
+}
+
+/**
+ * Scores a set of newly completed sections and returns the updated FloorState.
+ * Chips are totalled and multiplied by `floor.currentMult`.
+ */
+export function scoreNewSections(
+  newSections: string[],
+  floor: FloorState,
+  run: RunState,
+): SectionScoreResult {
+  if (newSections.length === 0) {
+    return { scoreGained: 0, updatedFloor: floor };
+  }
+
+  const hasArithmetician = run.runUpgrades.includes('arithmetician');
+  const hasGeometer      = run.runUpgrades.includes('geometer');
+
+  let chips = 0;
+  for (const key of newSections) {
+    if (key.startsWith('row-'))      chips += SECTION_CHIPS.row * (hasArithmetician ? 2 : 1);
+    else if (key.startsWith('col-')) chips += SECTION_CHIPS.col;
+    else if (key.startsWith('box-')) chips += SECTION_CHIPS.box * (hasGeometer ? 2 : 1);
+  }
+
+  const scoreGained   = chips * floor.currentMult;
+  const newTotal      = floor.totalScore + scoreGained;
+  const threshold     = getScoreThreshold(floor.floor);
+  const updatedFloor: FloorState = {
+    ...floor,
+    totalScore:        newTotal,
+    sectionsCompleted: [...floor.sectionsCompleted, ...newSections],
+    thresholdReached:  newTotal >= threshold,
+  };
+
+  return { scoreGained, updatedFloor };
+}
+
+/**
+ * Scores a single correct cell placement for the Comboist upgrade (10 × mult).
+ * Returns `scoreGained: 0` if the upgrade is not active.
+ */
+export function scoreCorrectPlacement(
+  floor: FloorState,
+  run: RunState,
+): SectionScoreResult {
+  if (!run.runUpgrades.includes('comboist')) {
+    return { scoreGained: 0, updatedFloor: floor };
+  }
+  const scoreGained  = 10 * floor.currentMult;
+  const newTotal     = floor.totalScore + scoreGained;
+  const threshold    = getScoreThreshold(floor.floor);
+  const updatedFloor: FloorState = {
+    ...floor,
+    totalScore:       newTotal,
+    thresholdReached: newTotal >= threshold,
+  };
+  return { scoreGained, updatedFloor };
+}
+
+/**
+ * Scores a perfect board clear (all cells correct) for the Completionist upgrade.
+ * Adds PERFECT_CLEAR_CHIPS × currentMult to total score.
+ * Returns `scoreGained: 0` if upgrade is not active.
+ */
+export function scorePerfectClear(
+  floor: FloorState,
+  run: RunState,
+): SectionScoreResult {
+  if (!run.runUpgrades.includes('completionist')) {
+    return { scoreGained: 0, updatedFloor: floor };
+  }
+  const scoreGained  = PERFECT_CLEAR_CHIPS * floor.currentMult;
+  const newTotal     = floor.totalScore + scoreGained;
+  const threshold    = getScoreThreshold(floor.floor);
+  const updatedFloor: FloorState = {
+    ...floor,
+    totalScore:       newTotal,
+    thresholdReached: newTotal >= threshold,
+  };
+  return { scoreGained, updatedFloor };
 }
 
 /**
@@ -392,16 +550,8 @@ export function calculateFloorReward(
     }
   }
 
-  // Multiplier tile bonus: if ALL multiplier tiles were triggered (filled correctly)
-  const allModifiers = Object.values(floor.tileModifiers);
-  const multiplierTiles = allModifiers.filter(m => m.type === 'multiplier');
-  const allMultiplierTriggered =
-    multiplierTiles.length > 0 && multiplierTiles.every(m => m.triggered);
-
-  const floorSubtotal = base + goldBonus + bonusTileFlat;
-  const multiplierBonus = allMultiplierTriggered
-    ? Math.round(floorSubtotal * RUN_CONFIG.multiplierPercent * (hasGambler ? 2 : 1))
-    : 0;
+  // Score bonus: coins derived from section-scoring total (100 score = 1 coin)
+  const scoreBonus = Math.round(floor.totalScore / 100);
 
   // Speed bonus
   const speedBonus =
@@ -410,13 +560,13 @@ export function calculateFloorReward(
       ? RUN_CONFIG.speedBonusCoins
       : 0;
 
-  const total = base + goldBonus + bonusTileFlat + multiplierBonus + speedBonus;
+  const total = base + goldBonus + bonusTileFlat + scoreBonus + speedBonus;
 
   return {
     base,
     goldBonus,
     bonusTileFlat,
-    multiplierBonus,
+    scoreBonus,
     speedBonus,
     total,
   };

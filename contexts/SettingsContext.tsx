@@ -7,7 +7,6 @@ interface GameSettings {
   boardLocked: boolean;
   notificationsEnabled: boolean;
   notificationHour: NotificationHour;
-  streakAlertsEnabled: boolean;
 }
 
 interface SettingsContextType {
@@ -15,14 +14,12 @@ interface SettingsContextType {
   setBoardLocked: (locked: boolean) => Promise<void>;
   setNotificationsEnabled: (enabled: boolean) => Promise<void>;
   setNotificationHour: (hour: NotificationHour) => Promise<void>;
-  setStreakAlertsEnabled: (enabled: boolean) => Promise<void>;
 }
 
 const defaultSettings: GameSettings = {
   boardLocked: true,
   notificationsEnabled: false,
   notificationHour: 8,
-  streakAlertsEnabled: true,
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -69,10 +66,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     await saveSettings({ ...settings, notificationHour: hour });
   };
 
-  const setStreakAlertsEnabled = async (enabled: boolean) => {
-    await saveSettings({ ...settings, streakAlertsEnabled: enabled });
-  };
-
   return (
     <SettingsContext.Provider
       value={{
@@ -80,7 +73,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setBoardLocked,
         setNotificationsEnabled,
         setNotificationHour,
-        setStreakAlertsEnabled,
       }}
     >
       {children}
