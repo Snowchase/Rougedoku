@@ -52,10 +52,54 @@ export interface AppTheme {
 }
 
 export const themes: { [key: string]: AppTheme } = {
+  dungeon: {
+    name: 'Dungeon',
+    price: 0,
+    description: 'Dark and atmospheric roguelike dungeon aesthetic',
+    isDark: true,
+    colors: {
+      background: '#0D0B0A',
+      cardBackground: '#1A1613',
+
+      gridBorder: '#8B6914',
+      cellBorder: '#2A2218',
+      cellBackground: '#141210',
+      cellBackgroundAlt: '#1E1A16',
+      cellOriginal: '#2A2218',
+      cellOriginalAlt: '#332A1E',
+      cellSelected: '#7C5510',
+      cellWrong: '#5C1616',
+      cellHighlighted: '#4A3A0E',
+
+      textPrimary: '#F0E0C0',
+      textSecondary: '#9A8060',
+      textOriginal: '#E8D090',
+      textUser: '#FFB830',
+
+      primaryButton: '#B8860B',
+      primaryButtonText: '#0D0B0A',
+      secondaryButton: '#3D3028',
+      secondaryButtonText: '#F0E0C0',
+
+      difficultyEasy: '#22C55E',
+      difficultyMedium: '#F59E0B',
+      difficultyHard: '#EF4444',
+      difficultyExpert: '#A855F7',
+
+      hintButton: '#A855F7',
+      clearButton: '#EF4444',
+      noteButton: '#22C55E',
+
+      success: '#22C55E',
+      error: '#EF4444',
+      warning: '#F59E0B',
+    },
+  },
+
   default: {
     name: 'Classic Blue',
     price: 0,
-    description: 'The classic Sudokle experience',
+    description: 'The classic Rougedoku experience',
     isDark: false,
     colors: {
       background: '#F9FAFB',
@@ -451,7 +495,7 @@ export const themes: { [key: string]: AppTheme } = {
   space: {
     name: 'Deep Space',
     price: 0,
-    description: 'Sudoku Pass exclusive — cosmic dark theme',
+    description: 'Rougedoku Pass exclusive — cosmic dark theme',
     isDark: true,
     colors: {
       background: '#03030A',
@@ -492,9 +536,9 @@ export const themes: { [key: string]: AppTheme } = {
     },
   },
   sudokupass: {
-    name: 'Sudoku Pass Gold',
+    name: 'Rougedoku Pass Gold',
     price: 0,
-    description: 'Sudoku Pass exclusive — prestige golden theme',
+    description: 'Rougedoku Pass exclusive — prestige golden theme',
     isDark: false,
     colors: {
       background: '#FFFBEB',

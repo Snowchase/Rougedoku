@@ -1,25 +1,25 @@
 {
   "expo": {
-    "name": "Sudokle",
-    "slug": "sudokle",
+    "name": "Rougedoku",
+    "slug": "rougedoku",
     "version": "1.1.7",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "sudokleapp",
+    "scheme": "rougedoku",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0D0B0A"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.chase.sudokle",
       "buildNumber": "9",
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Allow Sudokle to access your photos to share your scores.",
-        "NSCameraUsageDescription": "Allow Sudokle to use your camera to share your scores.",
+        "NSPhotoLibraryUsageDescription": "Allow Rougedoku to access your photos to share your scores.",
+        "NSCameraUsageDescription": "Allow Rougedoku to use your camera to share your scores.",
         "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you and to measure ad performance. You can change this in Settings at any time.",
         "ITSAppUsesNonExemptEncryption": false,
         "GADDelayAppMeasurementInit": true
@@ -51,9 +51,9 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#0D0B0A",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#0D0B0A"
           }
         }
       ],

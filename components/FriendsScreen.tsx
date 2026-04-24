@@ -141,7 +141,7 @@ const FriendsScreen = () => {
 
     try {
       await Share.share({
-        message: `Add me on Sudokle! My friend code is: ${myProfile.friendCode}`,
+        message: `Add me on Rougedoku! My friend code is: ${myProfile.friendCode}`,
       });
     } catch (error) {
       console.error('Error sharing:', error);

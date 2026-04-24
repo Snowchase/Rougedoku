@@ -48,12 +48,6 @@ export default function TabLayout() {
           href: null,
         }}
       />
-      <Tabs.Screen
-        name="versus"
-        options={{
-          href: null,
-        }}
-      />
     </Tabs>
   );
 }

@@ -100,47 +100,96 @@ export default function HomeScreen() {
         <View style={styles.content}>
           {/* App Title */}
           <View style={styles.titleContainer}>
+            <View style={[styles.titleDivider, { backgroundColor: theme.colors.warning }]} />
             <Text style={[styles.title, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.1}>ROUGEDOKU</Text>
-            <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>Sudoku Roguelike</Text>
+            <Text style={[styles.subtitle, { color: theme.colors.warning }]} maxFontSizeMultiplier={1.2}>ROGUELIKE SUDOKU</Text>
+            <View style={[styles.titleDivider, { backgroundColor: theme.colors.warning }]} />
           </View>
 
           {/* Run Status Card */}
           {!runLoading && (
-            <View style={[styles.quoteCard, { backgroundColor: theme.colors.cardBackground }]}>
+            <View style={[
+              styles.runCard,
+              {
+                backgroundColor: theme.colors.cardBackground,
+                borderColor: hasActiveRun ? theme.colors.warning : theme.colors.cellBorder,
+              }
+            ]}>
               {hasActiveRun && activeRun ? (
                 <>
-                  <Text style={styles.quoteIcon} allowFontScaling={false}>⚔️</Text>
-                  <Text style={[styles.quoteText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.1}>
-                    Floor {activeRun.currentFloor}/{activeRun.maxFloors}
-                    {'  '}{'❤️'.repeat(activeRun.livesRemaining)}{'🖤'.repeat(Math.max(0, activeRun.maxLives - activeRun.livesRemaining))}
-                    {'  '}💡{activeRun.hintsRemaining}
-                  </Text>
+                  <View style={styles.runCardHeader}>
+                    <Text style={styles.runCardIcon} allowFontScaling={false}>⚔️</Text>
+                    <Text style={[styles.runCardLabel, { color: theme.colors.warning }]} maxFontSizeMultiplier={1.1}>
+                      ACTIVE RUN
+                    </Text>
+                    <Text style={[styles.runCardFloor, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.1}>
+                      Floor {activeRun.currentFloor} / {activeRun.maxFloors}
+                    </Text>
+                  </View>
+                  <View style={[styles.progressBarTrack, { backgroundColor: theme.colors.cellBorder }]}>
+                    <View style={[
+                      styles.progressBarFill,
+                      {
+                        backgroundColor: theme.colors.warning,
+                        width: `${(activeRun.currentFloor / activeRun.maxFloors) * 100}%` as any,
+                      }
+                    ]} />
+                  </View>
+                  <View style={styles.runCardStats}>
+                    <View style={styles.runStat}>
+                      <Text style={styles.runStatIcon} allowFontScaling={false}>
+                        {'❤️'.repeat(activeRun.livesRemaining)}{'🖤'.repeat(Math.max(0, activeRun.maxLives - activeRun.livesRemaining))}
+                      </Text>
+                      <Text style={[styles.runStatLabel, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+                        Lives
+                      </Text>
+                    </View>
+                    <View style={[styles.runStatDivider, { backgroundColor: theme.colors.cellBorder }]} />
+                    <View style={styles.runStat}>
+                      <Text style={styles.runStatIcon} allowFontScaling={false}>💡 {activeRun.hintsRemaining}</Text>
+                      <Text style={[styles.runStatLabel, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
+                        Hints
+                      </Text>
+                    </View>
+                  </View>
                 </>
               ) : (
-                <>
-                  <Text style={styles.quoteIcon} allowFontScaling={false}>🗺️</Text>
-                  <Text style={[styles.quoteText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.1}>
-                    No run in progress. Start a new run to begin your roguelike adventure!
+                <View style={styles.noRunContent}>
+                  <Text style={styles.noRunIcon} allowFontScaling={false}>🏚️</Text>
+                  <Text style={[styles.noRunText, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.1}>
+                    The dungeon awaits. Start a new run to begin your descent.
                   </Text>
-                </>
+                </View>
               )}
             </View>
           )}
 
           {/* Menu Buttons */}
           <View style={styles.menuContainer}>
-          {/* Primary Buttons Group */}
+          {/* Primary Action Button */}
           <TouchableOpacity
-            style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.primaryButton }]}
+            style={[
+              styles.primaryActionButton,
+              {
+                backgroundColor: hasActiveRun ? theme.colors.primaryButton : theme.colors.cardBackground,
+                borderColor: theme.colors.primaryButton,
+              }
+            ]}
             onPress={handlePlayPress}
             disabled={runLoading}
           >
-            <Text style={styles.menuButtonIcon} allowFontScaling={false}>{hasActiveRun ? '▶️' : '🎮'}</Text>
-            <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>
+            <Text style={styles.menuButtonIcon} allowFontScaling={false}>{hasActiveRun ? '⚔️' : '🎮'}</Text>
+            <Text style={[
+              styles.menuButtonText,
+              { color: hasActiveRun ? theme.colors.primaryButtonText : theme.colors.textPrimary }
+            ]} maxFontSizeMultiplier={1.2}>
               {hasActiveRun ? 'Continue Run' : 'Start Run'}
             </Text>
-            <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>
-              {hasActiveRun && activeRun ? `Floor ${activeRun.currentFloor} of ${activeRun.maxFloors}` : 'Begin a new roguelike run'}
+            <Text style={[
+              styles.menuButtonSubtext,
+              { color: hasActiveRun ? theme.colors.primaryButtonText : theme.colors.textSecondary, opacity: 0.85 }
+            ]} maxFontSizeMultiplier={1.2}>
+              {hasActiveRun && activeRun ? `Resume floor ${activeRun.currentFloor} of ${activeRun.maxFloors}` : 'Begin a new roguelike run'}
             </Text>
           </TouchableOpacity>
 
@@ -152,14 +201,6 @@ export default function HomeScreen() {
             <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>Social</Text>
             <Text style={[styles.menuButtonSubtext, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={1.2}>Profile & friends</Text>
           </TouchableOpacity>
-
-          <View
-            style={[styles.menuButton, { backgroundColor: theme.colors.cardBackground, borderColor: '#EF4444', opacity: 0.6 }]}
-          >
-            <Text style={styles.menuButtonIcon} allowFontScaling={false}>⚔️</Text>
-            <Text style={[styles.menuButtonText, { color: theme.colors.textPrimary }]} maxFontSizeMultiplier={1.2}>Versus</Text>
-            <Text style={[styles.menuButtonSubtext, { color: '#EF4444' }]} maxFontSizeMultiplier={1.2}>Coming Soon</Text>
-          </View>
 
           {/* Secondary Buttons Group */}
           <View style={styles.secondaryButtonsRow}>
@@ -314,47 +355,117 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
+    gap: 8,
+  },
+  titleDivider: {
+    width: 56,
+    height: 2,
+    borderRadius: 1,
+    opacity: 0.7,
   },
   title: {
     fontSize: 44,
     fontWeight: 'bold',
-    letterSpacing: 3,
+    letterSpacing: 4,
   },
   subtitle: {
-    fontSize: 15,
-    marginTop: 6,
-    letterSpacing: 0.5,
+    fontSize: 11,
+    letterSpacing: 3,
+    fontWeight: '600',
   },
-  quoteCard: {
+  runCard: {
     width: '100%',
     maxWidth: 360,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderRadius: 14,
+    padding: 16,
     marginBottom: 16,
+    borderWidth: 1.5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 4,
+    gap: 12,
+  },
+  runCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    gap: 8,
   },
-  quoteIcon: {
+  runCardIcon: {
+    fontSize: 20,
+  },
+  runCardLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 2,
+    flex: 1,
+  },
+  runCardFloor: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  progressBarTrack: {
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  runCardStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+  },
+  runStat: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
+  },
+  runStatIcon: {
     fontSize: 16,
   },
-  quoteText: {
+  runStatLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  runStatDivider: {
+    width: 1,
+    height: 32,
+    marginHorizontal: 8,
+  },
+  noRunContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  noRunIcon: {
+    fontSize: 28,
+  },
+  noRunText: {
     flex: 1,
-    fontSize: 12,
+    fontSize: 13,
+    lineHeight: 19,
     fontStyle: 'italic',
-    lineHeight: 17,
   },
   menuContainer: {
     width: '100%',
     maxWidth: 360,
     gap: 12,
+  },
+  primaryActionButton: {
+    padding: 18,
+    borderRadius: 14,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 2,
   },
   menuButton: {
     padding: 18,
