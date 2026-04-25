@@ -28,7 +28,7 @@ const defaultCurrencyData: CurrencyData = {
 };
 
 const defaultPurchaseData: PurchaseData = {
-  unlockedThemes: ['default', 'dark'], // Default themes are free
+  unlockedThemes: ['default', 'dark', 'dungeon'], // Default themes are free
   unlockedAvatars: [],
   unlockedCellStyles: ['default'],
   unlockedFonts: ['default'], // Default font is free

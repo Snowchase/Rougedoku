@@ -244,7 +244,7 @@ export const SOUND_PACKS: SoundPack[] = [
   {
     id: 'default',
     name: 'Classic',
-    description: 'The original Sudokle sounds',
+    description: 'The original Rougedoku sounds',
     emoji: '🎯',
     price: 0,
     isSudokuPassReward: false,

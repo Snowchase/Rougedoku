@@ -13,8 +13,8 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const THEME_STORAGE_KEY = 'sudokle_theme';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [themeKey, setThemeKey] = useState<ThemeKey>('dark');
-  const [theme, setThemeState] = useState<AppTheme>(themes.dark);
+  const [themeKey, setThemeKey] = useState<ThemeKey>('dungeon');
+  const [theme, setThemeState] = useState<AppTheme>(themes.dungeon);
 
   useEffect(() => {
     loadTheme();

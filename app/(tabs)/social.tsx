@@ -263,7 +263,7 @@ export default function SocialScreen() {
     if (!profile) return;
     try {
       await Share.share({
-        message: `Join me on Sudokle! Use my code ${profile.friendCode} to get 100 free coins when you sign up!`,
+        message: `Join me on Rougedoku! Use my code ${profile.friendCode} to get 100 free coins when you sign up!`,
       });
     } catch (error) {
       console.error('Error sharing:', error);

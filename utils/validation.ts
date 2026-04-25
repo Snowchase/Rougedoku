@@ -72,7 +72,7 @@ export function validateUsername(username: string): ValidationResult {
   }
 
   // Check for reserved usernames
-  const reservedNames = ['admin', 'moderator', 'sudokle', 'system', 'official'];
+  const reservedNames = ['admin', 'moderator', 'sudokle', 'rougedoku', 'system', 'official'];
   if (reservedNames.includes(username.toLowerCase())) {
     return {
       isValid: false,

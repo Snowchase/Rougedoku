@@ -18,7 +18,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { notificationService } from '../../services/notificationService';
 import { patchNotesService } from '../../services/patchNotesService';
 
-// TODO: Replace these URLs with your actual hosted policy URLs
+// TODO: Replace these with Rougedoku-branded hosted policy URLs once available
 const PRIVACY_POLICY_URL = 'https://sudokleprivacy.netlify.app/';
 const TERMS_OF_SERVICE_URL = 'https://sudokleterms.netlify.app/';
 

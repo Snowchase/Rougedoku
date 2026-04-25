@@ -97,9 +97,9 @@ export default function ShopScreen() {
 
     if (themeData.price === 0) {
       Alert.alert(
-        'Sudoku Pass Exclusive',
-        `${themeData.name} is a Sudoku Pass reward. Earn XP by completing puzzles to unlock it!`,
-        [{ text: 'OK' }, { text: 'View Pass', onPress: () => router.push('/sudoku-pass') }]
+        'Rougedoku Pass Exclusive',
+        `${themeData.name} is a Rougedoku Pass reward. Keep playing to unlock it!`,
+        [{ text: 'OK' }]
       );
       return;
     }
@@ -144,9 +144,9 @@ export default function ShopScreen() {
 
     if (price === 0) {
       Alert.alert(
-        'Sudoku Pass Exclusive',
-        `${fontName} is a Sudoku Pass reward. Earn XP by completing puzzles to unlock it!`,
-        [{ text: 'OK' }, { text: 'View Pass', onPress: () => router.push('/sudoku-pass') }]
+        'Rougedoku Pass Exclusive',
+        `${fontName} is a Rougedoku Pass reward. Keep playing to unlock it!`,
+        [{ text: 'OK' }]
       );
       return;
     }
@@ -183,9 +183,9 @@ export default function ShopScreen() {
 
     if (price === 0) {
       Alert.alert(
-        'Sudoku Pass Exclusive',
-        `${emoji} ${name} is a Sudoku Pass reward. Earn XP by completing puzzles to unlock it!`,
-        [{ text: 'OK' }, { text: 'View Pass', onPress: () => router.push('/sudoku-pass') }]
+        'Rougedoku Pass Exclusive',
+        `${emoji} ${name} is a Rougedoku Pass reward. Keep playing to unlock it!`,
+        [{ text: 'OK' }]
       );
       return;
     }
@@ -222,9 +222,9 @@ export default function ShopScreen() {
 
     if (price === 0) {
       Alert.alert(
-        'Sudoku Pass Exclusive',
-        `${name} is a Sudoku Pass reward. Earn XP by completing puzzles to unlock it!`,
-        [{ text: 'OK' }, { text: 'View Pass', onPress: () => router.push('/sudoku-pass') }]
+        'Rougedoku Pass Exclusive',
+        `${name} is a Rougedoku Pass reward. Keep playing to unlock it!`,
+        [{ text: 'OK' }]
       );
       return;
     }
@@ -599,7 +599,7 @@ export default function ShopScreen() {
           <View style={styles.songInfo}>
             <Text style={[styles.songName, { color: theme.colors.textPrimary }]}>Default Music</Text>
             <Text style={[styles.songArtist, { color: theme.colors.textSecondary }]}>Built-in</Text>
-            <Text style={[styles.songDesc, { color: theme.colors.textSecondary }]}>Original Sudokle music</Text>
+            <Text style={[styles.songDesc, { color: theme.colors.textSecondary }]}>Original Rougedoku music</Text>
           </View>
           <View style={styles.priceBadge}>
             <View style={[styles.ownedBadge, { backgroundColor: selectedSong === null ? theme.colors.primaryButton : theme.colors.success }]}>
@@ -676,7 +676,7 @@ export default function ShopScreen() {
 
     if (price === 0) {
       // Sudoku pass only — not purchasable
-      Alert.alert('Sudoku Pass Reward', `${packName} is unlocked via the Sudoku Pass. Keep playing to earn XP!`);
+      Alert.alert('Rougedoku Pass Reward', `${packName} is unlocked via the Rougedoku Pass. Keep playing to earn XP!`);
       return;
     }
 
@@ -981,7 +981,7 @@ export default function ShopScreen() {
               Color Themes
             </Text>
             <Text style={[styles.sectionDesc, { color: theme.colors.textSecondary }]}>
-              Personalize your Sudokle experience
+              Personalize your Rougedoku experience
             </Text>
             <View style={styles.themesGrid}>
               {themeKeys.map(key => renderThemeCard(key))}
