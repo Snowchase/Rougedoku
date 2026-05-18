@@ -27,8 +27,8 @@ import {
 
 // ─── Storage Keys ─────────────────────────────────────────────────────────────
 
-const RUN_STATE_KEY = 'sudokle_active_run';
-const FLOOR_STATE_KEY = 'sudokle_floor_state';
+const RUN_STATE_KEY = 'rougedoku_active_run';
+const FLOOR_STATE_KEY = 'rougedoku_floor_state';
 
 // ─── UUID ─────────────────────────────────────────────────────────────────────
 

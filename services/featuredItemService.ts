@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { themes, ThemeKey } from '../constants/themes';
 import { numberFonts, premiumAvatars, premiumSongs } from '../constants/customizations';
 
-const FEATURED_ITEM_KEY = 'sudokle_featured_item';
+const FEATURED_ITEM_KEY = 'rougedoku_featured_item';
 
 export type FeaturedItemType = 'theme' | 'font' | 'avatar' | 'song';
 

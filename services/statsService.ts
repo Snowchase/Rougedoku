@@ -3,7 +3,7 @@ import { db, auth } from '../components/firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RunState } from '../constants/runConfig';
 
-const STATS_STORAGE_KEY = 'sudokle_user_stats';
+const STATS_STORAGE_KEY = 'rougedoku_user_stats';
 
 // ─── Run-based stats ──────────────────────────────────────────────────────────
 

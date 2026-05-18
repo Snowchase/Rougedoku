@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const GIFT_CLAIMED_KEY = 'sudokle_gift_v115_claimed';
-const STATS_STORAGE_KEY = 'sudokle_user_stats';
+const GIFT_CLAIMED_KEY = 'rougedoku_gift_v115_claimed';
+const STATS_STORAGE_KEY = 'rougedoku_user_stats';
 
 /**
  * Returns true if:

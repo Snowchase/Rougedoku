@@ -9,8 +9,8 @@ Notifications.setNotificationHandler({
   }),
 });
 
-const DAILY_REMINDER_ID = 'sudokle_daily_reminder';
-const STREAK_ALERT_ID = 'sudokle_streak_alert';
+const DAILY_REMINDER_ID = 'rougedoku_daily_reminder';
+const STREAK_ALERT_ID = 'rougedoku_streak_alert';
 
 // The hour (local time) at which the streak alert fires regardless of reminder time.
 const STREAK_ALERT_HOUR = 21;

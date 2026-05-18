@@ -15,8 +15,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.chase.sudokle",
-      "buildNumber": "9",
+      "bundleIdentifier": "com.snowchase.rougedoku",
+      "buildNumber": "1",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow Rougedoku to access your photos to share your scores.",
         "NSCameraUsageDescription": "Allow Rougedoku to use your camera to share your scores.",
@@ -26,8 +26,8 @@
       }
     },
     "android": {
-      "package": "com.snowchase.sudokle",
-      "versionCode": 7,
+      "package": "com.snowchase.rougedoku",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -71,7 +71,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "3b5528a1-cc2b-49a4-8937-d5048657b147"
+        "projectId": "REPLACE_WITH_NEW_EAS_PROJECT_ID"
       },
       "router": {}
     },

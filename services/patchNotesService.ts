@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PATCH_NOTES } from '../constants/patchNotes';
 
-const SEEN_VERSION_KEY = 'sudokle_last_seen_patch_version';
+const SEEN_VERSION_KEY = 'rougedoku_last_seen_patch_version';
 const LATEST_VERSION = PATCH_NOTES[0].version;
 
 export const patchNotesService = {

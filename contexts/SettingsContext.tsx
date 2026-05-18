@@ -24,7 +24,7 @@ const defaultSettings: GameSettings = {
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
-const SETTINGS_STORAGE_KEY = 'sudokle_game_settings';
+const SETTINGS_STORAGE_KEY = 'rougedoku_game_settings';
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<GameSettings>(defaultSettings);

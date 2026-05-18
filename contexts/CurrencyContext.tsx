@@ -33,7 +33,7 @@ import {
 } from '../services/referralService';
 import { auth } from '../components/firebaseConfig';
 
-const REFERRAL_COINS_GRANTED_KEY = 'sudokle_referral_coins_granted';
+const REFERRAL_COINS_GRANTED_KEY = 'rougedoku_referral_coins_granted';
 
 interface CurrencyContextType {
   coins: number;

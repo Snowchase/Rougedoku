@@ -10,7 +10,7 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const THEME_STORAGE_KEY = 'sudokle_theme';
+const THEME_STORAGE_KEY = 'rougedoku_theme';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [themeKey, setThemeKey] = useState<ThemeKey>('dungeon');

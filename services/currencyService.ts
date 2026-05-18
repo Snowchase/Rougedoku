@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const CURRENCY_STORAGE_KEY = 'sudokle_currency';
-const PURCHASES_STORAGE_KEY = 'sudokle_purchases';
+const CURRENCY_STORAGE_KEY = 'rougedoku_currency';
+const PURCHASES_STORAGE_KEY = 'rougedoku_purchases';
 
 export interface CurrencyData {
   coins: number;
